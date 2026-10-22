@@ -3624,52 +3624,101 @@ html.js .floating-badge-item {
   }
 }
 
-/* Fixed lower-edge progressive glass blur overlay: transparent, sleek, and glassy */
+/* Fixed lower-edge progressive glass blur overlay matching Reachify / Framer progressive blur (NO colour/glow) */
 .viewport-bottom-reveal {
   position: fixed !important;
   right: 0 !important;
   bottom: 0 !important;
   left: 0 !important;
   z-index: 800 !important;
-  height: clamp(2.2rem, 4.5vh, 3.6rem) !important;
+  height: clamp(5.2rem, 11vh, 6.75rem) !important;
   pointer-events: none !important;
   user-select: none !important;
-  transform: translateZ(0) !important;
-  will-change: transform !important;
-  background: linear-gradient(
-    to top,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(0, 229, 255, 0.02) 40%,
-    transparent 100%
-  ) !important;
-  backdrop-filter: blur(14px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
-  -webkit-mask-image: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.75) 35%,
-    rgba(0, 0, 0, 0.25) 75%,
-    transparent 100%
-  ) !important;
-  mask-image: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 0.75) 35%,
-    rgba(0, 0, 0, 0.25) 75%,
-    transparent 100%
-  ) !important;
-  transition: opacity 300ms ease, background 350ms ease !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 [data-theme="light"] .viewport-bottom-reveal {
-  background: linear-gradient(
-    to top,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 255, 255, 0.12) 40%,
-    transparent 100%
-  ) !important;
-  backdrop-filter: blur(14px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.viewport-bottom-reveal > div {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  opacity: 1 !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(1) {
+  z-index: 1 !important;
+  backdrop-filter: blur(0.078125px) !important;
+  -webkit-backdrop-filter: blur(0.078125px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 12.5%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 0) 37.5%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 12.5%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 0) 37.5%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(2) {
+  z-index: 2 !important;
+  backdrop-filter: blur(0.15625px) !important;
+  -webkit-backdrop-filter: blur(0.15625px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 12.5%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 1) 37.5%, rgba(0, 0, 0, 0) 50%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 12.5%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 1) 37.5%, rgba(0, 0, 0, 0) 50%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(3) {
+  z-index: 3 !important;
+  backdrop-filter: blur(0.3125px) !important;
+  -webkit-backdrop-filter: blur(0.3125px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 1) 37.5%, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 62.5%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 1) 37.5%, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 62.5%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(4) {
+  z-index: 4 !important;
+  backdrop-filter: blur(0.625px) !important;
+  -webkit-backdrop-filter: blur(0.625px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 37.5%, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 1) 62.5%, rgba(0, 0, 0, 0) 75%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 37.5%, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 1) 62.5%, rgba(0, 0, 0, 0) 75%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(5) {
+  z-index: 5 !important;
+  backdrop-filter: blur(1.25px) !important;
+  -webkit-backdrop-filter: blur(1.25px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 62.5%, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 87.5%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 62.5%, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 87.5%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(6) {
+  z-index: 6 !important;
+  backdrop-filter: blur(2.5px) !important;
+  -webkit-backdrop-filter: blur(2.5px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 62.5%, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 1) 87.5%, rgba(0, 0, 0, 0) 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 62.5%, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 1) 87.5%, rgba(0, 0, 0, 0) 100%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(7) {
+  z-index: 7 !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 1) 87.5%, rgba(0, 0, 0, 1) 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 1) 87.5%, rgba(0, 0, 0, 1) 100%) !important;
+}
+
+.viewport-bottom-reveal > div:nth-child(8) {
+  z-index: 8 !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 87.5%, rgba(0, 0, 0, 1) 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 87.5%, rgba(0, 0, 0, 1) 100%) !important;
 }
 
 /* Brand Cards — Dedicated Brand Logo Stage */

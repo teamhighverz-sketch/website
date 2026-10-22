@@ -175,14 +175,18 @@ function initBelowFoldFeatures() {
   init3DScene();
 }
 
-// Ensure smooth bottom viewport progressive blur exists on every page
+// Ensure Reachify-style progressive viewport blur exists on every page (8 optical layers, zero color)
 export function ensureViewportBottomReveal() {
   if (typeof document === 'undefined') return;
-  if (!document.querySelector('.viewport-bottom-reveal')) {
-    const reveal = document.createElement('div');
+  let reveal = document.querySelector('.viewport-bottom-reveal');
+  if (!reveal) {
+    reveal = document.createElement('div');
     reveal.className = 'viewport-bottom-reveal';
     reveal.setAttribute('aria-hidden', 'true');
     document.body.appendChild(reveal);
+  }
+  if (reveal.children.length < 8) {
+    reveal.innerHTML = '<div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>';
   }
 }
 

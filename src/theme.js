@@ -78,16 +78,6 @@ export function updateLogos(theme) {
       logo.src = logo.src.replace(/logo-(light|cyan)\.(png|svg)/, 'logo-white.png');
     }
   });
-
-  // Swap watermark logo in footer
-  const watermarkLogos = document.querySelectorAll('.footer-watermark-logo img');
-  watermarkLogos.forEach(logo => {
-    if (currentTheme === 'light') {
-      logo.src = logo.src.replace(/logo-(cyan|white)\.(png|svg)/, 'logo-light.svg');
-    } else {
-      logo.src = logo.src.replace(/logo-(light|white)\.(png|svg)/, 'logo-cyan.svg');
-    }
-  });
 }
 
 // ─── Toggle Theme ───

@@ -5587,7 +5587,7 @@ function initFooterScatterGrid() {
   const watermark = shell ? shell.querySelector('.footer-watermark-logo') : document.querySelector('.footer-watermark-logo');
   if (!watermark) return;
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  // Enhanced reactive scatter physics: Black/Charcoal in light mode, Electric Cyan in dark mode
+  // Enhanced reactive scatter physics: Sky Blue in light mode, Electric Cyan in dark mode
   window.__hvFooterScatterCleanup = initScatterGrid(watermark, {
     dotSize: 4,
     dotGap: 2,
@@ -5595,8 +5595,8 @@ function initFooterScatterGrid() {
     strength: 2.2,
     stiffness: 0.035,
     damping: 0.86,
-    base: isLight ? [15, 23, 42] : [210, 230, 250],
-    accent: isLight ? [2, 132, 199] : [0, 229, 255]
+    base: isLight ? [90, 160, 210] : [210, 230, 250],
+    accent: isLight ? [14, 165, 233] : [0, 229, 255]
   });
 }
 

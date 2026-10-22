@@ -18317,12 +18317,8 @@ body::after {
 }
 
 [data-theme="light"] .footer-watermark-logo {
-  opacity: 0.85;
-}
-
-[data-theme="light"] .footer-watermark-logo img {
-  filter: brightness(0) !important;
-  opacity: 0.08 !important;
+  opacity: 0.95;
+  filter: none !important;
 }
 
 [data-theme="light"] .footer-logo-img {
@@ -18332,7 +18328,7 @@ body::after {
 
 [data-theme="light"] .footer-scatter-canvas {
   mix-blend-mode: normal !important;
-  opacity: 0.9 !important;
+  opacity: 1 !important;
   filter: none !important;
 }
 

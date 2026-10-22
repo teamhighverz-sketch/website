@@ -341,7 +341,7 @@ app.post('/api/enquiry', async (req, res) => {
   const googleSheetsUrl = (payload.googleSheetsUrl && payload.googleSheetsUrl.trim()) ||
     config.googleSheetsUrl ||
     process.env.GOOGLE_SHEETS_URL ||
-    'https://script.google.com/macros/s/AKfycbzHkVm1s28Q8dJEaEnTsoHvxl-nZXE4cVURN92x47KJSTHTJfayTKSNvIR3219HLt9tRA/exec';
+    'https://script.google.com/macros/s/AKfycbzJnIoBHmIqo8JnNz9TYHjFszW1d9mdCNIXuCsYV3g-SFLMxOs19-cijUJfaQwPK1Pvsw/exec';
 
   if (!googleSheetsUrl || googleSheetsUrl.includes('testing/exec')) {
     console.warn('[Enquiry] Google Sheets URL is not set or using placeholder.');

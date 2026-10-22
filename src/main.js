@@ -175,6 +175,17 @@ function initBelowFoldFeatures() {
   init3DScene();
 }
 
+// Ensure smooth bottom viewport progressive blur exists on every page
+export function ensureViewportBottomReveal() {
+  if (typeof document === 'undefined') return;
+  if (!document.querySelector('.viewport-bottom-reveal')) {
+    const reveal = document.createElement('div');
+    reveal.className = 'viewport-bottom-reveal';
+    reveal.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(reveal);
+  }
+}
+
 // Initialize on DOM Ready or immediately if document is already ready
 let hasBooted = false;
 function boot() {
@@ -266,6 +277,8 @@ function boot() {
   try {
     sessionStorage.removeItem('hv_from_subpage');
   } catch (_) { }
+
+  ensureViewportBottomReveal();
 
   if (skipIntro) {
     // Intro skipped (navigated from another page or audit)
@@ -2754,6 +2767,7 @@ export function initPageScripts(pathname, isFromTransition = false) {
   // the ambient canvas. The loader remains mobile-deferred by
   // loadFluidBackground() itself.
   loadFluidBackground();
+  ensureViewportBottomReveal();
 
   if (isWorkPage) {
     initWorkHeroIntro(isFromTransition);

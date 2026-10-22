@@ -57,11 +57,12 @@ function updateIcons(theme) {
   });
 }
 
-// ─── Swap nav logos based on theme ───
-function updateLogos(theme) {
+// ─── Swap nav and footer logos based on theme ───
+export function updateLogos(theme) {
+  const currentTheme = theme || document.documentElement.getAttribute('data-theme') || 'dark';
   const navLogos = document.querySelectorAll('.nav-brand-logo-img');
   navLogos.forEach(logo => {
-    if (theme === 'light') {
+    if (currentTheme === 'light') {
       logo.src = logo.src.replace(/logo-(white|cyan)\.(png|svg)/, 'logo-light.png');
     } else {
       logo.src = logo.src.replace(/logo-(light|cyan)\.(png|svg)/, 'logo-white.png');
@@ -71,10 +72,20 @@ function updateLogos(theme) {
   // Also swap footer logos if they exist
   const footerLogos = document.querySelectorAll('.footer-logo-img');
   footerLogos.forEach(logo => {
-    if (theme === 'light') {
+    if (currentTheme === 'light') {
       logo.src = logo.src.replace(/logo-(white|cyan)\.(png|svg)/, 'logo-light.png');
     } else {
       logo.src = logo.src.replace(/logo-(light|cyan)\.(png|svg)/, 'logo-white.png');
+    }
+  });
+
+  // Swap watermark logo in footer
+  const watermarkLogos = document.querySelectorAll('.footer-watermark-logo img');
+  watermarkLogos.forEach(logo => {
+    if (currentTheme === 'light') {
+      logo.src = logo.src.replace(/logo-(cyan|white)\.(png|svg)/, 'logo-light.svg');
+    } else {
+      logo.src = logo.src.replace(/logo-(light|white)\.(png|svg)/, 'logo-cyan.svg');
     }
   });
 }

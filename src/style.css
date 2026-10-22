@@ -15384,32 +15384,46 @@ main+footer {
   stroke: currentColor;
 }
 
-.hero-trust-copy,
-.hero-trust-number,
+.hero-trust-copy {
+  color: rgba(255, 255, 255, 0.76);
+  white-space: nowrap;
+}
+
 .hero-trust-label {
-  background-image: linear-gradient(105deg, currentColor 35%, #ffffff 49%, currentColor 63%);
-  background-size: 240% 100%;
-  background-position: 130% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: heroTrustTextShine 5.5s ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.76);
+  margin-left: -0.24rem;
+  white-space: nowrap;
 }
 
 .hero-trust-number {
-  background-image: linear-gradient(105deg, var(--accent-cyan, #00e5ff) 35%, #dfffff 49%, var(--accent-cyan, #00e5ff) 63%);
+  color: var(--accent-cyan, #00e5ff);
+  font-weight: 800;
+  background-image: linear-gradient(
+    110deg,
+    var(--accent-cyan, #00e5ff) 0%,
+    var(--accent-cyan, #00e5ff) 36%,
+    #ffffff 50%,
+    var(--accent-cyan, #00e5ff) 64%,
+    var(--accent-cyan, #00e5ff) 100%
+  );
+  background-size: 220% 100%;
+  background-position: -120% 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: heroTrustTextShine 4.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
 
 @keyframes heroTrustTextShine {
-
-  0%,
-  62% {
-    background-position: 130% 0;
+  0% {
+    background-position: -120% 0;
   }
-
-  82%,
+  42% {
+    background-position: 220% 0;
+  }
   100% {
-    background-position: -130% 0;
+    background-position: 220% 0;
   }
 }
 
@@ -18308,17 +18322,22 @@ body::after {
 }
 
 [data-theme="light"] .footer-watermark-logo {
-  opacity: 0.95;
-  filter: none !important;
+  opacity: 0.85;
+}
+
+[data-theme="light"] .footer-watermark-logo img {
+  filter: brightness(0) !important;
+  opacity: 0.08 !important;
 }
 
 [data-theme="light"] .footer-logo-img {
-  filter: none !important;
+  filter: brightness(0) !important;
+  opacity: 0.95 !important;
 }
 
 [data-theme="light"] .footer-scatter-canvas {
   mix-blend-mode: normal !important;
-  opacity: 1 !important;
+  opacity: 0.9 !important;
   filter: none !important;
 }
 

@@ -15399,31 +15399,26 @@ main+footer {
   color: var(--accent-cyan, #00e5ff);
   font-weight: 800;
   background-image: linear-gradient(
-    110deg,
+    105deg,
     var(--accent-cyan, #00e5ff) 0%,
-    var(--accent-cyan, #00e5ff) 36%,
+    var(--accent-cyan, #00e5ff) 38%,
     #ffffff 50%,
-    var(--accent-cyan, #00e5ff) 64%,
+    var(--accent-cyan, #00e5ff) 62%,
     var(--accent-cyan, #00e5ff) 100%
   );
-  background-size: 220% 100%;
-  background-position: -120% 0;
-  background-repeat: no-repeat;
+  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: heroTrustTextShine 4.2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  animation: heroTrustTextShine 3.2s linear infinite;
 }
 
 @keyframes heroTrustTextShine {
   0% {
-    background-position: -120% 0;
-  }
-  42% {
-    background-position: 220% 0;
+    background-position: 200% 0;
   }
   100% {
-    background-position: 220% 0;
+    background-position: -200% 0;
   }
 }
 

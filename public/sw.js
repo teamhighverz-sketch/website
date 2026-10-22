@@ -1,6 +1,5 @@
-// Highverz High-Performance Media & Asset Service Worker
-const CACHE_NAME = 'highverz-cache-v2';
-const MEDIA_CACHE_NAME = 'highverz-media-v2';
+// Highverz High-Performance Static Asset Service Worker (v4)
+const CACHE_NAME = 'highverz-cache-v4';
 
 const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|webp|avif|svg|woff2?|css|js|json)$/i;
 const VIDEO_EXTENSIONS = /\.(?:mp4|webm|mov)$/i;
@@ -14,66 +13,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys
-          .filter((k) => k !== CACHE_NAME && k !== MEDIA_CACHE_NAME)
+          .filter((k) => k !== CACHE_NAME)
           .map((k) => caches.delete(k))
       );
     }).then(() => self.clients.claim())
   );
 });
-
-// Helper: Handle Byte Range requests from Cache Storage for HTML5 video
-async function handleRangeRequest(request, cache) {
-  const url = request.url;
-  let cachedResponse = await cache.match(url);
-
-  if (!cachedResponse) {
-    try {
-      const networkResponse = await fetch(request);
-      // Cache valid full or partial responses
-      if (networkResponse.ok || networkResponse.status === 206) {
-        // Clone and store full resource when available
-        if (networkResponse.status === 200) {
-          cache.put(url, networkResponse.clone());
-        }
-      }
-      return networkResponse;
-    } catch (err) {
-      return new Response('Network error loading video', { status: 503 });
-    }
-  }
-
-  // Handle Range Header if present
-  const rangeHeader = request.headers.get('range');
-  if (!rangeHeader) {
-    return cachedResponse;
-  }
-
-  const arrayBuffer = await cachedResponse.arrayBuffer();
-  const totalLength = arrayBuffer.byteLength;
-  const parts = rangeHeader.replace(/bytes=/, '').split('-');
-  const start = parseInt(parts[0], 10) || 0;
-  const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
-
-  if (start >= totalLength || end >= totalLength) {
-    return new Response('Requested range not satisfiable', {
-      status: 416,
-      headers: { 'Content-Range': `bytes */${totalLength}` }
-    });
-  }
-
-  const slicedBuffer = arrayBuffer.slice(start, end + 1);
-  return new Response(slicedBuffer, {
-    status: 206,
-    statusText: 'Partial Content',
-    headers: {
-      'Content-Type': cachedResponse.headers.get('Content-Type') || 'video/mp4',
-      'Content-Length': String(slicedBuffer.byteLength),
-      'Content-Range': `bytes ${start}-${end}/${totalLength}`,
-      'Accept-Ranges': 'bytes',
-      'Cache-Control': 'public, max-age=31536000, immutable'
-    }
-  });
-}
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
@@ -84,15 +29,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. Video files (MP4 / WebM / MOV): Range-aware cache
+  // 1. Video files (MP4 / WebM / MOV):
+  // CRITICAL: NEVER intercept video requests in Service Worker!
+  // Browsers (especially iOS Safari and mobile Chrome) have native media pipelines
+  // with HTTP 206 byte-range streaming, hardware decoding, and disk caching.
+  // Intercepting video requests in a Service Worker breaks Safari WebKit AVPlayer
+  // and causes range-slicing OOM failures on mobile devices.
   if (VIDEO_EXTENSIONS.test(url.pathname)) {
-    event.respondWith(
-      caches.open(MEDIA_CACHE_NAME).then((cache) => handleRangeRequest(request, cache))
-    );
     return;
   }
 
-  // 2. Static Assets (Images, WebP, Fonts, CSS): Cache-First
+  // 2. Static Assets (Images, WebP, Fonts, CSS, JS): Cache-First
   if (STATIC_EXTENSIONS.test(url.pathname) || url.pathname.startsWith('/assets/')) {
     event.respondWith(
       caches.match(request).then((cached) => {

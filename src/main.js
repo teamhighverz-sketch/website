@@ -3208,6 +3208,7 @@ export function initHeroReelCarousel() {
     const shouldPlay = priority === 'high' && !document.documentElement.classList.contains('intro-pending');
     video.autoplay = shouldPlay;
     video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
     video.setAttribute('muted', '');
     if (shouldPlay) video.setAttribute('autoplay', '');
     else video.removeAttribute('autoplay');
@@ -3235,6 +3236,7 @@ export function initHeroReelCarousel() {
     video.loop = true;
     video.autoplay = true;
     video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
     video.setAttribute('muted', '');
     video.setAttribute('autoplay', '');
 
@@ -5322,6 +5324,10 @@ function initInstagramReelsPlayer() {
         }
       });
 
+      if (!closestCard && reelCards.length) {
+        closestCard = reelCards[0];
+      }
+
       reelCards.forEach((card) => {
         const video = card.querySelector('.ig-reel-video');
         if (!video) return;
@@ -5330,6 +5336,7 @@ function initInstagramReelsPlayer() {
         video.loop = true;
         video.playsInline = true;
         video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
         video.setAttribute('muted', '');
         if (card === closestCard) {
           video.preload = 'metadata';
@@ -5351,6 +5358,7 @@ function initInstagramReelsPlayer() {
         video.setAttribute('muted', '');
         video.setAttribute('autoplay', '');
         video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
         video.preload = 'metadata';
         if (video.paused) {
           const attempt = video.play();
@@ -5383,13 +5391,14 @@ function initInstagramReelsPlayer() {
   }, { rootMargin: '200px 0px 200px 0px', threshold: 0 });
   observer.observe(section);
 
+  const unlockEvents = ['pointerdown', 'touchstart', 'scroll', 'wheel', 'click', 'keydown', 'pointerup'];
   const unlockOnInteraction = () => {
     if (isVisible && !document.hidden) {
       setPlayback(true);
     }
   };
-  ['pointerdown', 'touchstart', 'scroll', 'wheel', 'click', 'keydown', 'pointerup', 'mousemove'].forEach((evt) => {
-    window.addEventListener(evt, unlockOnInteraction, { once: true, passive: true });
+  unlockEvents.forEach((evt) => {
+    window.addEventListener(evt, unlockOnInteraction, { passive: true });
   });
 
   // If section is already near viewport on load, activate playback immediately
@@ -5522,6 +5531,9 @@ function initInstagramReelsPlayer() {
     window.removeEventListener('pointercancel', stopDragging);
     window.removeEventListener('resize', onResize);
     document.removeEventListener('visibilitychange', onVisibilityChange);
+    unlockEvents.forEach((evt) => {
+      window.removeEventListener(evt, unlockOnInteraction);
+    });
     videos.forEach((video) => { try { video.pause(); } catch (_) { } });
   };
 

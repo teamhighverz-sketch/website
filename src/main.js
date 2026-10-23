@@ -1383,31 +1383,33 @@ function applyThemeCreatorsCopy() {
     {
       image: '/assets/movie/runner.png',
       alt: 'Runner film poster',
-      title: 'RUNNER',
-      conceptBadge: 'FILM CLIPPING CONCEPT · 01',
-      headline: 'Every Scene Has Potential.',
-      description: 'A clipping concept focused on finding the most engaging moments, creating scroll-stopping edits, and getting the film in front of wider audiences.',
+      title: 'Runner',
+      platform: 'FILM CLIPPING CONCEPT · 01',
+      description: 'Every Scene Has Potential. A clipping concept focused on finding the most engaging moments, creating scroll-stopping edits, and getting the film in front of wider audiences.',
       badge: '↗ Concept 01',
-      href: '/movie-runner.html',
-      specs: [
-        { label: 'CONTENT FORMAT', value: 'Short-Form Clips' },
-        { label: 'CLIPPING STRATEGY', value: 'Hook-Driven Editing' },
-        { label: 'DISTRIBUTION', value: 'Multi-Platform' },
+      before: ['FORMAT', 'SHORT-FORM', 'Clips'],
+      after: ['DISTRIBUTION', 'MULTI-PLATFORM', 'Audience reach'],
+      meta: [
+        'Short-Form Clips',
+        'Hook-Driven Editing',
+        'Multi-Platform',
+        'Explore Concept',
       ],
     },
     {
       image: '/assets/movie/kingofkings.png',
       alt: 'King of Kings film poster',
-      title: 'KING OF KINGS',
-      conceptBadge: 'FILM CLIPPING CONCEPT · 02',
-      headline: 'One Film. Endless Clip Opportunities.',
-      description: 'A clipping concept built around memorable scenes, strong opening hooks, and short-form edits designed to grab attention and encourage viewers to discover the full film.',
+      title: 'King of Kings',
+      platform: 'FILM CLIPPING CONCEPT · 02',
+      description: 'One Film. Endless Clip Opportunities. A clipping concept built around memorable scenes, strong opening hooks, and short-form edits designed to grab attention and encourage viewers to discover the full film.',
       badge: '↗ Concept 02',
-      href: '/movie-kingofkings.html',
-      specs: [
-        { label: 'CONTENT FORMAT', value: 'Short-Form Clips' },
-        { label: 'CLIPPING STRATEGY', value: 'Scene Selection & Editing' },
-        { label: 'DISTRIBUTION', value: 'Multi-Platform' },
+      before: ['FORMAT', 'SHORT-FORM', 'Clips'],
+      after: ['DISTRIBUTION', 'MULTI-PLATFORM', 'Campaign scale'],
+      meta: [
+        'Short-Form Clips',
+        'Scene Selection & Editing',
+        'Multi-Platform',
+        'Explore Concept',
       ],
     },
   ];
@@ -1415,17 +1417,20 @@ function applyThemeCreatorsCopy() {
   cards.forEach((card, index) => {
     const movie = movieCards[index];
     if (!movie) return;
-
     const imageWrap = card.querySelector('.creator-image-wrap');
     const image = card.querySelector('.creator-img');
+    const name = card.querySelector('.creator-name');
+    const platform = card.querySelector('.creator-platform');
+    const description = card.querySelector('.creator-description');
     const badge = card.querySelector('.badge-growth');
+    const movieHref = movie.title === 'Runner' ? '/movie-runner.html' : '/movie-kingofkings.html';
 
     if (imageWrap) {
-      imageWrap.href = movie.href;
+      imageWrap.href = movieHref;
       imageWrap.removeAttribute('target');
       imageWrap.removeAttribute('rel');
-      imageWrap.dataset.cursor = 'EXPLORE ↗';
-      imageWrap.setAttribute('aria-label', `${movie.title} film clipping concept`);
+      imageWrap.dataset.cursor = 'FILM CASE STUDY ↗';
+      imageWrap.setAttribute('aria-label', `${movie.title} film case study`);
     }
     if (image) {
       image.src = movie.image;
@@ -1433,43 +1438,46 @@ function applyThemeCreatorsCopy() {
       image.loading = 'lazy';
       image.decoding = 'async';
     }
-    if (badge) {
-      badge.textContent = movie.badge;
+    if (name) name.textContent = movie.title;
+    if (platform) {
+      platform.href = movieHref;
+      platform.removeAttribute('target');
+      platform.removeAttribute('rel');
+      platform.dataset.cursor = 'VIEW CASE STUDY ↗';
+      platform.setAttribute('aria-label', `View ${movie.title} film case study`);
+      platform.classList.add('movie-platform');
+      platform.innerHTML = `<span>${movie.platform}</span><svg class="creator-ext-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>`;
     }
+    if (description) description.textContent = movie.description;
+    if (badge) badge.textContent = movie.badge;
 
-    const infoCol = card.querySelector('.creator-info-col');
-    if (infoCol) {
-      infoCol.innerHTML = `
-        <div class="creator-name-row">
-          <h3 class="creator-name">${movie.title}</h3>
-          <a href="${movie.href}" class="creator-platform movie-platform" data-cursor="EXPLORE ↗" aria-label="Explore ${movie.title} clipping concept">
-            <span>${movie.conceptBadge}</span>
-            <svg class="creator-ext-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </a>
-        </div>
+    const statItems = card.querySelectorAll('.creator-stat-item');
+    [movie.before, movie.after].forEach((stat, statIndex) => {
+      const item = statItems[statIndex];
+      if (!item) return;
+      const overline = item.querySelector('.stat-before-label, .stat-after-label');
+      const number = item.querySelector('.stat-number');
+      const label = item.querySelector('.stat-label');
+      if (overline) overline.textContent = stat[0];
+      if (number) {
+        number.removeAttribute('data-count');
+        number.dataset.staticText = stat[1];
+        number.textContent = stat[1];
+      }
+      if (label) label.textContent = stat[2];
+      item.removeAttribute('data-stat-target');
+    });
 
-        <div class="movie-concept-lead">
-          <h4 class="movie-concept-headline">${movie.headline}</h4>
-          <p class="creator-description">${movie.description}</p>
-        </div>
-
-        <div class="movie-specs-grid">
-          ${movie.specs.map((spec) => `
-            <div class="movie-spec-item">
-              <span class="movie-spec-label">${spec.label}</span>
-              <span class="movie-spec-val">${spec.value}</span>
-            </div>
-          `).join('')}
-        </div>
-
-        <div class="creator-meta-row movie-meta-row">
-          <a href="${movie.href}" class="meta-chip view-detail-chip movie-explore-chip" data-cursor="EXPLORE ↗" aria-label="Explore ${movie.title} concept">
-            <span>Explore Concept</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-          </a>
-        </div>
-      `;
-    }
+    const meta = card.querySelectorAll('.creator-meta-row .meta-chip');
+    meta.forEach((chip, chipIndex) => {
+      if (chipIndex === 3) {
+        chip.href = movieHref;
+        chip.dataset.cursor = 'CASE STUDY ↗';
+        chip.innerHTML = `<span>${movie.meta[chipIndex]}</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>`;
+      } else {
+        chip.innerHTML = `<span>${movie.meta[chipIndex]}</span>`;
+      }
+    });
   });
 
   const moreNote = section.querySelector('.creators-more-note');

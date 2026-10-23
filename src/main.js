@@ -1387,8 +1387,8 @@ function applyThemeCreatorsCopy() {
       platform: 'FILM CLIPPING CONCEPT · 01',
       description: 'Every Scene Has Potential. A clipping concept focused on finding the most engaging moments, creating scroll-stopping edits, and getting the film in front of wider audiences.',
       badge: '↗ Concept 01',
-      before: ['FORMAT', 'SHORT-FORM', 'Clips'],
-      after: ['DISTRIBUTION', 'MULTI-PLATFORM', 'Audience reach'],
+      before: ['FORMAT', 'BIG SCREEN', 'Original release'],
+      after: ['REACH', 'SOCIAL FEED', 'Audience reach'],
       meta: [
         'Short-Form Clips',
         'Hook-Driven Editing',
@@ -1403,8 +1403,8 @@ function applyThemeCreatorsCopy() {
       platform: 'FILM CLIPPING CONCEPT · 02',
       description: 'One Film. Endless Clip Opportunities. A clipping concept built around memorable scenes, strong opening hooks, and short-form edits designed to grab attention and encourage viewers to discover the full film.',
       badge: '↗ Concept 02',
-      before: ['FORMAT', 'SHORT-FORM', 'Clips'],
-      after: ['DISTRIBUTION', 'MULTI-PLATFORM', 'Campaign scale'],
+      before: ['FORMAT', 'THEATRICAL', 'Cinema first'],
+      after: ['REACH', 'SOCIAL FEED', 'Campaign scale'],
       meta: [
         'Short-Form Clips',
         'Scene Selection & Editing',

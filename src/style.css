@@ -6306,18 +6306,21 @@ html.js .floating-badge-item {
 }
 
 .section-creators.is-movie-showcase .stat-number {
-  font-size: clamp(0.78rem, 0.98vw, 1.04rem);
-  letter-spacing: -0.055em;
+  font-size: clamp(0.85rem, 1.05vw, 1.08rem);
+  letter-spacing: -0.035em;
   white-space: nowrap;
+  word-break: keep-all;
   overflow: visible;
+  line-height: 1.15;
 }
 
 .section-creators.is-movie-showcase .creator-stats-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) auto minmax(0, 1.18fr);
-  gap: 0.5rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding-left: 1.05rem;
+  padding-right: 1.05rem;
   min-width: 0;
   overflow: visible;
 }
@@ -6325,10 +6328,15 @@ html.js .floating-badge-item {
 .section-creators.is-movie-showcase .creator-stat-item {
   min-width: 0;
   overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .section-creators.is-movie-showcase .creator-description {
   color: #40566A;
+  font-size: clamp(0.82rem, 0.9vw, 0.88rem);
+  line-height: 1.5;
 }
 
 @media (max-width: 600px) {

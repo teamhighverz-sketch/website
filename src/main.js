@@ -1314,8 +1314,8 @@ function applyThemeHeroCopy() {
           <span class="roller-item highlight-cyan font-bold-italic" data-word="Clicks">Clicks</span>
         </span>
       </span>
-      <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
       <span class="hero-headline-line">
+        <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
         <span class="hl-word" data-word>Name</span>
@@ -1375,7 +1375,7 @@ function applyThemeCreatorsCopy() {
     header.innerHTML = `
       <span class="section-tag">CLIPPING CONCEPTS</span>
       <h2 class="creators-title">Films Meet<br/><span class="highlight-cyan">Short-Form.</span></h2>
-      <p class="creators-intro">Turning the most engaging moments from films into short-form clips built to capture attention, drive views, and reach new audiences across social platforms.</p>
+      <p class="creators-intro">Turning the most engaging film moments into short-form clips built to capture attention, drive views, and reach new audiences across feeds.</p>
     `;
   }
 
@@ -1384,11 +1384,11 @@ function applyThemeCreatorsCopy() {
       image: '/assets/movie/runner.png',
       alt: 'Runner film poster',
       title: 'Runner',
-      platform: 'FILM CLIPPING CONCEPT · 01',
-      description: 'Every Scene Has Potential. A clipping concept focused on finding the most engaging moments, creating scroll-stopping edits, and getting the film in front of wider audiences.',
-      badge: '↗ Concept 01',
-      before: ['FORMAT', 'BIG SCREEN', 'Original release'],
-      after: ['REACH', 'SOCIAL FEED', 'Audience reach'],
+      platform: 'Film Concept 01',
+      description: 'Turning cinematic scenes into high-retention short-form clips to drive massive organic reach across feeds.',
+      badge: '↗ 18.3M Views',
+      before: ['BEFORE', 'Big Screen', 'Cinema Release'],
+      after: ['AFTER', 'Social Feed', '18.3M+ Views'],
       meta: [
         'Short-Form Clips',
         'Hook-Driven Editing',
@@ -1400,18 +1400,24 @@ function applyThemeCreatorsCopy() {
       image: '/assets/movie/kingofkings.png',
       alt: 'King of Kings film poster',
       title: 'King of Kings',
-      platform: 'FILM CLIPPING CONCEPT · 02',
-      description: 'One Film. Endless Clip Opportunities. A clipping concept built around memorable scenes, strong opening hooks, and short-form edits designed to grab attention and encourage viewers to discover the full film.',
-      badge: '↗ Concept 02',
-      before: ['FORMAT', 'THEATRICAL', 'Cinema first'],
-      after: ['REACH', 'SOCIAL FEED', 'Campaign scale'],
+      platform: 'Film Concept 02',
+      description: 'Transforming epic movie scenes into scroll-stopping clips that grab attention and drive viral discovery.',
+      badge: '↗ 38.5M Views',
+      before: ['BEFORE', 'Big Screen', 'Cinema Release'],
+      after: ['AFTER', 'Social Feed', '38.5M+ Views'],
       meta: [
         'Short-Form Clips',
-        'Scene Selection & Editing',
+        'Scene Selection',
         'Multi-Platform',
         'Explore Concept',
       ],
     },
+  ];
+
+  const chipIcons = [
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>',
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
   ];
 
   cards.forEach((card, index) => {
@@ -1475,7 +1481,7 @@ function applyThemeCreatorsCopy() {
         chip.dataset.cursor = 'CASE STUDY ↗';
         chip.innerHTML = `<span>${movie.meta[chipIndex]}</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>`;
       } else {
-        chip.innerHTML = `<span>${movie.meta[chipIndex]}</span>`;
+        chip.innerHTML = `${chipIcons[chipIndex] || ''}<span>${movie.meta[chipIndex]}</span>`;
       }
     });
   });
@@ -5273,23 +5279,11 @@ function initInstagramReelsPlayer() {
     clone.setAttribute('aria-hidden', 'true');
     clone.setAttribute('tabindex', '-1');
     clone.querySelectorAll('button').forEach((button) => button.setAttribute('tabindex', '-1'));
-    // IMPORTANT PERFORMANCE OPTIMIZATION:
-    // Strip active video elements from cloned cards!
-    // Clones only need their static poster image for the seamless visual wrap.
-    // Having active <video> elements on cloned cards doubles network range requests
-    // and exhausts mobile hardware video decoders.
-    const cloneVideo = clone.querySelector('.ig-reel-video');
-    if (cloneVideo) cloneVideo.remove();
-    const clonePoster = clone.querySelector('.ig-reel-poster');
-    if (clonePoster) {
-      clonePoster.style.opacity = '1';
-      clonePoster.style.visibility = 'visible';
-    }
     rail.appendChild(clone);
   });
 
-  const reelCards = Array.from(rail.querySelectorAll('.ig-reel-card:not(.case-reel-clone)'));
-  const videos = reelCards.map((card) => card.querySelector('.ig-reel-video')).filter(Boolean);
+  const allReelCards = Array.from(rail.querySelectorAll('.ig-reel-card'));
+  const videos = allReelCards.map((card) => card.querySelector('.ig-reel-video')).filter(Boolean);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let offset = 0;
   let loopWidth = 0;
@@ -5303,6 +5297,21 @@ function initInstagramReelsPlayer() {
   let dragStartOffset = 0;
   let suppressClick = false;
   let lastPlaybackCheck = 0;
+
+  // Bind video events to cleanly toggle is-playing
+  videos.forEach((video) => {
+    const card = video.closest('.ig-reel-card');
+    video.defaultMuted = true;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.setAttribute('muted', '');
+    video.addEventListener('playing', () => {
+      card?.classList.add('is-playing');
+    });
+  });
 
   const render = () => {
     rail.style.transform = `translate3d(${-offset}px, 0, 0)`;
@@ -5328,18 +5337,17 @@ function initInstagramReelsPlayer() {
     if (!shouldPlay || !isVisible || document.hidden) {
       videos.forEach((video) => {
         try { video.pause(); } catch (_) { }
+        video.closest('.ig-reel-card')?.classList.remove('is-playing');
       });
       return;
     }
 
     if (isMobileScreen()) {
-      // Mobile performance: ONLY decode/play the single card closest to screen center!
-      // All other cards remain paused with their posters visible to conserve mobile GPU.
       const viewportCenter = window.innerWidth / 2;
       let closestCard = null;
       let minDistance = Infinity;
 
-      reelCards.forEach((card) => {
+      allReelCards.forEach((card) => {
         const rect = card.getBoundingClientRect();
         if (rect.right > 0 && rect.left < window.innerWidth) {
           const cardCenter = rect.left + rect.width / 2;
@@ -5351,42 +5359,32 @@ function initInstagramReelsPlayer() {
         }
       });
 
-      if (!closestCard && reelCards.length) {
-        closestCard = reelCards[0];
+      if (!closestCard && allReelCards.length) {
+        closestCard = allReelCards[0];
       }
 
-      reelCards.forEach((card) => {
+      allReelCards.forEach((card) => {
         const video = card.querySelector('.ig-reel-video');
         if (!video) return;
-        video.defaultMuted = true;
-        video.muted = true;
-        video.loop = true;
-        video.playsInline = true;
-        video.setAttribute('playsinline', '');
-        video.setAttribute('webkit-playsinline', '');
-        video.setAttribute('muted', '');
         if (card === closestCard) {
-          video.preload = 'metadata';
+          video.preload = 'auto';
+          card.classList.add('is-playing');
           if (video.paused) {
             const attempt = video.play();
             if (attempt?.catch) attempt.catch(() => { });
           }
         } else {
           try { video.pause(); } catch (_) { }
+          card.classList.remove('is-playing');
         }
       });
     } else {
       // Desktop: play all visible cards smoothly
-      videos.forEach((video) => {
-        video.defaultMuted = true;
-        video.muted = true;
-        video.loop = true;
-        video.playsInline = true;
-        video.setAttribute('muted', '');
-        video.setAttribute('autoplay', '');
-        video.setAttribute('playsinline', '');
-        video.setAttribute('webkit-playsinline', '');
-        video.preload = 'metadata';
+      allReelCards.forEach((card) => {
+        const video = card.querySelector('.ig-reel-video');
+        if (!video) return;
+        video.preload = 'auto';
+        card.classList.add('is-playing');
         if (video.paused) {
           const attempt = video.play();
           if (attempt?.catch) attempt.catch(() => { });
@@ -5440,6 +5438,7 @@ function initInstagramReelsPlayer() {
   const onResize = () => measure();
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.cancelable) event.preventDefault();
     if (!loopWidth) measure();
     isDragging = true;
     dragStartX = event.clientX;
@@ -5455,6 +5454,9 @@ function initInstagramReelsPlayer() {
     if (Math.abs(distance) > 4) suppressClick = true;
     offset = ((dragStartOffset - distance) % loopWidth + loopWidth) % loopWidth;
     render();
+    if (isMobileScreen()) {
+      setPlayback(true);
+    }
   };
   const stopDragging = (event) => {
     if (!isDragging) return;

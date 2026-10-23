@@ -182,17 +182,18 @@
             <span class="btn-arrow-icon">↗</span>
           </a>
 
-          <button class="theme-switcher" id="theme-switcher" aria-label="Toggle theme" data-cursor="THEME">
-            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          </button>
+          <!-- Theme Slider Capsule (Creators = Dark, Brands = Light) -->
+          <div class="theme-capsule-switcher" id="theme-capsule-switcher" role="radiogroup" aria-label="Audience theme switcher" data-active-theme="dark">
+            <div class="theme-capsule-glider" aria-hidden="true"></div>
+            <button type="button" class="theme-capsule-btn active" data-theme-value="dark" role="radio" aria-checked="true" data-cursor="CREATORS" aria-label="Switch to Creators mode (Dark theme)">
+              <span class="capsule-btn-dot" aria-hidden="true"></span>
+              <span class="capsule-btn-text">Creators</span>
+            </button>
+            <button type="button" class="theme-capsule-btn" data-theme-value="light" role="radio" aria-checked="false" data-cursor="BRANDS" aria-label="Switch to Brands mode (Light theme)">
+              <span class="capsule-btn-dot" aria-hidden="true"></span>
+              <span class="capsule-btn-text">Brands</span>
+            </button>
+          </div>
 
           <!-- Mobile Toggle -->
           <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">

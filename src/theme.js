@@ -37,9 +37,27 @@ function applyTheme(theme, animate = false) {
   localStorage.setItem(STORAGE_KEY, theme);
   updateIcons(theme);
   updateLogos(theme);
+  updateCapsuleSwitchers(theme);
   try {
     window.dispatchEvent(new CustomEvent('hv:themechange', { detail: { theme } }));
   } catch (_) {}
+}
+
+// ─── Update Capsule Switchers (Creators ↔ Brands) ───
+export function updateCapsuleSwitchers(theme) {
+  const current = theme || document.documentElement.getAttribute('data-theme') || 'dark';
+  const capsules = document.querySelectorAll('.theme-capsule-switcher');
+  capsules.forEach(capsule => {
+    capsule.setAttribute('data-active-theme', current);
+    const buttons = capsule.querySelectorAll('.theme-capsule-btn');
+    buttons.forEach(btn => {
+      const val = btn.getAttribute('data-theme-value');
+      const isActive = val === current;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  });
 }
 
 // ─── Update Sun / Moon icon visibility ───
@@ -104,6 +122,39 @@ export function initThemeSystem() {
       e.preventDefault();
       e.stopPropagation();
       toggleTheme(btn);
+    });
+  });
+
+  // Bind slider capsule switchers (Creators ↔ Brands)
+  const capsuleSwitchers = document.querySelectorAll('.theme-capsule-switcher');
+  capsuleSwitchers.forEach(capsule => {
+    const buttons = capsule.querySelectorAll('.theme-capsule-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const targetTheme = btn.getAttribute('data-theme-value');
+        const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        if (targetTheme && targetTheme !== activeTheme) {
+          applyTheme(targetTheme, true);
+        } else {
+          // Subtle micro-tap haptic animation
+          btn.style.transform = 'scale(0.95)';
+          setTimeout(() => { btn.style.transform = ''; }, 140);
+        }
+      });
+    });
+
+    // Keyboard support: ArrowLeft / ArrowRight toggles between Creators and Brands
+    capsule.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === ' ') {
+        e.preventDefault();
+        const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme, true);
+        const nextBtn = capsule.querySelector(`.theme-capsule-btn[data-theme-value="${nextTheme}"]`);
+        nextBtn?.focus();
+      }
     });
   });
 

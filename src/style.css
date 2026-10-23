@@ -690,7 +690,7 @@ body.cursor-active .custom-cursor {
 
 .nav-container {
   pointer-events: auto;
-  width: min(940px, 94%);
+  width: min(990px, 94%);
   min-height: 58px;
   margin: 0 auto;
   padding: 0.68rem 1.15rem 0.68rem 1.75rem;
@@ -713,7 +713,7 @@ body.cursor-active .custom-cursor {
 }
 
 .navbar.scrolled .nav-container {
-  width: min(840px, 92%);
+  width: min(890px, 92%);
   min-height: 52px;
   padding: 0.58rem 1.05rem 0.58rem 1.6rem;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 100%), rgba(6, 10, 15, 0.5);
@@ -1005,6 +1005,250 @@ body.cursor-active .custom-cursor {
     0 10px 24px -2px rgba(14, 165, 233, 0.22),
     inset 0 1.5px 1.5px 0 #FFFFFF !important;
   transform: translateY(-1px) scale(1.06);
+}
+
+/* ==========================================================================
+   THEME CAPSULE SWITCHER (Creators ↔ Brands / Dark ↔ Light)
+   ========================================================================== */
+.theme-capsule-switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 3px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-capsule-switcher:hover {
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow:
+    0 4px 18px rgba(0, 229, 255, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+/* Light Theme Styling for Capsule Container */
+[data-theme="light"] .theme-capsule-switcher {
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.88) 0%, rgba(240, 246, 253, 0.65) 100%) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(205, 220, 236, 0.6) 45%, rgba(255, 255, 255, 0.95) 100%) border-box !important;
+  border: 1px solid transparent !important;
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.05),
+    0 8px 20px -2px rgba(15, 23, 42, 0.07),
+    inset 0 1.2px 1.2px 0 #FFFFFF !important;
+}
+
+[data-theme="light"] .theme-capsule-switcher:hover {
+  border: 1px solid transparent !important;
+  box-shadow:
+    0 4px 14px rgba(14, 165, 233, 0.16),
+    0 10px 24px -2px rgba(14, 165, 233, 0.2),
+    inset 0 1.5px 1.5px 0 #FFFFFF !important;
+}
+
+/* Glider Slider Track */
+.theme-capsule-glider {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 9999px;
+  pointer-events: none;
+  transform: translateX(0);
+  transition:
+    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+  will-change: transform;
+  z-index: 1;
+
+  /* Default Dark Mode Glider: Left on Creators */
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.22) 0%, rgba(0, 160, 255, 0.12) 100%);
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  box-shadow:
+    0 0 16px rgba(0, 229, 255, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Brands Mode Active (Glider Slides Right) */
+.theme-capsule-switcher[data-active-theme="light"] .theme-capsule-glider,
+[data-theme="light"] .theme-capsule-switcher .theme-capsule-glider {
+  transform: translateX(100%);
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%);
+  border: 1px solid rgba(14, 165, 233, 0.32);
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.1),
+    0 6px 18px rgba(14, 165, 233, 0.22),
+    inset 0 1.2px 1.2px #FFFFFF;
+}
+
+/* If explicitly set to dark, keep left */
+.theme-capsule-switcher[data-active-theme="dark"] .theme-capsule-glider {
+  transform: translateX(0);
+}
+
+/* Buttons inside Capsule */
+.theme-capsule-btn {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  height: 100%;
+  padding: 0 0.88rem;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 0.77rem;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  border-radius: 9999px;
+  transition:
+    color 0.25s ease,
+    text-shadow 0.25s ease,
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-capsule-btn:hover {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.theme-capsule-btn:active {
+  transform: scale(0.96);
+}
+
+/* In Dark Theme (default) */
+.theme-capsule-btn.active,
+.theme-capsule-switcher[data-active-theme="dark"] .theme-capsule-btn[data-theme-value="dark"] {
+  color: #FFFFFF;
+  font-weight: 650;
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.55);
+}
+
+.theme-capsule-switcher[data-active-theme="dark"] .theme-capsule-btn[data-theme-value="light"] {
+  color: rgba(255, 255, 255, 0.48);
+  font-weight: 500;
+  text-shadow: none;
+}
+
+/* In Light Theme (Brands active) */
+[data-theme="light"] .theme-capsule-btn {
+  color: #64748B;
+}
+
+[data-theme="light"] .theme-capsule-btn:hover {
+  color: #0F172A;
+}
+
+.theme-capsule-switcher[data-active-theme="light"] .theme-capsule-btn[data-theme-value="light"],
+[data-theme="light"] .theme-capsule-btn.active {
+  color: #0284C7 !important;
+  font-weight: 650 !important;
+  text-shadow: none !important;
+}
+
+.theme-capsule-switcher[data-active-theme="light"] .theme-capsule-btn[data-theme-value="dark"],
+[data-theme="light"] .theme-capsule-btn[data-theme-value="dark"] {
+  color: #64748B !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+
+/* Dot indicator on each button */
+.capsule-btn-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.45;
+  transition: opacity 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.theme-capsule-btn[data-theme-value="dark"] .capsule-btn-dot {
+  background: var(--accent-cyan);
+}
+
+.theme-capsule-btn[data-theme-value="light"] .capsule-btn-dot {
+  background: #38BDF8;
+}
+
+.theme-capsule-switcher[data-active-theme="dark"] .theme-capsule-btn[data-theme-value="dark"] .capsule-btn-dot,
+.theme-capsule-btn[data-theme-value="dark"].active .capsule-btn-dot {
+  opacity: 1;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.theme-capsule-switcher[data-active-theme="light"] .theme-capsule-btn[data-theme-value="light"] .capsule-btn-dot,
+[data-theme="light"] .theme-capsule-btn[data-theme-value="light"].active .capsule-btn-dot {
+  opacity: 1;
+  background: #0284C7;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.45);
+}
+
+@media (max-width: 900px) {
+  .theme-capsule-switcher {
+    height: 34px;
+    padding: 2.5px;
+  }
+  .theme-capsule-glider {
+    top: 2.5px;
+    bottom: 2.5px;
+    left: 2.5px;
+    width: calc(50% - 2.5px);
+  }
+  .theme-capsule-btn {
+    padding: 0 0.72rem;
+    font-size: 0.72rem;
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .theme-capsule-switcher {
+    height: 32px;
+    padding: 2px;
+  }
+  .theme-capsule-glider {
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: calc(50% - 2px);
+  }
+  .theme-capsule-btn {
+    padding: 0 0.58rem;
+    font-size: 0.69rem;
+    letter-spacing: 0.01em;
+    gap: 0.22rem;
+  }
+  .capsule-btn-dot {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 .mobile-toggle {

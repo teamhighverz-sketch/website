@@ -599,7 +599,7 @@ function initCustomCursor() {
       }
 
       // Priority 3: Standard Interactive Elements (buttons, links, nav, dropdowns, filters)
-      const interactiveEl = e.target.closest('a, button, select, [role="button"], input[type="range"], .glass-dropdown-trigger, .glass-option-item, .nav-link, .campaign-tag-pill, .theme-switcher, .service-badge-item, .domain-chip, .founder-social-btn, .f-social');
+      const interactiveEl = e.target.closest('a, button, select, [role="button"], input[type="range"], .glass-dropdown-trigger, .glass-option-item, .nav-link, .campaign-tag-pill, .theme-switcher, .theme-capsule-switcher, .theme-capsule-btn, .service-badge-item, .domain-chip, .founder-social-btn, .f-social');
       if (interactiveEl) {
         if (cursorRing) {
           cursorRing.classList.remove('is-text-input', 'is-view-detail', 'is-badge');

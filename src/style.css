@@ -6237,7 +6237,7 @@ html.js .floating-badge-item {
   box-sizing: border-box;
   min-width: 0;
   margin-right: 0;
-  grid-template-columns: minmax(0, 195px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 175px) minmax(0, 1fr);
   gap: 1.35rem;
 }
 
@@ -6252,17 +6252,27 @@ html.js .floating-badge-item {
 .section-creators.is-movie-showcase .creator-info-col {
   min-width: 0;
   align-self: stretch;
-  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
 }
 
 .section-creators.is-movie-showcase .creator-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   flex-wrap: nowrap;
   min-width: 0;
 }
 
 .section-creators.is-movie-showcase .creator-name {
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  white-space: nowrap;
+  font-size: clamp(1.2rem, 1.45vw, 1.55rem);
+  line-height: 1.15;
 }
 
 .section-creators.is-movie-showcase .creator-img {
@@ -6272,13 +6282,20 @@ html.js .floating-badge-item {
 .section-creators.is-movie-showcase .creator-platform {
   color: #0369A1;
   font-weight: 750;
-  letter-spacing: 0.04em;
-  flex: 0 1 auto;
+  letter-spacing: 0.025em;
+  flex: 0 0 auto;
   min-width: 0;
   white-space: nowrap;
-  font-size: clamp(0.62rem, 0.8vw, 0.76rem);
-  padding-left: 0.68rem;
-  padding-right: 0.68rem;
+  font-size: clamp(0.56rem, 0.66vw, 0.68rem);
+  padding: 0.28rem 0.55rem;
+  gap: 0.3rem;
+  line-height: 1;
+}
+
+.section-creators.is-movie-showcase .creator-platform .creator-ext-icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
 }
 
 .section-creators.is-movie-showcase .creator-platform:hover {

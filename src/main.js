@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 // hv3d.js (three.js, ~600 KB) is lazy-loaded inside init3DScene()
 import { initHighverzIntro, replayHighverzIntro } from './intro/HighverzIntro.js';
+import './style.css';
 import './enquiry/enquiry.css';
 import { initEnquirySystem } from './enquiry/enquiry.js';
 import { initThemeSystem, updateLogos } from './theme.js';

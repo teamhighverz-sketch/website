@@ -84,6 +84,49 @@
       [data-theme="light"] #highverz-intro {
         background: #FFFFFF !important;
       }
+
+      /* Home Theme Capsule critical position & layout (prevents FOUC / top-left flash) */
+      .home-theme-capsule-wrap {
+        position: fixed;
+        top: 1.25rem;
+        right: clamp(1rem, 2.5vw, 2.25rem);
+        z-index: 1002;
+        display: flex;
+        align-items: center;
+        pointer-events: auto;
+      }
+      .theme-capsule-switcher {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        height: 36px;
+        padding: 3px;
+        border-radius: 9999px;
+      }
+      .theme-capsule-btn {
+        position: relative;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.32rem;
+        height: 100%;
+        padding: 0 0.88rem;
+        background: transparent;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.77rem;
+        font-weight: 550;
+      }
+      html.intro-pending:not(.skip-intro) .home-theme-capsule-wrap,
+      body.intro-active .home-theme-capsule-wrap {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
     </style>
   <script>
     document.documentElement.classList.add('js');

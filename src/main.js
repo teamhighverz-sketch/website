@@ -1306,7 +1306,8 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>Into</span>
         <span class="hl-word" data-word>a</span>
         <span class="hl-word highlight-cyan font-bold-italic" data-word>Global Sensation.</span>
-      </span>`
+      </span>
+      <span class="hero-headline-connector is-placeholder" aria-hidden="true">&amp;</span>`
     : `<span class="hero-headline-line">
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
@@ -1319,8 +1320,8 @@ function applyThemeHeroCopy() {
           <span class="roller-item highlight-cyan font-bold-italic" data-word="Clicks">Clicks</span>
         </span>
       </span>
+      <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
       <span class="hero-headline-line">
-        <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
         <span class="hl-word" data-word>Name</span>
@@ -1347,6 +1348,13 @@ function applyThemeCreatorsCopy() {
   const section = document.querySelector('.section-creators');
   const cards = Array.from(section?.querySelectorAll('.creator-card') || []);
   if (!section || cards.length < 2) return;
+
+  // Clear any stale dimensions left by an earlier hot-reload version of the
+  // theme lock before calculating the current card layout.
+  section.querySelectorAll('[data-theme-layout-height]').forEach((element) => {
+    element.style.removeProperty('height');
+    delete element.dataset.themeLayoutHeight;
+  });
 
   if (!homeCreatorsDarkMarkup) {
     homeCreatorsDarkMarkup = {
@@ -3165,7 +3173,7 @@ export function initHeroReelCarousel() {
   if (!count) return;
 
   const cardPerspectives = cardPositions.map((pos) => pos.querySelector('.card-perspective'));
-  const videos = cardPositions.map((pos) => pos.querySelector('.card-video'));
+  let videos = cardPositions.map((pos) => pos.querySelector('.card-video'));
   const creatorReelViewCounts = ['24.5M', '38.2M', '19.4M', '45.0M', '82.6M', '54.1M', '16.8M', '29.3M', '41.7M', '67.4M'];
   const movieReelViewCounts = ['8M', '12M', '5M', '6.5M', '9.4M', '11M', '15M', '17M', '4M', '6M'];
 
@@ -3791,31 +3799,84 @@ export function initHeroReelCarousel() {
   // Theme toggles happen without a document reload. Swap only the media
   // source, retain the existing card geometry/animation, and let the browser
   // cache serve any previously loaded reel immediately on subsequent swaps.
+  let themeSwapGeneration = 0;
   const onThemeChange = () => {
-    videos.forEach((video) => {
+    const swapGeneration = ++themeSwapGeneration;
+    const activeVideos = videos.slice();
+    const theme = document.documentElement.dataset.theme;
+    const carouselViewport = viewport;
+    carouselViewport.classList.add('theme-media-swapping');
+
+    activeVideos.forEach((video, index) => {
       if (!video) return;
       const nextSrc = getThemeVideoSource(video);
-      if (!nextSrc || video.dataset.activeThemeSrc === nextSrc) return;
-      const shouldResume = !video.paused;
-      video.pause();
-      video.dataset.activeThemeSrc = nextSrc;
-      video.removeAttribute('src');
-      video.setAttribute('src', nextSrc);
-      video.preload = 'auto';
-      video.load();
-      if (shouldResume) {
-        const resume = () => {
-          const attempt = video.play();
-          attempt?.catch?.(() => {});
-        };
-        video.addEventListener('canplay', resume, { once: true });
-      }
-      if (document.documentElement.dataset.theme === 'light') {
-        const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${videos.indexOf(video) + 1}.jpg`;
-        video.setAttribute('poster', lightPoster);
+      if (!nextSrc || video.dataset.activeThemeSrc === nextSrc || video.dataset.themeSwapPending === nextSrc) return;
+
+      const videoCard = video.closest('.video-card');
+      if (!videoCard) return;
+      video.dataset.themeSwapPending = nextSrc;
+
+      const nextVideo = video.cloneNode(false);
+      nextVideo.classList.add('card-video-theme-next');
+      nextVideo.removeAttribute('src');
+      nextVideo.dataset.activeThemeSrc = nextSrc;
+      nextVideo.dataset.themeSwapPending = '';
+      nextVideo.defaultMuted = true;
+      nextVideo.muted = true;
+      nextVideo.playsInline = true;
+      nextVideo.loop = true;
+      nextVideo.autoplay = true;
+      nextVideo.preload = 'auto';
+      nextVideo.setAttribute('playsinline', '');
+      nextVideo.setAttribute('webkit-playsinline', '');
+      nextVideo.setAttribute('muted', '');
+      nextVideo.setAttribute('autoplay', '');
+
+      if (theme === 'light') {
+        nextVideo.setAttribute('poster', video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`);
       } else if (video.dataset.darkPoster) {
-        video.setAttribute('poster', video.dataset.darkPoster);
+        nextVideo.setAttribute('poster', video.dataset.darkPoster);
       }
+
+      const shouldResume = !video.paused && !document.hidden;
+      let revealed = false;
+      const revealThemeVideo = () => {
+        if (revealed) return;
+        revealed = true;
+        if (swapGeneration !== themeSwapGeneration) {
+          nextVideo.remove();
+          return;
+        }
+        if (shouldResume) {
+          const playAttempt = nextVideo.play();
+          playAttempt?.catch?.(() => {});
+        }
+        requestAnimationFrame(() => {
+          nextVideo.style.opacity = '1';
+          video.style.opacity = '0';
+        });
+        window.setTimeout(() => {
+          if (swapGeneration !== themeSwapGeneration) {
+            nextVideo.remove();
+            return;
+          }
+          if (video.isConnected) video.remove();
+          nextVideo.classList.remove('card-video-theme-next');
+          nextVideo.style.opacity = '';
+          videos[index] = nextVideo;
+          if (videos.every((item) => item?.dataset.activeThemeSrc === getThemeVideoSource(item))) {
+            carouselViewport.classList.remove('theme-media-swapping');
+          }
+        }, 460);
+      };
+
+      nextVideo.addEventListener('canplay', revealThemeVideo, { once: true });
+      nextVideo.addEventListener('loadeddata', revealThemeVideo, { once: true });
+      nextVideo.addEventListener('error', revealThemeVideo, { once: true });
+      videoCard.appendChild(nextVideo);
+      nextVideo.setAttribute('src', nextSrc);
+      nextVideo.load();
+      if (nextVideo.readyState >= 2) revealThemeVideo();
     });
     cardPositions.forEach((position, index) => {
       const viewCount = position.querySelector('.reel-view-count');
@@ -3826,7 +3887,9 @@ export function initHeroReelCarousel() {
       viewCount.setAttribute('aria-label', `${count} views`);
     });
     lastVideoPriorityIndex = -1;
-    updateVideoPriority(true);
+    window.setTimeout(() => {
+      if (swapGeneration === themeSwapGeneration) updateVideoPriority(true);
+    }, 480);
   };
   window.addEventListener('hv:themechange', onThemeChange);
   window.__hvHeroReelRefreshTheme = onThemeChange;
@@ -5233,7 +5296,29 @@ function initInstagramReelsPlayer() {
 
   if (window.__hvCaseReelsCleanup) window.__hvCaseReelsCleanup();
   rail.querySelectorAll('.case-reel-clone').forEach((card) => card.remove());
-  rail.querySelectorAll('.ig-reel-icon-badge, .ig-sound-toggle-btn, .ig-reel-title, .ig-reel-tag').forEach((element) => element.remove());
+  rail.querySelectorAll('.ig-reel-icon-badge, .ig-reel-title, .ig-reel-tag').forEach((element) => element.remove());
+
+  // Some of the later reel cards are intentionally compact and do not carry
+  // a sound button in their static markup. Normalize every card so creator
+  // and movie case studies expose the same mute/unmute control.
+  rail.querySelectorAll('.ig-reel-card').forEach((card) => {
+    if (card.querySelector('.ig-sound-toggle-btn')) return;
+    const metaRow = card.querySelector('.ig-reel-meta-row') || card.querySelector('.ig-reel-bottom-info');
+    if (!metaRow) return;
+    const soundButton = document.createElement('button');
+    soundButton.type = 'button';
+    soundButton.className = 'ig-sound-toggle-btn';
+    soundButton.setAttribute('aria-label', 'Unmute audio');
+    soundButton.title = 'Unmute Audio';
+    soundButton.innerHTML = `
+      <svg class="sound-icon-muted" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+      </svg>
+      <svg class="sound-icon-unmuted" style="display:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M11 5L6 9H2v6h4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>`;
+    metaRow.appendChild(soundButton);
+  });
 
   // Profile reels use the creator's social platforms. Keep this treatment on
   // the detailed creator pages only; the homepage carousel has no badges.
@@ -5286,6 +5371,13 @@ function initInstagramReelsPlayer() {
       clone.setAttribute('aria-hidden', 'true');
       clone.setAttribute('tabindex', '-1');
       clone.querySelectorAll('button').forEach((button) => button.setAttribute('tabindex', '-1'));
+      // Clones are only a visual loop buffer. Defer their media requests
+      // until they approach the viewport instead of starting another full
+      // set of autoplay downloads during page initialization.
+      clone.querySelectorAll('.ig-reel-video').forEach((video) => {
+        video.preload = 'none';
+        video.removeAttribute('autoplay');
+      });
       rail.appendChild(clone);
     });
   }
@@ -5314,6 +5406,53 @@ function initInstagramReelsPlayer() {
   let lastPlaybackCheck = 0;
   const autoSpeed = 38; // px/sec
 
+  // Keep failed/slow media from leaving an empty card behind. The poster is
+  // the visual fallback until the browser actually emits `playing`, and a
+  // bounded reload gives transient range/network failures a second chance.
+  const recoveryTimers = new WeakMap();
+  const scheduleVideoRecovery = (video, delay = 450) => {
+    if (!video || !video.isConnected || recoveryTimers.has(video)) return;
+    const attempts = Number(video.dataset.reelRecoveryAttempts || 0);
+    if (attempts >= 3) return;
+
+    video.dataset.reelRecoveryAttempts = String(attempts + 1);
+    const timer = window.setTimeout(() => {
+      recoveryTimers.delete(video);
+      if (!video.isConnected) return;
+
+      video.classList.remove('is-reel-loading');
+      video.load();
+
+      if (video.dataset.reelWantPlayback === 'true' && isVisible && !document.hidden) {
+        const attempt = video.play();
+        if (attempt?.catch) attempt.catch(() => { });
+      }
+    }, delay * Math.pow(2, attempts));
+    recoveryTimers.set(video, timer);
+  };
+
+  const attemptVideoPlay = (video) => {
+    if (!video || !video.isConnected) return;
+    if (video.dataset.reelAudioEnabled !== 'true') {
+      video.defaultMuted = true;
+      video.muted = true;
+    }
+    video.playsInline = true;
+    video.loop = true;
+    video.dataset.reelWantPlayback = 'true';
+    video.preload = 'auto';
+
+    if (video.readyState === 0) video.load();
+    const attempt = video.play();
+    if (attempt?.catch) {
+      attempt.catch(() => {
+        // Muted autoplay can still be rejected during a route/visibility
+        // transition. Retry through the same bounded recovery path.
+        scheduleVideoRecovery(video, 300);
+      });
+    }
+  };
+
   // Bind video events to cleanly toggle is-playing
   videos.forEach((video) => {
     const card = video.closest('.ig-reel-card');
@@ -5321,11 +5460,32 @@ function initInstagramReelsPlayer() {
     video.muted = true;
     video.loop = true;
     video.playsInline = true;
+    // Let the player decide which cards are active. Leaving autoplay on every
+    // original card starts all five source files before the viewport logic can
+    // pause the offscreen ones (particularly expensive on Umar's reels).
+    video.autoplay = false;
+    video.removeAttribute('autoplay');
     video.setAttribute('playsinline', '');
     video.setAttribute('webkit-playsinline', '');
     video.setAttribute('muted', '');
+    video.dataset.reelSource = video.getAttribute('src') || '';
+    video.dataset.reelWantPlayback = 'false';
+    video.dataset.reelAudioEnabled = 'false';
     video.addEventListener('playing', () => {
+      video.dataset.reelRecoveryAttempts = '0';
+      video.classList.remove('is-reel-loading');
       card?.classList.add('is-playing');
+    });
+    video.addEventListener('pause', () => card?.classList.remove('is-playing'));
+    video.addEventListener('error', () => {
+      card?.classList.remove('is-playing');
+      video.classList.add('is-reel-loading');
+      scheduleVideoRecovery(video);
+    });
+    video.addEventListener('stalled', () => {
+      if (video.readyState < 2 && video.dataset.reelWantPlayback === 'true') {
+        scheduleVideoRecovery(video, 900);
+      }
     });
   });
 
@@ -5354,6 +5514,8 @@ function initInstagramReelsPlayer() {
   const setPlayback = (shouldPlay) => {
     if (!shouldPlay || !isVisible || document.hidden) {
       videos.forEach((video) => {
+        video.dataset.reelWantPlayback = 'false';
+        video.dataset.reelAudioEnabled = 'false';
         try { video.pause(); } catch (_) { }
         video.closest('.ig-reel-card')?.classList.remove('is-playing');
       });
@@ -5385,27 +5547,32 @@ function initInstagramReelsPlayer() {
         const video = card.querySelector('.ig-reel-video');
         if (!video) return;
         if (card === closestCard) {
-          video.preload = 'auto';
-          card.classList.add('is-playing');
-          if (video.paused) {
-            const attempt = video.play();
-            if (attempt?.catch) attempt.catch(() => { });
-          }
+          attemptVideoPlay(video);
         } else {
+          video.dataset.reelWantPlayback = 'false';
+          video.dataset.reelAudioEnabled = 'false';
           try { video.pause(); } catch (_) { }
           card.classList.remove('is-playing');
         }
       });
     } else {
-      // Desktop: play all visible cards smoothly
+      // Desktop: only warm cards near the viewport. Playing every original
+      // plus two clone sets at once can saturate the browser's media pipeline,
+      // especially on the larger Umar source files.
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
       allReelCards.forEach((card) => {
         const video = card.querySelector('.ig-reel-video');
         if (!video) return;
-        video.preload = 'auto';
-        card.classList.add('is-playing');
-        if (video.paused) {
-          const attempt = video.play();
-          if (attempt?.catch) attempt.catch(() => { });
+        const rect = card.getBoundingClientRect();
+        const isNearViewport = rect.right > -viewportWidth * 0.35 && rect.left < viewportWidth * 1.35;
+        if (isNearViewport) {
+          attemptVideoPlay(video);
+        } else {
+          video.dataset.reelWantPlayback = 'false';
+          video.dataset.reelAudioEnabled = 'false';
+          video.preload = 'metadata';
+          try { video.pause(); } catch (_) { }
+          card.classList.remove('is-playing');
         }
       });
     }
@@ -5626,6 +5793,23 @@ function initInstagramReelsPlayer() {
       soundBtn.setAttribute('aria-label', isMuted ? 'Unmute Audio' : 'Mute Audio');
     };
 
+    const updateOtherSoundButtons = (mutedVideo) => {
+      videos.forEach((otherVideo) => {
+        if (otherVideo === mutedVideo) return;
+        otherVideo.muted = true;
+        otherVideo.dataset.reelAudioEnabled = 'false';
+        const otherButton = otherVideo.closest('.ig-reel-card')?.querySelector('.ig-sound-toggle-btn');
+        if (otherButton) {
+          const mutedIcon = otherButton.querySelector('.sound-icon-muted');
+          const unmutedIcon = otherButton.querySelector('.sound-icon-unmuted');
+          if (mutedIcon) mutedIcon.style.display = 'block';
+          if (unmutedIcon) unmutedIcon.style.display = 'none';
+          otherButton.setAttribute('title', 'Unmute Audio');
+          otherButton.setAttribute('aria-label', 'Unmute audio');
+        }
+      });
+    };
+
     const markPlaying = () => {
       card.classList.add('is-playing');
       if (poster) poster.style.opacity = '0';
@@ -5643,10 +5827,21 @@ function initInstagramReelsPlayer() {
     });
 
     const playWithSound = () => {
-      videos.forEach((otherVideo) => { if (otherVideo !== video) otherVideo.muted = true; });
+      updateOtherSoundButtons(video);
+      video.dataset.reelWantPlayback = 'true';
+      video.dataset.reelAudioEnabled = 'true';
+      video.preload = 'auto';
       video.muted = false;
       const attempt = video.play();
-      if (attempt?.catch) attempt.catch(() => { video.muted = true; video.play().catch(() => { }); });
+      if (attempt?.catch) {
+        attempt.catch(() => {
+          video.muted = true;
+          video.dataset.reelAudioEnabled = 'false';
+          updateSoundUI(true);
+          const retry = video.play();
+          retry?.catch?.(() => scheduleVideoRecovery(video, 300));
+        });
+      }
     };
 
     if (soundBtn) {
@@ -5654,15 +5849,23 @@ function initInstagramReelsPlayer() {
         event.stopPropagation();
         event.preventDefault();
         if (video.muted) playWithSound();
-        else video.muted = true;
+        else {
+          video.muted = true;
+          video.dataset.reelAudioEnabled = 'false';
+        }
         updateSoundUI(video.muted);
       });
     }
+    updateSoundUI(video.muted);
 
     card.setAttribute('tabindex', '0');
     const togglePlayback = () => {
-      if (video.paused) video.play().catch(() => { });
-      else video.pause();
+      if (video.paused) attemptVideoPlay(video);
+      else {
+        video.dataset.reelWantPlayback = 'false';
+        video.dataset.reelAudioEnabled = 'false';
+        video.pause();
+      }
     };
     card.addEventListener('click', (event) => {
       if (suppressClick || event.target.closest('.ig-sound-toggle-btn') || event.target.closest('a')) return;

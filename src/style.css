@@ -2025,8 +2025,9 @@ body.mobile-menu-active .work-creator-card {
 
 /* Connector between the two hero statements. */
 .hero-headline-connector {
-  display: inline-block;
-  margin: 0 0.16em 0 0;
+  display: block;
+  width: max-content;
+  margin: 0.02em auto 0.02em;
   color: var(--accent-cyan);
   font-family: var(--font-display);
   font-size: 0.76em;
@@ -2035,8 +2036,14 @@ body.mobile-menu-active .work-creator-card {
   line-height: 1;
   letter-spacing: -0.04em;
   opacity: 0.9;
-  vertical-align: 0.04em;
   text-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+}
+
+/* Keep the light-theme headline's vertical rhythm identical while the
+   visible ampersand is only used by the creator (dark) headline. */
+.hero-headline-connector.is-placeholder {
+  visibility: hidden;
+  opacity: 0 !important;
 }
 
 [data-theme="light"] .hero-headline-connector {
@@ -2046,7 +2053,7 @@ body.mobile-menu-active .work-creator-card {
 
 @media (max-width: 640px) {
   .hero-headline-connector {
-    margin: 0 0.14em 0 0;
+    margin: 0.02em auto;
     font-size: 0.72em;
   }
 }
@@ -2852,6 +2859,14 @@ html.js .floating-badge-item {
   overflow: hidden;
   box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.5), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.2), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
   transition: border-color 0.4s var(--ease-smooth), transform 0.4s var(--ease-expo), box-shadow 0.4s var(--ease-smooth), background 0.4s var(--ease-smooth);
+}
+
+/* Keep creator and film variants on the same structural baseline so the
+   theme swap never shortens the card row or clips the dark-theme footer. */
+@media (min-width: 601px) {
+  .section-creators .creator-card {
+    min-height: clamp(340px, 25vw, 390px);
+  }
 }
 
 .creator-card::before {
@@ -4654,7 +4669,8 @@ html.js .floating-badge-item {
 }
 
 .card-video {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
   width: 100%;
   height: 100%;
@@ -4666,6 +4682,13 @@ html.js .floating-badge-item {
   pointer-events: none;
   user-select: none;
   background: #000;
+  opacity: 1;
+  transition: opacity 420ms ease;
+}
+
+.card-video.card-video-theme-next {
+  z-index: 2;
+  opacity: 0;
 }
 
 @media (max-width: 900px) {
@@ -6713,6 +6736,57 @@ html.js .floating-badge-item {
 
   .section-creators.is-movie-showcase .creator-platform {
     margin-left: auto;
+  }
+}
+
+/* Shared creator/movie geometry: both theme variants use the same media
+   column, poster ratio, and metadata chip rows so content swaps never resize
+   or reflow the cards. */
+.section-creators .creator-card,
+.section-creators.is-movie-showcase .creator-card {
+  --creator-media-width: 215px;
+  grid-template-columns: minmax(0, var(--creator-media-width)) minmax(0, 1fr);
+}
+
+.section-creators .creator-image-wrap,
+.section-creators.is-movie-showcase .creator-image-wrap {
+  aspect-ratio: 4 / 5;
+}
+
+.section-creators .creator-meta-row {
+  grid-template-rows: repeat(2, 40px);
+  grid-auto-rows: 40px;
+  min-height: 86px;
+}
+
+.section-creators .meta-chip {
+  height: 40px;
+  min-height: 40px;
+}
+
+@media (max-width: 1200px) {
+  .section-creators .creator-card,
+  .section-creators.is-movie-showcase .creator-card {
+    --creator-media-width: 180px;
+  }
+}
+
+@media (max-width: 992px) {
+  .section-creators .creator-card,
+  .section-creators.is-movie-showcase .creator-card {
+    --creator-media-width: 210px;
+  }
+}
+
+@media (max-width: 600px) {
+  .section-creators .creator-card,
+  .section-creators.is-movie-showcase .creator-card {
+    grid-template-columns: 1fr;
+  }
+
+  .section-creators .creator-image-wrap,
+  .section-creators.is-movie-showcase .creator-image-wrap {
+    aspect-ratio: 16 / 10;
   }
 }
 
@@ -16009,11 +16083,16 @@ main+footer {
   pointer-events: auto;
 }
 
-/* The case-study rail is an ambient showcase: reel content, not player controls. */
+/* The case-study rail is an ambient showcase, while keeping audio controls
+   available so visitors can listen to the actual reel edits. */
 .case-reels-section .ig-reel-icon-badge,
-.case-reels-section .ig-sound-toggle-btn,
 .case-reels-section .ig-reel-title {
   display: none;
+}
+
+.case-reels-section .ig-sound-toggle-btn {
+  display: flex;
+  flex: 0 0 36px;
 }
 
 .case-reels-section .ig-reel-top-bar {
@@ -19717,8 +19796,6 @@ html.theme-switching::before {
   pointer-events: none;
   opacity: 0;
   background: rgba(3, 8, 12, 0.18);
-  backdrop-filter: blur(5px) saturate(108%);
-  -webkit-backdrop-filter: blur(5px) saturate(108%);
   animation: theme-optical-veil 760ms var(--ease-theme) both;
 }
 
@@ -19731,16 +19808,13 @@ html.theme-switching.theme-target-dark::before {
 }
 
 @keyframes theme-optical-veil {
-  0% { opacity: 0; }
-  18% { opacity: 1; }
+  0% { opacity: 0.22; }
   100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html.theme-switching::before {
     animation-duration: 200ms;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 }
 
@@ -19760,6 +19834,46 @@ html.theme-switching.theme-target-dark::before {
 [data-theme="light"] #hero .hero-headline-line {
   padding-top: 0.12em !important;
   padding-bottom: 0.2em !important;
+}
+
+/* Mobile home controls: keep the audience switcher in normal flow so it
+   cannot overlap the trust badge or hero copy beneath the fixed navbar. */
+@media (max-width: 768px) {
+  .home-theme-capsule-wrap {
+    position: relative;
+    inset: auto;
+    z-index: 4;
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    padding-top: 4.65rem;
+    margin: 0;
+  }
+
+  #hero.hero-section {
+    padding-top: 1.25rem;
+  }
+
+  /* A 44px target is easier to hit with a thumb while preserving the reel
+     card's compact metadata row. */
+  .case-reels-section .ig-sound-toggle-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex-basis: 44px;
+  }
+
+  .case-reels-section .ig-reel-meta-row {
+    min-height: 44px;
+    gap: 0.45rem;
+  }
+
+  .case-reels-section .ig-reel-views {
+    max-width: calc(100% - 52px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* Cinema headline accent: underline only the Light-theme “Screen.” word. */

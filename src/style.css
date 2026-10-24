@@ -15964,13 +15964,14 @@ main+footer {
 }
 
 .ig-reels-viewport:active,
+.ig-reels-viewport.is-dragging,
 .ig-reels-viewport:has(.ig-reels-grid.is-dragging) {
   cursor: grabbing;
 }
 
 .ig-reels-grid {
-  display: flex;
-  grid-template-columns: none;
+  display: flex !important;
+  grid-template-columns: none !important;
   gap: clamp(0.85rem, 1.4vw, 1.45rem);
   width: max-content;
   max-width: none;

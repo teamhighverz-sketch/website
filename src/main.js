@@ -5277,14 +5277,17 @@ function initInstagramReelsPlayer() {
   const originalCards = Array.from(rail.querySelectorAll('.ig-reel-card'));
   if (!originalCards.length) return;
 
-  originalCards.forEach((card) => {
-    const clone = card.cloneNode(true);
-    clone.classList.add('case-reel-clone');
-    clone.setAttribute('aria-hidden', 'true');
-    clone.setAttribute('tabindex', '-1');
-    clone.querySelectorAll('button').forEach((button) => button.setAttribute('tabindex', '-1'));
-    rail.appendChild(clone);
-  });
+  // Add 2 sets of clones so even on 4K ultrawide screens the carousel is seamless and never runs out of cards
+  for (let k = 0; k < 2; k++) {
+    originalCards.forEach((card) => {
+      const clone = card.cloneNode(true);
+      clone.classList.add('case-reel-clone');
+      clone.setAttribute('aria-hidden', 'true');
+      clone.setAttribute('tabindex', '-1');
+      clone.querySelectorAll('button').forEach((button) => button.setAttribute('tabindex', '-1'));
+      rail.appendChild(clone);
+    });
+  }
 
   const allReelCards = Array.from(rail.querySelectorAll('.ig-reel-card'));
   const videos = allReelCards.map((card) => card.querySelector('.ig-reel-video')).filter(Boolean);
@@ -5297,10 +5300,18 @@ function initInstagramReelsPlayer() {
   let isVisible = false;
   let isHovering = false;
   let isDragging = false;
-  let dragStartX = 0;
-  let dragStartOffset = 0;
+  let isHorizontalDrag = false;
+  let isVerticalScroll = false;
+  let startX = 0;
+  let startY = 0;
+  let startOffset = 0;
+  let lastDragX = 0;
+  let lastDragTime = 0;
+  let dragVelocity = 0;
+  let activePointerId = null;
   let suppressClick = false;
   let lastPlaybackCheck = 0;
+  const autoSpeed = 38; // px/sec
 
   // Bind video events to cleanly toggle is-playing
   videos.forEach((video) => {
@@ -5323,13 +5334,15 @@ function initInstagramReelsPlayer() {
 
   const measure = () => {
     const firstClone = rail.querySelector('.case-reel-clone');
-    loopWidth = firstClone ? firstClone.offsetLeft - originalCards[0].offsetLeft : 0;
+    if (firstClone && originalCards[0]) {
+      loopWidth = firstClone.offsetLeft - originalCards[0].offsetLeft;
+    }
     if (loopWidth > 0) {
       if (!hasMeasured) {
         offset = Math.min(loopWidth * 0.12, 150);
         hasMeasured = true;
       } else {
-        offset %= loopWidth;
+        offset = ((offset % loopWidth) + loopWidth) % loopWidth;
       }
     }
     render();
@@ -5398,14 +5411,37 @@ function initInstagramReelsPlayer() {
   };
 
   const tick = (time) => {
-    const delta = lastTime ? Math.min(time - lastTime, 40) : 16;
+    if (!lastTime) lastTime = time;
+    const delta = Math.min((time - lastTime) / 1000, 0.05);
     lastTime = time;
+
     if (!loopWidth && isVisible) measure();
-    if (!reduceMotion && isVisible && !document.hidden && !isHovering && !isDragging && loopWidth) {
-      offset = (offset + delta * 0.022) % loopWidth;
-      render();
+
+    if (!reduceMotion && isVisible && !document.hidden && loopWidth) {
+      if (isDragging) {
+        // Dragging directly updates offset and renders in pointermove
+      } else {
+        // Inertia decay glide
+        if (Math.abs(dragVelocity) > 1.0) {
+          offset += dragVelocity * delta;
+          dragVelocity *= Math.pow(0.96, delta * 60);
+          if (Math.abs(dragVelocity) <= 1.0) {
+            dragVelocity = 0;
+          }
+        } else if (!isHovering) {
+          // Continuous marquee
+          offset += autoSpeed * delta;
+        } else {
+          // Slow crawl on hover so cards don't freeze dead
+          offset += (autoSpeed * 0.25) * delta;
+        }
+
+        offset = ((offset % loopWidth) + loopWidth) % loopWidth;
+        render();
+      }
     }
-    // Update active mobile centered reel every 350ms during marquee motion
+
+    // Update active mobile centered reel every 350ms during motion
     if (isVisible && !document.hidden && time - lastPlaybackCheck > 350) {
       lastPlaybackCheck = time;
       setPlayback(true);
@@ -5440,48 +5476,139 @@ function initInstagramReelsPlayer() {
 
   const onVisibilityChange = () => setPlayback(isVisible && !document.hidden);
   const onResize = () => measure();
+
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    if (event.cancelable) event.preventDefault();
+
+    isDragging = false;
+    isHorizontalDrag = false;
+    isVerticalScroll = false;
+    suppressClick = false;
+    dragVelocity = 0;
+    startX = event.clientX;
+    startY = event.clientY;
+    lastDragX = event.clientX;
+    lastDragTime = performance.now();
+    startOffset = offset;
+    activePointerId = event.pointerId;
+
     if (!loopWidth) measure();
-    isDragging = true;
-    dragStartX = event.clientX;
-    dragStartOffset = offset;
-    rail.classList.add('is-dragging');
-    viewport.setPointerCapture?.(event.pointerId);
   };
-  const onPointerEnter = () => { isHovering = true; };
-  const onPointerLeave = () => { isHovering = false; };
+
+  const onPointerEnter = (event) => {
+    // Only pause/slow down on genuine mouse hover, never on touch tap
+    if (event.pointerType === 'mouse') {
+      isHovering = true;
+    }
+  };
+
+  const onPointerLeave = (event) => {
+    if (event.pointerType === 'mouse') {
+      isHovering = false;
+    }
+  };
+
   const onPointerMove = (event) => {
+    if (activePointerId === null || event.pointerId !== activePointerId) return;
+
+    if (event.pointerType === 'mouse' && event.buttons === 0) {
+      stopDragging(event);
+      return;
+    }
+
+    if (isVerticalScroll) return;
+
+    const diffX = event.clientX - startX;
+    const diffY = event.clientY - startY;
+
+    // Axis locking: distinguish vertical page swipe from horizontal carousel drag
+    if (!isHorizontalDrag) {
+      if (Math.abs(diffX) < 7 && Math.abs(diffY) < 7) return;
+
+      if (Math.abs(diffY) > Math.abs(diffX)) {
+        isVerticalScroll = true;
+        isDragging = false;
+        return;
+      }
+
+      // Claim horizontal drag
+      isHorizontalDrag = true;
+      isDragging = true;
+      rail.classList.add('is-dragging');
+      viewport.classList.add('is-dragging');
+      if (viewport.setPointerCapture) {
+        try { viewport.setPointerCapture(event.pointerId); } catch (_) { }
+      }
+    }
+
     if (!isDragging || !loopWidth) return;
-    const distance = (event.clientX - dragStartX) * 2.8;
-    if (Math.abs(distance) > 4) suppressClick = true;
-    offset = ((dragStartOffset - distance) % loopWidth + loopWidth) % loopWidth;
+
+    if (Math.abs(diffX) > 6) suppressClick = true;
+
+    const now = performance.now();
+    const dt = Math.max(now - lastDragTime, 1);
+    const instVel = -(event.clientX - lastDragX) / (dt / 1000);
+    dragVelocity = dragVelocity * 0.3 + instVel * 0.7;
+    lastDragX = event.clientX;
+    lastDragTime = now;
+
+    // 1:1 direct tracking feel
+    offset = ((startOffset - diffX) % loopWidth + loopWidth) % loopWidth;
     render();
+
     if (isMobileScreen()) {
       setPlayback(true);
     }
   };
+
   const stopDragging = (event) => {
-    if (!isDragging) return;
-    isDragging = false;
-    rail.classList.remove('is-dragging');
-    if (event?.pointerId !== undefined) {
-      try { viewport.releasePointerCapture?.(event.pointerId); } catch (_) { }
+    if (activePointerId === null) return;
+    if (event && event.pointerId !== undefined && event.pointerId !== activePointerId) return;
+    activePointerId = null;
+
+    if (isDragging) {
+      isDragging = false;
+      rail.classList.remove('is-dragging');
+      viewport.classList.remove('is-dragging');
+      if (event?.pointerId !== undefined) {
+        try { viewport.releasePointerCapture?.(event.pointerId); } catch (_) { }
+      }
     }
-    window.setTimeout(() => { suppressClick = false; }, 0);
+    isHorizontalDrag = false;
+    isVerticalScroll = false;
+    window.setTimeout(() => { suppressClick = false; }, 40);
+  };
+
+  const onWheel = (event) => {
+    const isHorizontalWheel = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+    const isShiftWheel = event.shiftKey && Math.abs(event.deltaY) > 0;
+    if (!isHorizontalWheel && !isShiftWheel) {
+      // Natural vertical page scroll allowed
+      return;
+    }
+
+    const delta = isHorizontalWheel ? event.deltaX : event.deltaY;
+    if (Math.abs(delta) < 2) return;
+
+    if (event.cancelable) event.preventDefault();
+    if (!loopWidth) measure();
+
+    offset = ((offset + delta) % loopWidth + loopWidth) % loopWidth;
+    dragVelocity = delta * 8;
+    render();
   };
 
   viewport.addEventListener('pointerenter', onPointerEnter);
   viewport.addEventListener('pointerleave', onPointerLeave);
   viewport.addEventListener('pointerdown', onPointerDown);
-  window.addEventListener('pointermove', onPointerMove);
-  window.addEventListener('pointerup', stopDragging);
-  window.addEventListener('pointercancel', stopDragging);
+  viewport.addEventListener('wheel', onWheel, { passive: false });
+  window.addEventListener('pointermove', onPointerMove, { passive: true });
+  window.addEventListener('pointerup', stopDragging, { passive: true });
+  window.addEventListener('pointercancel', stopDragging, { passive: true });
   window.addEventListener('resize', onResize, { passive: true });
   document.addEventListener('visibilitychange', onVisibilityChange);
 
-  reelCards.forEach((card) => {
+  allReelCards.forEach((card) => {
     const video = card.querySelector('.ig-reel-video');
     const soundBtn = card.querySelector('.ig-sound-toggle-btn');
     const poster = card.querySelector('.ig-reel-poster');
@@ -5531,23 +5658,21 @@ function initInstagramReelsPlayer() {
       });
     }
 
-    if (!card.classList.contains('case-reel-clone')) {
-      card.setAttribute('tabindex', '0');
-      const togglePlayback = () => {
-        if (video.paused) video.play().catch(() => { });
-        else video.pause();
-      };
-      card.addEventListener('click', (event) => {
-        if (suppressClick || event.target.closest('.ig-sound-toggle-btn') || event.target.closest('a')) return;
+    card.setAttribute('tabindex', '0');
+    const togglePlayback = () => {
+      if (video.paused) video.play().catch(() => { });
+      else video.pause();
+    };
+    card.addEventListener('click', (event) => {
+      if (suppressClick || event.target.closest('.ig-sound-toggle-btn') || event.target.closest('a')) return;
+      togglePlayback();
+    });
+    card.addEventListener('keydown', (event) => {
+      if ((event.key === ' ' || event.key === 'Enter') && !event.target.closest('.ig-sound-toggle-btn')) {
+        event.preventDefault();
         togglePlayback();
-      });
-      card.addEventListener('keydown', (event) => {
-        if ((event.key === ' ' || event.key === 'Enter') && !event.target.closest('.ig-sound-toggle-btn')) {
-          event.preventDefault();
-          togglePlayback();
-        }
-      });
-    }
+      }
+    });
   });
 
   requestAnimationFrame(measure);
@@ -5559,6 +5684,7 @@ function initInstagramReelsPlayer() {
     viewport.removeEventListener('pointerenter', onPointerEnter);
     viewport.removeEventListener('pointerleave', onPointerLeave);
     viewport.removeEventListener('pointerdown', onPointerDown);
+    viewport.removeEventListener('wheel', onWheel);
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', stopDragging);
     window.removeEventListener('pointercancel', stopDragging);

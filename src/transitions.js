@@ -5,7 +5,7 @@
  * SPECIFICATION:
  * - Angle: 315° (135° in CSS linear-gradient coordinates, top-left to bottom-right)
  * - Feather / Softness Width: 30%
- * - Duration: 0.8s
+ * - Duration: 1.0s
  * - Easing: cubic-bezier(0.27, 0, 0.51, 1)
  *
  * Internal HTML routes use the same fade transition, including Home.
@@ -187,6 +187,22 @@ export async function prefetchPage(urlStr) {
 
 let isTransitioning = false;
 
+// Keep the route handoff deliberately longer than the page's component
+// entrances. A single set of timings prevents the outgoing page, incoming
+// page, and navbar from resolving at different speeds (the source of the
+// brief snap users could see on slower devices).
+const ROUTE_TRANSITION = Object.freeze({
+  safetyMs: 4200,
+  outgoingDuration: 0.48,
+  incomingDelay: 0.12,
+  incomingDuration: 0.86,
+  outgoingBlur: 32,
+  incomingBlur: 48,
+  navbarOutDuration: 0.46,
+  navbarInDelay: 0.16,
+  navbarInDuration: 0.56,
+});
+
 /**
  * Core Page Transition Choreographer
  */
@@ -225,7 +241,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     console.warn('Page transition timed out; falling back to native navigation.');
     isTransitioning = false;
     window.location.href = targetHref;
-  }, 2600);
+  }, ROUTE_TRANSITION.safetyMs);
 
   try {
     // 1. Retrieve target document HTML (from memory cache or network)
@@ -446,9 +462,9 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     }
     gsap.set(shell, {
       opacity: 0,
-      y: 10,
-      scale: 0.995,
-      filter: 'blur(40px)',
+      y: 0,
+      scale: 1,
+      filter: `blur(${ROUTE_TRANSITION.incomingBlur}px)`,
       willChange: 'opacity, transform, filter',
     });
     gsap.set(glow, { opacity: 0 });
@@ -568,10 +584,10 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     })
       .to(currentContent, {
         opacity: 0,
-        filter: 'blur(24px)',
-        y: -10,
-        scale: 0.99,
-        duration: 0.34,
+        filter: `blur(${ROUTE_TRANSITION.outgoingBlur}px)`,
+        y: 0,
+        scale: 1,
+        duration: ROUTE_TRANSITION.outgoingDuration,
         ease: 'power2.inOut',
       }, 0)
       .to(shell, {
@@ -579,32 +595,32 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         filter: 'blur(0px)',
         y: 0,
         scale: 1,
-        duration: 0.56,
+        duration: ROUTE_TRANSITION.incomingDuration,
         ease: 'power3.out',
         clearProps: 'filter,willChange',
-      }, 0.08);
+      }, ROUTE_TRANSITION.incomingDelay);
 
     if (navbar) {
       transitionTimeline.to(navbar, {
         opacity: 0,
         y: 0,
         scale: 1,
-        filter: 'blur(24px)',
-        duration: 0.34,
+        filter: `blur(${ROUTE_TRANSITION.outgoingBlur}px)`,
+        duration: ROUTE_TRANSITION.navbarOutDuration,
         ease: 'power2.inOut',
       }, 0);
       transitionTimeline.fromTo(navbar,
-        { opacity: 0, y: 0, scale: 1, filter: 'blur(40px)' },
+        { opacity: 0, y: 0, scale: 1, filter: `blur(${ROUTE_TRANSITION.incomingBlur}px)` },
         {
           opacity: 1,
           y: 0,
           scale: 1,
           filter: 'blur(0px)',
-          duration: 0.34,
+          duration: ROUTE_TRANSITION.navbarInDuration,
           ease: 'power2.out',
           clearProps: 'all',
         },
-        0.12
+        ROUTE_TRANSITION.navbarInDelay
       );
     }
 

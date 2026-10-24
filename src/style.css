@@ -19082,16 +19082,16 @@ body::after {
 }
 
 /* Pure, velvety optical camera blur transition.
-   Precisely calibrated 0.34s duration eliminates stuck/frozen delays and
-   delivers pure, uncluttered optical blur without artificial zoom scaling. */
+   The longer handoff gives the eye enough time to settle between pages while
+   keeping the content at a fixed scale so there is no perceived jump. */
 ::view-transition-old(root) {
   z-index: 1;
-  animation: route-page-blur-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: route-page-blur-out 0.48s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 ::view-transition-new(root) {
   z-index: 2;
-  animation: route-page-blur-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: route-page-blur-in 0.86s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes route-page-blur-out {
@@ -19102,19 +19102,19 @@ body::after {
 
   100% {
     opacity: 0;
-    filter: blur(20px);
+    filter: blur(32px);
   }
 }
 
 @keyframes route-page-blur-in {
   0% {
     opacity: 0;
-    filter: blur(22px);
+    filter: blur(48px);
   }
 
   35% {
     opacity: 0.85;
-    filter: blur(12px);
+    filter: blur(20px);
   }
 
   100% {
@@ -19125,11 +19125,11 @@ body::after {
 
 @media (max-width: 720px) {
   ::view-transition-old(root) {
-    animation-duration: 0.24s;
+    animation-duration: 0.40s;
   }
 
   ::view-transition-new(root) {
-    animation-duration: 0.30s;
+    animation-duration: 0.68s;
   }
 
   @keyframes route-page-blur-out {
@@ -19140,14 +19140,14 @@ body::after {
 
     100% {
       opacity: 0;
-      filter: blur(16px);
+      filter: blur(24px);
     }
   }
 
   @keyframes route-page-blur-in {
     0% {
       opacity: 0;
-      filter: blur(18px);
+      filter: blur(34px);
     }
 
     100% {

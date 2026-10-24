@@ -539,6 +539,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
             const refreshPass = () => {
               try {
                 window.__hvHeroReelRefresh?.();
+                window.__hvInitFooterScatterGrid?.();
                 passes++;
                 if (passes < 4) {
                   requestAnimationFrame(refreshPass);

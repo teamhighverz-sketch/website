@@ -10,6 +10,12 @@ export function initScatterGrid(container, options = {}) {
   const accent = options.accent || [0, 229, 255]; // cyan
   const STEPS = 14;
 
+  if (!container) return () => {};
+
+  // Clean up any existing canvas in container
+  const oldCanvases = container.querySelectorAll('.footer-scatter-canvas');
+  oldCanvases.forEach((c) => c.remove());
+
   // Make sure container has relative positioning
   if (getComputedStyle(container).position === 'static') {
     container.style.position = 'relative';
@@ -25,7 +31,7 @@ export function initScatterGrid(container, options = {}) {
   container.appendChild(canvas);
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) return () => {};
 
   function buildRamp(from, to) {
     const ramp = [];
@@ -52,10 +58,36 @@ export function initScatterGrid(container, options = {}) {
 
   let resizeTimer;
 
+  const existingImg = container.querySelector('img');
+
   function build() {
     const rect = container.getBoundingClientRect();
-    const boxW = Math.max(1, Math.round(rect.width));
-    const boxH = Math.max(1, Math.round(rect.height));
+    let boxW = Math.round(rect.width);
+
+    // If container width is <= 10 (e.g. before mount/layout), try parent footer or clamp
+    if (!boxW || boxW <= 10) {
+      const parentRect = container.parentElement?.getBoundingClientRect();
+      if (parentRect && parentRect.width > 20) {
+        boxW = Math.min(650, Math.round(parentRect.width * 0.45));
+      } else {
+        boxW = Math.min(650, Math.round((window.innerWidth || 1200) * 0.4));
+      }
+    }
+    boxW = Math.max(1, boxW);
+
+    const aspect = (existingImg && existingImg.naturalWidth && existingImg.naturalHeight)
+      ? (existingImg.naturalWidth / existingImg.naturalHeight)
+      : (2415 / 900);
+
+    let boxH = Math.round(rect.height);
+    if (!boxH || boxH <= 10 || boxH < (boxW / aspect) * 0.6) {
+      boxH = Math.round(boxW / aspect);
+    }
+    boxH = Math.max(1, boxH);
+
+    // Keep container height consistent so it never collapses to 0
+    container.style.minHeight = boxH + 'px';
+
     width = boxW + bleed * 2;
     height = boxH + bleed * 2;
 
@@ -76,25 +108,22 @@ export function initScatterGrid(container, options = {}) {
     const mctx = mask.getContext("2d", { willReadFrequently: true });
     if (!mctx) return;
 
-    // Check if there is an image to use
-    const existingImg = container.querySelector('img');
-
-    const drawAndExtract = () => {
+    const extractDots = () => {
       try {
         const data = mctx.getImageData(0, 0, width, height).data;
 
         // Sample the actual logo densely enough to retain the rocket window,
-        // fins and flame. A fixed 6px grid loses those details at footer size.
+        // fins and flame.
         const minStep = Math.max(1, Math.min(dotSize + dotGap, boxW / 320));
         let step = minStep;
 
-        const countAt = s => {
+        const countAt = (s) => {
           let n = 0;
           const half = s / 2;
           for (let y = half; y < height; y += s) {
             for (let x = half; x < width; x += s) {
               const px = (Math.round(y) * width + Math.round(x)) * 4;
-              if (data[px + 3] > 60) n++; // Alpha threshold
+              if (data[px + 3] > 50) n++; // Alpha threshold
             }
           }
           return n;
@@ -114,39 +143,23 @@ export function initScatterGrid(container, options = {}) {
         for (let y = half; y < height; y += step) {
           for (let x = half; x < width; x += step) {
             const px = (Math.round(y) * width + Math.round(x)) * 4;
-            if (data[px + 3] > 60) {
+            if (data[px + 3] > 50) {
               nextDots.push({ hx: x, hy: y, x, y, vx: 0, vy: 0 });
             }
           }
         }
-        dots = nextDots;
+        if (nextDots.length > 0) {
+          dots = nextDots;
+        }
       } catch (err) {
         console.warn('scatterGrid getImageData error, falling back to text mask', err);
       }
     };
 
-    if (existingImg && existingImg.complete && existingImg.naturalWidth > 0) {
-      const aspect = existingImg.naturalWidth / existingImg.naturalHeight;
-      let w = boxW; // Use full width of container
-      let h = w / aspect;
-      if (h > boxH) {
-        h = boxH;
-        w = h * aspect;
-      }
-      // Center in canvas (which is box + bleed)
-      mctx.drawImage(existingImg, bleed + (boxW - w) / 2, bleed + (boxH - h) / 2, w, h);
-
-      // Hide the original image to only show dots
-      existingImg.style.opacity = 0;
-
-      drawAndExtract();
-    } else if (existingImg) {
-      existingImg.onload = () => {
-        build();
-      };
-    } else {
+    const renderTextFallback = () => {
+      mctx.clearRect(0, 0, width, height);
       let text = options.text || "HIGHVERZ";
-      let size = boxH * 0.8;
+      let size = boxH * 0.75;
       mctx.font = `900 ${size}px "Inter", sans-serif`;
 
       const measured = mctx.measureText(text).width;
@@ -159,7 +172,43 @@ export function initScatterGrid(container, options = {}) {
       mctx.textBaseline = "middle";
       mctx.fillStyle = "#000";
       mctx.fillText(text, width / 2, height / 2);
-      drawAndExtract();
+      extractDots();
+    };
+
+    if (existingImg && existingImg.complete && existingImg.naturalWidth > 0) {
+      let w = boxW;
+      let h = w / aspect;
+      if (h > boxH) {
+        h = boxH;
+        w = h * aspect;
+      }
+      // Center in canvas (which is box + bleed)
+      mctx.drawImage(existingImg, bleed + (boxW - w) / 2, bleed + (boxH - h) / 2, w, h);
+
+      extractDots();
+      if (dots.length > 0) {
+        existingImg.style.opacity = '0';
+      } else {
+        renderTextFallback();
+        if (dots.length > 0) {
+          existingImg.style.opacity = '0';
+        } else {
+          existingImg.style.opacity = '1';
+        }
+      }
+    } else if (existingImg) {
+      const onLoad = () => {
+        build();
+        paint();
+      };
+      existingImg.addEventListener('load', onLoad, { once: true });
+      existingImg.decode?.().then(() => onLoad()).catch(() => {});
+      renderTextFallback();
+      if (dots.length > 0) {
+        existingImg.style.opacity = '0';
+      }
+    } else {
+      renderTextFallback();
     }
   }
 
@@ -254,6 +303,7 @@ export function initScatterGrid(container, options = {}) {
   }
 
   build();
+  paint();
 
   const visibilityObserver = 'IntersectionObserver' in window ? new IntersectionObserver(([entry]) => {
     isIntersecting = entry.isIntersecting;
@@ -266,7 +316,7 @@ export function initScatterGrid(container, options = {}) {
         raf = 0;
       }
     }
-  }, { threshold: 0.01 }) : null;
+  }, { threshold: 0, rootMargin: '300px' }) : null;
 
   if (visibilityObserver) {
     visibilityObserver.observe(container);
@@ -275,14 +325,27 @@ export function initScatterGrid(container, options = {}) {
     raf = requestAnimationFrame(loop);
   }
 
+  const wakeUpIfNeeded = () => {
+    if (!isIntersecting) {
+      const cRect = canvas.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      if (cRect.top < vh + 400 && cRect.bottom > -400) {
+        isIntersecting = true;
+        last = performance.now();
+        if (!raf) raf = requestAnimationFrame(loop);
+      }
+    }
+  };
+
   const handlePointerMove = (e) => {
+    wakeUpIfNeeded();
     if (!isIntersecting) return;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     // Nearby CTA/footer text must not push the first letter out of shape.
-    // Scatter only while the pointer is actually over the logo itself.
-    if (x >= bleed && x <= width - bleed && y >= bleed && y <= height - bleed) {
+    // Scatter when pointer is over or near the logo itself.
+    if (x >= bleed - 25 && x <= width - bleed + 25 && y >= bleed - 25 && y <= height - bleed + 25) {
       pointerX = x;
       pointerY = y;
     } else {
@@ -297,11 +360,12 @@ export function initScatterGrid(container, options = {}) {
   };
 
   const handlePointerDown = (e) => {
+    wakeUpIfNeeded();
     if (!isIntersecting) return;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    if (x < bleed || y < bleed || x > width - bleed || y > height - bleed) return;
+    if (x < bleed - 25 || y < bleed - 25 || x > width - bleed + 25 || y > height - bleed + 25) return;
 
     if (ripples.length > 2) ripples.shift();
     ripples.push({ x, y, r: 0 });

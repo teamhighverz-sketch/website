@@ -690,7 +690,7 @@ body.cursor-active .custom-cursor {
 
 .nav-container {
   pointer-events: auto;
-  width: min(990px, 94%);
+  width: min(940px, 94%);
   min-height: 58px;
   margin: 0 auto;
   padding: 0.68rem 1.15rem 0.68rem 1.75rem;
@@ -713,7 +713,7 @@ body.cursor-active .custom-cursor {
 }
 
 .navbar.scrolled .nav-container {
-  width: min(890px, 92%);
+  width: min(840px, 92%);
   min-height: 52px;
   padding: 0.58rem 1.05rem 0.58rem 1.6rem;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 100%), rgba(6, 10, 15, 0.5);
@@ -1005,6 +1005,34 @@ body.cursor-active .custom-cursor {
     0 10px 24px -2px rgba(14, 165, 233, 0.22),
     inset 0 1.5px 1.5px 0 #FFFFFF !important;
   transform: translateY(-1px) scale(1.06);
+}
+
+/* ==========================================================================
+   HOME TOPMOST THEME CAPSULE WRAPPER
+   Positions the Creators ↔ Brands capsule at the right topmost corner of Home
+   ========================================================================== */
+.home-theme-capsule-wrap {
+  position: absolute;
+  top: 1.35rem;
+  right: clamp(1.25rem, 3.5vw, 3.25rem);
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+@media (max-width: 900px) {
+  .home-theme-capsule-wrap {
+    top: 4.85rem;
+    right: 1.15rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-theme-capsule-wrap {
+    top: 4.65rem;
+    right: 1rem;
+  }
 }
 
 /* ==========================================================================
@@ -18375,6 +18403,7 @@ body::after {
   bottom: auto;
   z-index: 0;
   width: min(650px, 40vw);
+  aspect-ratio: 2415 / 900;
   /* Increased size to find the sweet spot */
   transform: translate(50%, -50%);
   /* Center horizontally and vertically */
@@ -18389,7 +18418,8 @@ body::after {
 .footer-watermark-logo img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  aspect-ratio: 2415 / 900;
 }
 
 .footer-scatter-canvas {

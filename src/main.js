@@ -208,6 +208,8 @@ function boot() {
   const onEarlyInteraction = () => {
     if (isHomeRoute(window.location.pathname)) {
       initBelowFoldFeatures();
+    } else {
+      initFooterScatterGrid();
     }
     window.removeEventListener('scroll', onEarlyInteraction);
     window.removeEventListener('pointerdown', onEarlyInteraction);
@@ -322,6 +324,7 @@ function boot() {
           initHeroIntro(false);
         } else {
           triggerPageHeroEntrance(window.location.pathname);
+          initFooterScatterGrid();
         }
         requestAnimationFrame(() => {
           ScrollTrigger.refresh();
@@ -344,6 +347,7 @@ function boot() {
   });
   window.addEventListener('load', () => {
     ScrollTrigger.refresh();
+    initFooterScatterGrid();
 
     // Register high-performance Service Worker for video and asset caching
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
@@ -5588,13 +5592,12 @@ function initInstagramReelsPlayer() {
 // FOOTER WATERMARK — INTERACTIVE SCATTER GRID
 // Keeps the large Highverz mark intact at rest, then gently breaks its pixels
 // away from the pointer and lets them settle back into the logo.
-function initFooterScatterGrid() {
+export function initFooterScatterGrid() {
   if (typeof window.__hvFooterScatterCleanup === 'function') {
     try { window.__hvFooterScatterCleanup(); } catch (_) { }
     window.__hvFooterScatterCleanup = null;
   }
-  const shell = document.getElementById('page-transition-shell');
-  const watermark = shell ? shell.querySelector('.footer-watermark-logo') : document.querySelector('.footer-watermark-logo');
+  const watermark = document.querySelector('.footer-watermark-logo');
   if (!watermark) return;
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   // Enhanced reactive scatter physics: Sky Blue in light mode, Electric Cyan in dark mode
@@ -5609,6 +5612,7 @@ function initFooterScatterGrid() {
     accent: isLight ? [14, 165, 233] : [0, 229, 255]
   });
 }
+window.__hvInitFooterScatterGrid = initFooterScatterGrid;
 
 // Re-sync scatter grid on theme changes
 if (!window.__hvScatterThemeListenerBound) {

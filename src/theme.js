@@ -59,6 +59,7 @@ export function updateCapsuleSwitchers(theme) {
     });
   });
 }
+window.__hvUpdateCapsuleSwitchers = updateCapsuleSwitchers;
 
 // ─── Update Sun / Moon icon visibility ───
 function updateIcons(theme) {
@@ -128,26 +129,28 @@ export function initThemeSystem() {
   // Bind slider capsule switchers (Creators ↔ Brands)
   const capsuleSwitchers = document.querySelectorAll('.theme-capsule-switcher');
   capsuleSwitchers.forEach(capsule => {
-    const buttons = capsule.querySelectorAll('.theme-capsule-btn');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    capsule.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const btn = e.target.closest('.theme-capsule-btn');
+      if (btn) {
         const targetTheme = btn.getAttribute('data-theme-value');
-        const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
         if (targetTheme && targetTheme !== activeTheme) {
           applyTheme(targetTheme, true);
         } else {
-          // Subtle micro-tap haptic animation
-          btn.style.transform = 'scale(0.95)';
-          setTimeout(() => { btn.style.transform = ''; }, 140);
+          const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+          applyTheme(nextTheme, true);
         }
-      });
+      } else {
+        const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme, true);
+      }
     });
 
     // Keyboard support: ArrowLeft / ArrowRight toggles between Creators and Brands
     capsule.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === ' ') {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
         const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
@@ -167,3 +170,26 @@ export function initThemeSystem() {
     }
   });
 }
+
+// Delegated fallback listener for dynamically mounted switchers
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    const switcher = e.target.closest('.theme-capsule-switcher');
+    if (!switcher) return;
+    const activeTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const btn = e.target.closest('.theme-capsule-btn');
+    if (btn) {
+      const targetTheme = btn.getAttribute('data-theme-value');
+      if (targetTheme && targetTheme !== activeTheme) {
+        applyTheme(targetTheme, true);
+      } else {
+        const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme, true);
+      }
+    } else {
+      const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme, true);
+    }
+  });
+}
+

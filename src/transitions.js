@@ -540,6 +540,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
               try {
                 window.__hvHeroReelRefresh?.();
                 window.__hvInitFooterScatterGrid?.();
+                window.__hvUpdateCapsuleSwitchers?.();
                 passes++;
                 if (passes < 4) {
                   requestAnimationFrame(refreshPass);

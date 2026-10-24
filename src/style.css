@@ -690,7 +690,7 @@ body.cursor-active .custom-cursor {
 
 .nav-container {
   pointer-events: auto;
-  width: min(940px, 94%);
+  width: min(800px, calc(100% - 240px));
   min-height: 58px;
   margin: 0 auto;
   padding: 0.68rem 1.15rem 0.68rem 1.75rem;
@@ -713,7 +713,7 @@ body.cursor-active .custom-cursor {
 }
 
 .navbar.scrolled .nav-container {
-  width: min(840px, 92%);
+  width: min(740px, calc(100% - 240px));
   min-height: 52px;
   padding: 0.58rem 1.05rem 0.58rem 1.6rem;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.025) 100%), rgba(6, 10, 15, 0.5);
@@ -1012,25 +1012,35 @@ body.cursor-active .custom-cursor {
    Positions the Creators ↔ Brands capsule at the right topmost corner of Home
    ========================================================================== */
 .home-theme-capsule-wrap {
-  position: absolute;
-  top: 1.35rem;
-  right: clamp(1.25rem, 3.5vw, 3.25rem);
-  z-index: 998;
+  position: fixed;
+  top: 1.25rem;
+  right: clamp(1rem, 2.5vw, 2.25rem);
+  z-index: 1002;
   display: flex;
   align-items: center;
   pointer-events: auto;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.35s ease;
 }
 
-@media (max-width: 900px) {
+body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
+  transform: translateY(calc(-100% - 3rem));
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
   .home-theme-capsule-wrap {
-    top: 4.85rem;
+    position: absolute;
+    top: 5rem;
     right: 1.15rem;
+    z-index: 998;
   }
 }
 
 @media (max-width: 480px) {
   .home-theme-capsule-wrap {
-    top: 4.65rem;
+    top: 4.85rem;
     right: 1rem;
   }
 }
@@ -1055,6 +1065,8 @@ body.cursor-active .custom-cursor {
   user-select: none;
   -webkit-user-select: none;
   cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
   flex-shrink: 0;
   transition:
     background 0.35s ease,
@@ -1136,7 +1148,7 @@ body.cursor-active .custom-cursor {
 /* Buttons inside Capsule */
 .theme-capsule-btn {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1152,6 +1164,8 @@ body.cursor-active .custom-cursor {
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
   border-radius: 9999px;
   transition:
     color 0.25s ease,

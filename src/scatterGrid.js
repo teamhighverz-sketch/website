@@ -212,12 +212,8 @@ export function initScatterGrid(container, options = {}) {
     }
   }
 
-  let isAnyMoving = false;
-
   function simulate() {
     const r2 = radius * radius;
-    isAnyMoving = false;
-
     for (let i = 0; i < dots.length; i++) {
       const d = dots[i];
       const dx = d.x - pointerX;
@@ -250,54 +246,32 @@ export function initScatterGrid(container, options = {}) {
       d.vy *= damping;
       d.x += d.vx;
       d.y += d.vy;
-
-      // Snap to rest when displacement and velocity are negligible to eliminate subpixel float jitter
-      const distHome2 = (d.x - d.hx) * (d.x - d.hx) + (d.y - d.hy) * (d.y - d.hy);
-      const vel2 = d.vx * d.vx + d.vy * d.vy;
-      if (distHome2 < 0.05 && vel2 < 0.02) {
-        d.x = d.hx;
-        d.y = d.hy;
-        d.vx = 0;
-        d.vy = 0;
-      } else {
-        isAnyMoving = true;
-      }
     }
 
     for (let j = ripples.length - 1; j >= 0; j--) {
       ripples[j].r += 14;
       if (ripples[j].r > Math.max(width, height) * 1.2) {
         ripples.splice(j, 1);
-      } else {
-        isAnyMoving = true;
       }
     }
   }
 
   function paint() {
     ctx.clearRect(0, 0, width, height);
-    const pSize = Math.max(1, Math.round(renderedDotSize));
-    let lastFill = '';
-
     for (let i = 0; i < dots.length; i++) {
       const d = dots[i];
       const ox = d.x - d.hx;
       const oy = d.y - d.hy;
       const disp = Math.sqrt(ox * ox + oy * oy);
 
-      // Elevated color only on active disturbance (no continuous sine wave on straight lines)
-      let level = disp > 0.5 ? Math.min(1, disp / 22) : 0;
+      let level = Math.min(1, disp / 24);
+      // Shimmer changes color only; keep the logo's stems and baseline straight.
+      const s = Math.sin(d.hx * 0.012 - clock * 1.6);
+      level = Math.max(level, Math.max(0, s - 0.86) * 3.2);
 
       const idx = Math.min(STEPS - 1, Math.max(0, Math.round(level * (STEPS - 1))));
-      const fill = ramp[idx];
-      if (fill !== lastFill) {
-        ctx.fillStyle = fill;
-        lastFill = fill;
-      }
-      // Integer-aligned drawing coordinates to avoid fractional antialiasing blur/shiver
-      const px = Math.round(d.x - pSize / 2);
-      const py = Math.round(d.y - pSize / 2);
-      ctx.fillRect(px, py, pSize, pSize);
+      ctx.fillStyle = ramp[idx];
+      ctx.fillRect(d.x - renderedDotSize / 2, d.y - renderedDotSize / 2, renderedDotSize, renderedDotSize);
     }
   }
 
@@ -325,13 +299,6 @@ export function initScatterGrid(container, options = {}) {
     }
 
     paint();
-
-    // If completely settled at home and pointer is idle, sleep the RAF loop
-    if (!isAnyMoving && pointerX < -500 && ripples.length === 0) {
-      raf = 0;
-      return;
-    }
-
     raf = requestAnimationFrame(loop);
   }
 
@@ -364,11 +331,9 @@ export function initScatterGrid(container, options = {}) {
       const vh = window.innerHeight || document.documentElement.clientHeight;
       if (cRect.top < vh + 400 && cRect.bottom > -400) {
         isIntersecting = true;
+        last = performance.now();
+        if (!raf) raf = requestAnimationFrame(loop);
       }
-    }
-    if (isIntersecting && !raf) {
-      last = performance.now();
-      raf = requestAnimationFrame(loop);
     }
   };
 
@@ -383,10 +348,6 @@ export function initScatterGrid(container, options = {}) {
     if (x >= bleed - 25 && x <= width - bleed + 25 && y >= bleed - 25 && y <= height - bleed + 25) {
       pointerX = x;
       pointerY = y;
-      if (!raf) {
-        last = performance.now();
-        raf = requestAnimationFrame(loop);
-      }
     } else {
       pointerX = -9999;
       pointerY = -9999;
@@ -408,10 +369,6 @@ export function initScatterGrid(container, options = {}) {
 
     if (ripples.length > 2) ripples.shift();
     ripples.push({ x, y, r: 0 });
-    if (!raf) {
-      last = performance.now();
-      raf = requestAnimationFrame(loop);
-    }
   };
 
   // Track on window so overlaying footer content (links, copyright, text) does not block scatter reactivity

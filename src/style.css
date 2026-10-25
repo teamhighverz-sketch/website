@@ -8302,25 +8302,26 @@ html.js .floating-badge-item {
 }
 
 [data-theme="light"] .accord-body-inner .founder-bio,
-[data-theme="light"] .founder-bio,
-[data-theme="light"] .accord-body-inner .founder-side-copy {
+[data-theme="light"] .founder-bio {
   color: #334155 !important;
-  font-size: 0.94rem;
+  font-size: 0.95rem;
   line-height: 1.68;
 }
 
 [data-theme="light"] .accord-body-inner .founder-quote,
 [data-theme="light"] .founder-quote {
-  background: linear-gradient(135deg, rgba(126, 141, 155, 0.22) 0%, rgba(79, 95, 110, 0.14) 100%) !important;
-  border: 1px solid rgba(99, 116, 132, 0.28) !important;
-  border-left: 3.5px solid rgba(51, 65, 79, 0.72) !important;
+  background: linear-gradient(135deg, rgba(235, 245, 252, 0.9) 0%, rgba(220, 235, 247, 0.75) 100%) !important;
+  border: 1px solid rgba(14, 165, 233, 0.22) !important;
+  border-left: 3.5px solid #0EA5E9 !important;
   border-radius: 0 16px 16px 0;
-  color: #172033 !important;
+  color: #0f172a !important;
   backdrop-filter: blur(16px) saturate(135%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(135%) !important;
-  box-shadow: 0 5px 18px rgba(40, 54, 68, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.42) !important;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.08), inset 0 1px 1px #ffffff !important;
   font-style: italic;
+  font-size: 1rem;
   line-height: 1.6;
+  padding: 1.15rem 1.45rem;
 }
 
 [data-theme="light"] .accord-stats {
@@ -13419,12 +13420,11 @@ html.js .floating-badge-item {
 }
 
 .accord-body-inner {
-  padding: 0 1.5rem 1.5rem;
+  padding: 0 1.6rem 1.6rem;
   border-top: 1px solid rgba(205, 250, 253, 0.1);
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(220px, 0.92fr);
-  align-items: start;
-  gap: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
   padding-top: 1.4rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 35%);
 }
@@ -13433,50 +13433,39 @@ html.js .floating-badge-item {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  grid-column: 1 / -1;
 }
 
 .accord-body-inner .founder-bio {
-  grid-column: 1;
-  min-width: 0;
+  width: 100%;
   margin: 0;
   color: rgba(205, 222, 226, 0.86);
+  font-size: 0.96rem;
+  line-height: 1.68;
 }
 
-.accord-body-inner .founder-bio p,
-.accord-body-inner .founder-side-copy {
+.accord-body-inner .founder-bio p {
   margin: 0;
 }
 
 .accord-body-inner .founder-bio p + p {
-  margin-top: 1.55rem;
+  margin-top: 0.85rem;
 }
 
-.accord-side-stack {
-  grid-column: 2;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-self: start;
-  gap: 0.9rem;
-}
-
-.accord-body-inner .founder-side-copy {
-  color: rgba(205, 222, 226, 0.86);
-  font-size: 0.98rem;
-  line-height: 1.7;
-}
-
+/* Quote banner placed cleanly in the middle */
 .accord-body-inner .founder-quote {
-  min-width: 0;
+  width: 100%;
   box-sizing: border-box;
-  margin: 0;
+  margin: 0.2rem 0;
+  padding: 1.15rem 1.45rem;
   border: 1px solid rgba(213, 221, 229, 0.16);
-  border-left: 3px solid rgba(188, 202, 214, 0.8);
+  border-left: 3.5px solid rgba(0, 229, 255, 0.75);
   border-radius: 0 16px 16px 0;
-  background: linear-gradient(135deg, rgba(70, 80, 92, 0.76), rgba(31, 39, 49, 0.84));
-  color: rgba(241, 246, 249, 0.94);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(70, 80, 92, 0.55), rgba(31, 39, 49, 0.65));
+  color: rgba(241, 246, 249, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 16px rgba(0, 0, 0, 0.15);
+  font-style: italic;
+  font-size: 1.02rem;
+  line-height: 1.6;
 }
 
 /* reuse .domain-chip from existing styles */
@@ -13537,15 +13526,6 @@ html.js .floating-badge-item {
 @media (max-width: 640px) {
   .founders-accordion-grid {
     max-width: 100%;
-  }
-
-  .accord-body-inner {
-    grid-template-columns: 1fr;
-  }
-
-  .accord-body-inner .founder-bio,
-  .accord-side-stack {
-    grid-column: 1;
   }
 
   .accord-stats {

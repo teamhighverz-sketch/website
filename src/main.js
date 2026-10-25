@@ -105,8 +105,8 @@ export function loadFluidBackground() {
     return Promise.resolve();
   }
 
-  // Keep the mobile critical path focused on the text, controls, and three
-  // visible reels. The CSS background is already present, so delaying this
+  // Keep the mobile critical path focused on the text, controls, and visible
+  // reel rail. The CSS background is already present, so delaying this
   // WebGL import avoids competing with the first paint and video startup.
   // Light mode's hero transition depends on the fluid layer already being
   // mounted. Start it immediately there; retain the mobile idle deferral for
@@ -1526,14 +1526,23 @@ window.addEventListener('hv:themechange', () => {
   const words = headline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller');
   const description = document.getElementById('hero-desc');
   if (typeof gsap === 'undefined') return;
+  // Theme changes should resolve optically in place. The previous y-offset
+  // entrance made the newly swapped headline lift or drop while the hero
+  // frame was being re-centered, creating the visible up/down glitch.
+  gsap.killTweensOf([...
+    Array.from(words),
+    ...(description ? [description] : [])
+  ]);
+  gsap.set(words, { y: 0 });
+  if (description) gsap.set(description, { y: 0 });
   gsap.fromTo(words,
-    { opacity: 0, y: 14, filter: 'blur(8px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.48, stagger: 0.045, ease: 'power3.out', clearProps: 'filter,transform' }
+    { opacity: 0, filter: 'blur(8px)' },
+    { opacity: 1, filter: 'blur(0px)', duration: 0.48, stagger: 0.045, ease: 'power3.out', clearProps: 'filter,transform' }
   );
   if (description) {
     gsap.fromTo(description,
-      { opacity: 0, y: 10, filter: 'blur(6px)' },
-      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.42, delay: 0.14, ease: 'power3.out', clearProps: 'filter,transform' }
+      { opacity: 0, filter: 'blur(6px)' },
+      { opacity: 1, filter: 'blur(0px)', duration: 0.42, delay: 0.14, ease: 'power3.out', clearProps: 'filter,transform' }
     );
   }
   if (document.documentElement.dataset.theme === 'dark') initHeroWordRoller();
@@ -2022,7 +2031,7 @@ function init3DScene() {
       .catch((err) => console.warn('Hero visual initialization notice:', err));
   };
 
-  // On phones, let the hero text and three autoplaying reels reach a stable
+  // On phones, let the hero text and the visible reel rail reach a stable
   // first paint before downloading/initializing the heavier WebGL scene.
   // Desktop keeps the existing immediate initialization.
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
@@ -3127,14 +3136,14 @@ export function initHeroReelCarousel() {
   if (isIntroPending) {
     viewport.style.display = 'none';
 
-    // Buffer the three cards that will be visible at the initial carousel
+    // Buffer the five cards that will be visible at the initial carousel
     // position while the branded loader is on screen. They remain paused and
     // hidden until the intro finishes, but the first reveal can use decoded
     // frames instead of flashing black video surfaces.
     const introVideos = Array.from(track.querySelectorAll('.card-video'));
     const introCount = introVideos.length;
-    const introIndexes = introCount > 2
-      ? [introCount - 1, 0, 1]
+    const introIndexes = introCount > 4
+      ? [introCount - 2, introCount - 1, 0, 1, 2]
       : introVideos.map((_, index) => index);
     const mobileIntro = window.innerWidth <= 768;
     introIndexes.forEach((index) => {
@@ -3464,14 +3473,16 @@ export function initHeroReelCarousel() {
       const sign = Math.sign(u);
 
       if (isMobileDevice) {
-        // Mobile performance: strict culling outside the visible center slot (only 3 cards in DOM)
-        if (absU > 1.55) {
+        // Keep five cards in the mobile rail (center + two neighbors on each
+        // side). The previous ±1 cull left only three cards visible, which
+        // made the carousel feel empty and made the infinite loop obvious.
+        if (absU > 2.45) {
           pos.style.display = 'none';
           return;
         }
         pos.style.display = 'block';
 
-        const norm = Math.min(1.0, absU / 2.2);
+        const norm = Math.min(1.0, absU / 2.7);
         const screenX = x * (1.0 + Math.pow(norm, 1.2) * 0.08);
         const scale = 0.92 + Math.pow(norm, 1.2) * 0.20;
         const maxRotY = 22;
@@ -3487,7 +3498,9 @@ export function initHeroReelCarousel() {
         if (perspectiveEl) {
           perspectiveEl.style.transform = `translate3d(0, 0, ${translateZ.toFixed(1)}px) rotateY(${rotationY.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
         }
-        pos.style.zIndex = String(Math.round(20 + Math.min(2.0, absU) * 20));
+        // Keep the center card in front of its neighbors so the denser rail
+        // still reads as one intentional carousel instead of stacked tiles.
+        pos.style.zIndex = String(Math.round(50 - Math.min(2.5, absU) * 10));
         return;
       }
 
@@ -3536,7 +3549,9 @@ export function initHeroReelCarousel() {
     lastTime = currentTime;
 
     if (!isDragging) {
-      const currentAutoSpeed = isMobileDevice ? 28 : autoSpeed;
+      // A 28px/s mobile crawl took more than three seconds to move one card.
+      // Keep it calm, but advance often enough that the rail reads as live.
+      const currentAutoSpeed = isMobileDevice ? 46 : autoSpeed;
 
       if (Math.abs(dragVelocity) > 1.0) {
         // Butter smooth glide with lower friction and expanded 6-7 reel reach
@@ -3807,10 +3822,50 @@ export function initHeroReelCarousel() {
     const carouselViewport = viewport;
     carouselViewport.classList.add('theme-media-swapping');
 
+    // On phones, only the five cards currently occupying the rail need an
+    // immediate source swap. Loading all ten alternate films at once was
+    // enough to starve the active reel and make the carousel look frozen.
+    const isMobileThemeSwap = cachedViewportWidth <= 768;
+    const visibleThemeIndexes = new Set();
+    if (isMobileThemeSwap) {
+      let centerIdx = Math.round(scrollPosition / stageStep) % count;
+      if (centerIdx < 0) centerIdx += count;
+      for (let offset = -2; offset <= 2; offset += 1) {
+        visibleThemeIndexes.add((centerIdx + offset + count) % count);
+      }
+    }
+
+    // Cancel stale pending clones from a rapid light/dark/light toggle before
+    // creating the next handoff. This prevents orphaned videos from covering
+    // the active card and keeps one source per slot.
+    carouselViewport.querySelectorAll('.card-video-theme-next').forEach((pending) => pending.remove());
+
     activeVideos.forEach((video, index) => {
       if (!video) return;
       const nextSrc = getThemeVideoSource(video);
       if (!nextSrc || video.dataset.activeThemeSrc === nextSrc || video.dataset.themeSwapPending === nextSrc) return;
+
+      const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`;
+      if (theme === 'light') {
+        video.setAttribute('poster', lightPoster);
+      } else if (video.dataset.darkPoster) {
+        video.setAttribute('poster', video.dataset.darkPoster);
+      }
+
+      // Hidden mobile slots keep only the new poster until they enter the
+      // five-card window. Clearing their old source prevents a stale dark
+      // frame from appearing at the edge of a light-theme rail; loadVideo()
+      // will attach the current theme when that card becomes active.
+      if (isMobileThemeSwap && !visibleThemeIndexes.has(index)) {
+        try {
+          video.pause();
+          video.removeAttribute('src');
+          video.load();
+        } catch (_) { }
+        video.dataset.activeThemeSrc = nextSrc;
+        video.dataset.themeSwapPending = '';
+        return;
+      }
 
       const videoCard = video.closest('.video-card');
       if (!videoCard) return;
@@ -3840,10 +3895,13 @@ export function initHeroReelCarousel() {
 
       const shouldResume = !video.paused && !document.hidden;
       let revealed = false;
+      let swapFallbackId = null;
       const revealThemeVideo = () => {
         if (revealed) return;
         revealed = true;
+        if (swapFallbackId !== null) window.clearTimeout(swapFallbackId);
         if (swapGeneration !== themeSwapGeneration) {
+          video.dataset.themeSwapPending = '';
           nextVideo.remove();
           return;
         }
@@ -3867,12 +3925,16 @@ export function initHeroReelCarousel() {
           if (videos.every((item) => item?.dataset.activeThemeSrc === getThemeVideoSource(item))) {
             carouselViewport.classList.remove('theme-media-swapping');
           }
-        }, 460);
+        }, 260);
       };
 
       nextVideo.addEventListener('canplay', revealThemeVideo, { once: true });
       nextVideo.addEventListener('loadeddata', revealThemeVideo, { once: true });
       nextVideo.addEventListener('error', revealThemeVideo, { once: true });
+      // A slow or unsupported alternate source must never hold the carousel
+      // in its swapping state indefinitely. The poster remains visible while
+      // the next source continues buffering in the background.
+      swapFallbackId = window.setTimeout(revealThemeVideo, 420);
       videoCard.appendChild(nextVideo);
       nextVideo.setAttribute('src', nextSrc);
       nextVideo.load();
@@ -3888,8 +3950,11 @@ export function initHeroReelCarousel() {
     });
     lastVideoPriorityIndex = -1;
     window.setTimeout(() => {
-      if (swapGeneration === themeSwapGeneration) updateVideoPriority(true);
-    }, 480);
+      if (swapGeneration === themeSwapGeneration) {
+        updateVideoPriority(true);
+        carouselViewport.classList.remove('theme-media-swapping');
+      }
+    }, isMobileThemeSwap ? 280 : 380);
   };
   window.addEventListener('hv:themechange', onThemeChange);
   window.__hvHeroReelRefreshTheme = onThemeChange;

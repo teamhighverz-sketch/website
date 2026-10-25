@@ -4703,8 +4703,8 @@ html.js .floating-badge-item {
   }
 
   .card-position {
-    width: clamp(170px, 24vw, 220px);
-    height: clamp(300px, 42vw, 390px);
+    width: clamp(128px, 20vw, 160px);
+    height: clamp(228px, 35.55vw, 284px);
     top: 50%;
     bottom: auto;
   }
@@ -4721,8 +4721,10 @@ html.js .floating-badge-item {
   }
 
   .card-position {
-    width: clamp(104px, 30vw, 136px);
-    height: clamp(185px, 53.3vw, 242px);
+    /* Five-card mobile rail: two neighboring cards remain visible on either
+       side of the active reel without making the center card unreadable. */
+    width: clamp(98px, 25vw, 128px);
+    height: clamp(174px, 44.45vw, 228px);
     top: 50%;
     bottom: auto;
   }

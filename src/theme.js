@@ -28,6 +28,11 @@ let themeTransitionTimer = null;
 let homeHeroLayoutLocked = false;
 function lockHomeHeroLayout() {
   const selectors = [
+    // Freeze the full hero frame as well as its flow-sensitive children. The
+    // light and dark copy have different line lengths; without the outer lock
+    // flex layout recenters the rail once during the swap, which reads as a
+    // vertical jump.
+    '#hero',
     '#hero .hero-trust-badge-wrap',
     '#hero #hero-headline',
     '#hero #hero-desc',

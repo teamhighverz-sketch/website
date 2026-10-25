@@ -1300,6 +1300,7 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>Social</span>
         <span class="hl-word" data-word>Feeds,</span>
       </span>
+      <span class="hero-headline-connector is-placeholder" aria-hidden="true">&amp;</span>
       <span class="hero-headline-line">
         <span class="hl-word" data-word>Turning</span>
         <span class="hl-word" data-word>Every</span>
@@ -1320,8 +1321,8 @@ function applyThemeHeroCopy() {
           <span class="roller-item highlight-cyan font-bold-italic" data-word="Clicks">Clicks</span>
         </span>
       </span>
+      <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
       <span class="hero-headline-line">
-        <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
         <span class="hl-word" data-word>Name</span>

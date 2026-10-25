@@ -2034,12 +2034,12 @@ body.mobile-menu-active .work-creator-card {
 
 /* Connector between the two hero statements. */
 .hero-headline-connector {
-  display: inline-block;
-  vertical-align: 0.02em;
-  margin: 0 0.22em 0 0;
+  display: block;
+  width: max-content;
+  margin: 0.04em auto 0.04em;
   color: var(--accent-cyan);
   font-family: var(--font-display);
-  font-size: 0.88em;
+  font-size: 0.74em;
   font-style: normal;
   font-weight: 600;
   line-height: 1;
@@ -2051,9 +2051,10 @@ body.mobile-menu-active .work-creator-card {
 /* Keep the light-theme headline's vertical rhythm identical while the
    visible ampersand is only used by the creator (dark) headline. */
 .hero-headline-connector.is-placeholder {
-  display: none !important;
-  visibility: hidden;
+  display: block !important;
+  visibility: hidden !important;
   opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 [data-theme="light"] .hero-headline-connector {
@@ -2063,8 +2064,8 @@ body.mobile-menu-active .work-creator-card {
 
 @media (max-width: 640px) {
   .hero-headline-connector {
-    margin: 0 0.18em 0 0;
-    font-size: 0.84em;
+    margin: 0.03em auto;
+    font-size: 0.70em;
   }
 }
 

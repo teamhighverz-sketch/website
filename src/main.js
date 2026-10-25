@@ -1385,7 +1385,8 @@ function applyThemeCreatorsCopy() {
   }
 
   const currentBadge = cards[0]?.querySelector('.badge-growth')?.textContent;
-  if (section.dataset.creatorsThemeCopy === 'light' && currentBadge === 'Film Concept 01') return;
+  const hasPlatform = Boolean(cards[0]?.querySelector('.creator-platform'));
+  if (section.dataset.creatorsThemeCopy === 'light' && currentBadge === 'Film Concept 01' && !hasPlatform) return;
 
   const header = section.querySelector('.creators-header');
   if (header) {
@@ -1401,7 +1402,6 @@ function applyThemeCreatorsCopy() {
       image: '/assets/movie/runner.png',
       alt: 'Runner film poster',
       title: 'Runner',
-      platform: '18.3M Views',
       description: 'Turning cinematic scenes into high-retention short-form clips to drive massive organic reach across feeds.',
       badge: 'Film Concept 01',
       before: ['BEFORE', 'Big Screen', 'Cinema Release'],
@@ -1417,7 +1417,6 @@ function applyThemeCreatorsCopy() {
       image: '/assets/movie/kingofkings.png',
       alt: 'King of Kings film poster',
       title: 'King of Kings',
-      platform: '38.5M Views',
       description: 'Transforming epic movie scenes into scroll-stopping clips that grab attention and drive viral discovery.',
       badge: 'Film Concept 02',
       before: ['BEFORE', 'Big Screen', 'Cinema Release'],
@@ -1463,13 +1462,7 @@ function applyThemeCreatorsCopy() {
     }
     if (name) name.textContent = movie.title;
     if (platform) {
-      platform.href = movieHref;
-      platform.removeAttribute('target');
-      platform.removeAttribute('rel');
-      platform.dataset.cursor = 'VIEW CASE STUDY ↗';
-      platform.setAttribute('aria-label', `View ${movie.title} film case study`);
-      platform.classList.add('movie-platform');
-      platform.innerHTML = `<span>${movie.platform}</span><svg class="creator-ext-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>`;
+      platform.remove();
     }
     if (description) description.textContent = movie.description;
     if (badge) badge.textContent = movie.badge;

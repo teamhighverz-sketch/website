@@ -1522,28 +1522,44 @@ window.addEventListener('hv:themechange', () => {
   applyThemeCreatorsCopy();
   window.__hvHeroReelRefreshTheme?.();
 
-  const words = headline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller');
+  const words = headline.querySelectorAll('.hl-word, .hero-headline-connector:not(.is-placeholder), .hero-word-roller');
   const description = document.getElementById('hero-desc');
-  if (typeof gsap === 'undefined') return;
+  if (typeof gsap === 'undefined') {
+    window.__hvHeroReelTriggerSwap?.();
+    return;
+  }
+
   // Theme changes should resolve optically in place. The previous y-offset
   // entrance made the newly swapped headline lift or drop while the hero
   // frame was being re-centered, creating the visible up/down glitch.
-  gsap.killTweensOf([...
-    Array.from(words),
+  gsap.killTweensOf([
+    ...Array.from(words),
     ...(description ? [description] : [])
   ]);
   gsap.set(words, { y: 0 });
   if (description) gsap.set(description, { y: 0 });
-  gsap.fromTo(words,
-    { opacity: 0, filter: 'blur(8px)' },
-    { opacity: 1, filter: 'blur(0px)', duration: 0.48, stagger: 0.045, ease: 'power3.out', clearProps: 'filter,transform' }
+
+  // 1. First animate the headline and description text cleanly
+  const textTl = gsap.timeline({
+    onComplete: () => {
+      // 2. Precisely when the text animation finishes, reveal the themed reels!
+      window.__hvHeroReelTriggerSwap?.();
+    }
+  });
+
+  textTl.fromTo(words,
+    { opacity: 0, filter: 'blur(10px)' },
+    { opacity: 1, filter: 'blur(0px)', duration: 0.40, stagger: 0.03, ease: 'power2.out', clearProps: 'filter,transform' }
   );
+
   if (description) {
-    gsap.fromTo(description,
+    textTl.fromTo(description,
       { opacity: 0, filter: 'blur(6px)' },
-      { opacity: 1, filter: 'blur(0px)', duration: 0.42, delay: 0.14, ease: 'power3.out', clearProps: 'filter,transform' }
+      { opacity: 1, filter: 'blur(0px)', duration: 0.35, ease: 'power2.out', clearProps: 'filter,transform' },
+      0.12
     );
   }
+
   if (document.documentElement.dataset.theme === 'dark') initHeroWordRoller();
   if (isHomeRoute(window.location.pathname)) {
     initAdscaleTextEffects();
@@ -3893,18 +3909,25 @@ export function initHeroReelCarousel() {
       pendingHandoffs.push({ video, nextVideo, index });
     });
 
-    cardPositions.forEach((position, index) => {
-      const viewCount = position.querySelector('.reel-view-count');
-      if (!viewCount) return;
-      const count = getReelViewCount(index);
-      const text = viewCount.querySelector('.rvc-text');
-      if (text) text.textContent = `${count} views`;
-      viewCount.setAttribute('aria-label', `${count} views`);
-    });
-
-    // Synchronized crossfade: transition all visible cards together under the optical veil
+    let hasTriggeredSwap = false;
     const triggerSynchronizedSwap = () => {
+      if (hasTriggeredSwap) return;
+      hasTriggeredSwap = true;
       if (swapGeneration !== themeSwapGeneration) return;
+
+      // Immediately lift the swapping dim/blur so reels unveil into full focus
+      carouselViewport.classList.remove('theme-media-swapping');
+
+      // Update view counts precisely when the new reels appear
+      cardPositions.forEach((position, index) => {
+        const viewCount = position.querySelector('.reel-view-count');
+        if (!viewCount) return;
+        const count = getReelViewCount(index);
+        const text = viewCount.querySelector('.rvc-text');
+        if (text) text.textContent = `${count} views`;
+        viewCount.setAttribute('aria-label', `${count} views`);
+      });
+
       pendingHandoffs.forEach(({ video, nextVideo }) => {
         nextVideo.style.opacity = '1';
         video.style.opacity = '0';
@@ -3922,15 +3945,15 @@ export function initHeroReelCarousel() {
           nextVideo.style.opacity = '';
           videos[index] = nextVideo;
         });
-        carouselViewport.classList.remove('theme-media-swapping');
         lastVideoPriorityIndex = -1;
         updateVideoPriority(true);
       }, 340);
     };
 
-    window.setTimeout(triggerSynchronizedSwap, 140);
+    window.__hvHeroReelTriggerSwap = triggerSynchronizedSwap;
+    // Fallback timer: ensure reels appear even if GSAP or text animation is interrupted
+    window.setTimeout(triggerSynchronizedSwap, 600);
   };
-  window.addEventListener('hv:themechange', onThemeChange);
   window.__hvHeroReelRefreshTheme = onThemeChange;
 
   window.__hvHeroReelCleanup = () => {

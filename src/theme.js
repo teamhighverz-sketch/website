@@ -28,11 +28,9 @@ let themeTransitionTimer = null;
 let homeHeroLayoutLocked = false;
 function lockHomeHeroLayout() {
   const selectors = [
-    // Freeze the full hero frame as well as its flow-sensitive children. The
-    // light and dark copy have different line lengths; without the outer lock
-    // flex layout recenters the rail once during the swap, which reads as a
-    // vertical jump.
-    '#hero',
+    // Freeze only the flow-sensitive hero blocks. Keeping the outer section
+    // height locked permanently leaves a large empty tail after the theme
+    // copy settles, while these inner locks preserve the handoff anchor.
     '#hero .hero-trust-badge-wrap',
     '#hero #hero-headline',
     '#hero #hero-desc',
@@ -74,6 +72,7 @@ function applyTheme(theme, animate = false) {
     if (themeTransitionTimer) window.clearTimeout(themeTransitionTimer);
     themeTransitionTimer = window.setTimeout(() => {
       root.classList.remove('theme-switching', 'theme-target-light', 'theme-target-dark');
+      unlockHomeHeroLayout();
       themeTransitionTimer = null;
     }, 760);
   }

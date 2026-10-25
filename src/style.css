@@ -1024,6 +1024,15 @@ body.cursor-active .custom-cursor {
     opacity 0.35s ease;
 }
 
+/* Keep the audience switcher out of the branded intro on every route. */
+html.intro-pending:not(.skip-intro) .home-theme-capsule-wrap,
+body.intro-active .home-theme-capsule-wrap {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
   transform: translateY(calc(-100% - 3rem));
   pointer-events: none;
@@ -1782,7 +1791,7 @@ body.mobile-menu-active .work-creator-card {
   color: var(--text-secondary);
   max-width: 780px;
   width: 100%;
-  margin: 0 auto 1.8rem auto;
+  margin: 0 auto 1rem auto;
   text-align: center;
   white-space: normal;
   word-break: normal;
@@ -2025,23 +2034,24 @@ body.mobile-menu-active .work-creator-card {
 
 /* Connector between the two hero statements. */
 .hero-headline-connector {
-  display: block;
-  width: max-content;
-  margin: 0.02em auto 0.02em;
+  display: inline-block;
+  vertical-align: 0.02em;
+  margin: 0 0.22em 0 0;
   color: var(--accent-cyan);
   font-family: var(--font-display);
-  font-size: 0.76em;
+  font-size: 0.88em;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.04em;
-  opacity: 0.9;
-  text-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+  letter-spacing: -0.02em;
+  opacity: 0.95;
+  text-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
 }
 
 /* Keep the light-theme headline's vertical rhythm identical while the
    visible ampersand is only used by the creator (dark) headline. */
 .hero-headline-connector.is-placeholder {
+  display: none !important;
   visibility: hidden;
   opacity: 0 !important;
 }
@@ -2053,8 +2063,8 @@ body.mobile-menu-active .work-creator-card {
 
 @media (max-width: 640px) {
   .hero-headline-connector {
-    margin: 0.02em auto;
-    font-size: 0.72em;
+    margin: 0 0.18em 0 0;
+    font-size: 0.84em;
   }
 }
 
@@ -4513,17 +4523,19 @@ html.js .floating-badge-item {
    room below the baseline while they reveal and settle. */
 #hero .hero-headline--centered {
   overflow: visible !important;
-  line-height: 1.18 !important;
+  line-height: 1.15 !important;
+  margin-bottom: 0.75rem !important;
 }
 
 #hero .hero-headline-line {
   overflow: visible !important;
-  line-height: 1.18;
-  padding-bottom: 0.18em;
+  line-height: 1.15 !important;
+  padding-top: 0.08em !important;
+  padding-bottom: 0.04em !important;
 }
 
 #hero .hero-headline-line .hl-word {
-  padding-bottom: 0.035em;
+  padding-bottom: 0.02em;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4538,6 +4550,14 @@ html.js .floating-badge-item {
 
 #hero .hero-description--centered {
   color: rgba(255, 255, 255, 0.68);
+  margin-top: 0 !important;
+  margin-bottom: 1.75rem !important;
+  line-height: 1.58 !important;
+}
+
+#hero .hero-actions--centered {
+  margin-top: 0 !important;
+  transform: translateY(0);
 }
 
 /* ==========================================================================
@@ -4565,7 +4585,10 @@ html.js .floating-badge-item {
 .carousel-track {
   position: relative;
   width: 100%;
-  height: clamp(480px, 42vw, 600px);
+  /* Keep the cards close to the CTA while preserving enough depth for the
+     desktop arc. The previous 42vw stage created a large dead zone above the
+     reels on wide screens. */
+  height: clamp(360px, 34vw, 500px);
   transform-style: preserve-3d;
   display: flex;
   align-items: center;
@@ -15991,8 +16014,8 @@ main+footer {
   max-width: 780px;
   color: rgba(255, 255, 255, 0.6);
   font-size: clamp(15px, 2vw, 18px);
-  line-height: 1.7;
-  margin-bottom: 1.35rem;
+  line-height: 1.58;
+  margin-bottom: 1.75rem;
 }
 
 .hero-actions--centered {
@@ -19798,7 +19821,11 @@ html.theme-switching::before {
   pointer-events: none;
   opacity: 0;
   background: rgba(3, 8, 12, 0.18);
-  animation: theme-optical-veil 760ms var(--ease-theme) both;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  animation:
+    theme-optical-veil 760ms var(--ease-theme) both,
+    theme-optical-blur 760ms var(--ease-theme) both;
 }
 
 html.theme-switching.theme-target-light::before {
@@ -19814,9 +19841,19 @@ html.theme-switching.theme-target-dark::before {
   100% { opacity: 0; }
 }
 
+/* A short, low-intensity focus pull smooths the visual handoff without
+   moving any layout boxes or blurring the page after the swap completes. */
+@keyframes theme-optical-blur {
+  0% { backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+  42% { backdrop-filter: blur(2.5px); -webkit-backdrop-filter: blur(2.5px); }
+  100% { backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html.theme-switching::before {
-    animation-duration: 200ms;
+    animation:
+      theme-optical-veil 200ms var(--ease-theme) both,
+      theme-optical-blur 200ms var(--ease-theme) both;
   }
 }
 
@@ -19830,12 +19867,12 @@ html.theme-switching.theme-target-dark::before {
 [data-theme="light"] #hero .hero-headline--centered,
 [data-theme="light"] #hero .hero-headline-line {
   overflow: visible !important;
-  line-height: 1.2 !important;
+  line-height: 1.15 !important;
 }
 
 [data-theme="light"] #hero .hero-headline-line {
-  padding-top: 0.12em !important;
-  padding-bottom: 0.2em !important;
+  padding-top: 0.08em !important;
+  padding-bottom: 0.04em !important;
 }
 
 /* Mobile home controls: keep the audience switcher in normal flow so it

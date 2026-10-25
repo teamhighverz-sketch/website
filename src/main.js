@@ -141,6 +141,7 @@ window.loadFluidBackground = loadFluidBackground;
 // Progressive below-the-fold feature hydrator:
 // Keeps initial main-thread work under 300ms so hero LCP paints on frame 1 without delay.
 let belowFoldInitialized = false;
+let homeCreatorsDarkMarkup = null;
 function initBelowFoldFeatures() {
   // These sections exist only on Home. Running their timelines after an early
   // interaction on a dedicated route can attach duplicate observers/tweens to
@@ -1306,8 +1307,7 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>Into</span>
         <span class="hl-word" data-word>a</span>
         <span class="hl-word highlight-cyan font-bold-italic" data-word>Global Sensation.</span>
-      </span>
-      <span class="hero-headline-connector is-placeholder" aria-hidden="true">&amp;</span>`
+      </span>`
     : `<span class="hero-headline-line">
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
@@ -1320,8 +1320,8 @@ function applyThemeHeroCopy() {
           <span class="roller-item highlight-cyan font-bold-italic" data-word="Clicks">Clicks</span>
         </span>
       </span>
-      <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
       <span class="hero-headline-line">
+        <span class="hero-headline-connector" aria-hidden="true">&amp;</span>
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
         <span class="hl-word" data-word>Name</span>
@@ -1342,8 +1342,6 @@ function applyThemeHeroCopy() {
 // Dark mode and film distribution in Light mode. Keep the existing creator
 // markup as the source of truth, then swap only the copy/assets at the theme
 // boundary so both variants share the same layout and animation hooks.
-let homeCreatorsDarkMarkup = null;
-
 function applyThemeCreatorsCopy() {
   const section = document.querySelector('.section-creators');
   const cards = Array.from(section?.querySelectorAll('.creator-card') || []);

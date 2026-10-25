@@ -1288,7 +1288,7 @@ function applyThemeHeroCopy() {
   // Do not trust only the marker: Vite hot reloads and route handoffs can
   // preserve the marker while restoring the previous theme's DOM nodes.
   const hasExpectedMarkup = isLight
-    ? headline.querySelector('.hero-movie-screen')
+    ? headline.querySelector('.hero-movie-screen') && headline.querySelector('.hero-platform-snippet')
     : headline.querySelector('#hero-word-roller');
   if (headline.dataset.themeCopyApplied === document.documentElement.dataset.theme && hasExpectedMarkup) return;
   headline.innerHTML = isLight
@@ -1300,7 +1300,11 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>Social</span>
         <span class="hl-word" data-word>Feeds,</span>
       </span>
-      <span class="hero-headline-connector is-placeholder" aria-hidden="true">&amp;</span>
+      <span class="hero-headline-connector hero-platform-snippet hl-platform-chips" aria-label="YouTube Shorts, TikTok, and Meta">
+        <span class="platform-chip platform-chip--yt" aria-hidden="true"><span class="platform-chip-inner"><img src="/logos/youtube-shorts.png" alt="YouTube Shorts" class="platform-chip-img platform-chip-img--yt" /></span></span>
+        <span class="platform-chip platform-chip--tt" aria-hidden="true"><span class="platform-chip-inner"><img src="/logos/tiktok.svg" alt="TikTok" class="platform-chip-img platform-chip-img--tt" /></span></span>
+        <span class="platform-chip platform-chip--meta" aria-hidden="true"><span class="platform-chip-inner"><img src="/logos/meta.png" alt="Meta" class="platform-chip-img platform-chip-img--meta" /></span></span>
+      </span>
       <span class="hero-headline-line">
         <span class="hl-word" data-word>Turning</span>
         <span class="hl-word" data-word>Every</span>
@@ -3360,9 +3364,9 @@ export function initHeroReelCarousel() {
     } else if (width < 1024) {
       stageStep = Math.max(150, Math.min(185, width * 0.17));
     } else {
-      // Slightly tighter desktop slots keep the outer perspective cards inside
-      // the new viewport breathing room instead of clipping at the corners.
-      stageStep = Math.max(175, Math.min(195, width * 0.13));
+      // Pair the smaller desktop cards with a tighter rail step so the outer
+      // perspective cards remain clear of the clipped viewport corners.
+      stageStep = Math.max(165, Math.min(180, width * 0.12));
     }
     totalWidth = count * stageStep;
   };
@@ -3519,17 +3523,17 @@ export function initHeroReelCarousel() {
 
       // Desktop full rendering:
       const norm = Math.min(1.0, absU / 4.2);
-      const spreadFactor = 1.0 + Math.pow(norm, 1.35) * 0.16;
+      const spreadFactor = 1.0 + Math.pow(norm, 1.35) * 0.1;
       const screenX = x * spreadFactor;
       const baseScale = 0.80;
-      const scaleRange = 0.56;
+      const scaleRange = 0.36;
       const scale = baseScale + Math.pow(norm, 1.35) * scaleRange;
-      const maxRotY = 38;
+      const maxRotY = 52;
       const rotationY = -sign * Math.pow(norm, 0.78) * maxRotY;
       const maxRotZ = 2.8;
       const rotationZ = sign * Math.pow(norm, 1.3) * maxRotZ;
-      const baseZ = -140;
-      const zRange = 310;
+      const baseZ = -120;
+      const zRange = 180;
       const translateZ = baseZ + Math.pow(norm, 1.25) * zRange;
       const baselineY = Math.pow(norm, 1.6) * 10;
       const opacity = absU > 4.2 ? Math.max(0, 1 - (absU - 4.2) * 2.2) : 1;
@@ -3543,7 +3547,9 @@ export function initHeroReelCarousel() {
       if (perspectiveEl) {
         perspectiveEl.style.transform = `translate3d(0, 0, ${translateZ.toFixed(1)}px) rotateY(${rotationY.toFixed(2)}deg) rotateZ(${rotationZ.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
       }
-      pos.style.zIndex = String(Math.round(20 + Math.min(4.0, absU) * 20));
+      // The center reel must sit in front; edge cards recede into the arc
+      // instead of visually flattening across the foreground.
+      pos.style.zIndex = String(Math.round(100 - Math.min(4.0, absU) * 18));
       pos.classList.remove('is-center-card');
     });
   };

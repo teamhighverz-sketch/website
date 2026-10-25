@@ -3364,9 +3364,8 @@ export function initHeroReelCarousel() {
     } else if (width < 1024) {
       stageStep = Math.max(150, Math.min(185, width * 0.17));
     } else {
-      // Pair the smaller desktop cards with a tighter rail step so the outer
-      // perspective cards remain clear of the clipped viewport corners.
-      stageStep = Math.max(165, Math.min(180, width * 0.12));
+      // Desktop slots keep the full 10-reel track seamless with zero edge gap
+      stageStep = Math.max(175, Math.min(195, width * 0.13));
     }
     totalWidth = count * stageStep;
   };
@@ -3522,21 +3521,21 @@ export function initHeroReelCarousel() {
       }
 
       // Desktop full rendering:
-      const norm = Math.min(1.0, absU / 4.2);
-      const spreadFactor = 1.0 + Math.pow(norm, 1.35) * 0.1;
+      const norm = Math.min(1.0, absU / 4.4);
+      const spreadFactor = 1.0 + Math.pow(norm, 1.35) * 0.15;
       const screenX = x * spreadFactor;
       const baseScale = 0.80;
-      const scaleRange = 0.36;
+      const scaleRange = 0.54;
       const scale = baseScale + Math.pow(norm, 1.35) * scaleRange;
-      const maxRotY = 52;
+      const maxRotY = 38;
       const rotationY = -sign * Math.pow(norm, 0.78) * maxRotY;
       const maxRotZ = 2.8;
       const rotationZ = sign * Math.pow(norm, 1.3) * maxRotZ;
-      const baseZ = -120;
-      const zRange = 180;
+      const baseZ = -135;
+      const zRange = 295;
       const translateZ = baseZ + Math.pow(norm, 1.25) * zRange;
       const baselineY = Math.pow(norm, 1.6) * 10;
-      const opacity = absU > 4.2 ? Math.max(0, 1 - (absU - 4.2) * 2.2) : 1;
+      const opacity = absU > 4.65 ? Math.max(0, 1 - (absU - 4.65) / 0.32) : 1;
 
       pos.style.display = 'block';
       pos.style.transform = `translate3d(calc(-50% + ${screenX.toFixed(1)}px), calc(-50% + ${baselineY.toFixed(1)}px), 0)`;
@@ -3547,9 +3546,8 @@ export function initHeroReelCarousel() {
       if (perspectiveEl) {
         perspectiveEl.style.transform = `translate3d(0, 0, ${translateZ.toFixed(1)}px) rotateY(${rotationY.toFixed(2)}deg) rotateZ(${rotationZ.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
       }
-      // The center reel must sit in front; edge cards recede into the arc
-      // instead of visually flattening across the foreground.
-      pos.style.zIndex = String(Math.round(100 - Math.min(4.0, absU) * 18));
+      // Fisheye amphitheater layering: enlarged foreground corner cards sit cleanly in front
+      pos.style.zIndex = String(Math.round(20 + Math.min(4.0, absU) * 20));
       pos.classList.remove('is-center-card');
     });
   };

@@ -4646,7 +4646,7 @@ html.js .floating-badge-item {
 #hero .hero-headline--centered {
   overflow: visible !important;
   line-height: 1.15 !important;
-  margin-bottom: 0.75rem !important;
+  margin-bottom: clamp(1.2rem, 1.8vw, 1.65rem) !important;
 }
 
 #hero .hero-headline-line {

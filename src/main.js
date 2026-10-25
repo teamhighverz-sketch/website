@@ -1384,7 +1384,8 @@ function applyThemeCreatorsCopy() {
     return;
   }
 
-  if (section.dataset.creatorsThemeCopy === 'light') return;
+  const currentBadge = cards[0]?.querySelector('.badge-growth')?.textContent;
+  if (section.dataset.creatorsThemeCopy === 'light' && currentBadge === 'Film Concept 01') return;
 
   const header = section.querySelector('.creators-header');
   if (header) {
@@ -1400,9 +1401,9 @@ function applyThemeCreatorsCopy() {
       image: '/assets/movie/runner.png',
       alt: 'Runner film poster',
       title: 'Runner',
-      platform: 'Film Concept 01',
+      platform: '18.3M Views',
       description: 'Turning cinematic scenes into high-retention short-form clips to drive massive organic reach across feeds.',
-      badge: '↗ 18.3M Views',
+      badge: 'Film Concept 01',
       before: ['BEFORE', 'Big Screen', 'Cinema Release'],
       after: ['AFTER', 'Social Feed', '18.3M+ Views'],
       meta: [
@@ -1416,9 +1417,9 @@ function applyThemeCreatorsCopy() {
       image: '/assets/movie/kingofkings.png',
       alt: 'King of Kings film poster',
       title: 'King of Kings',
-      platform: 'Film Concept 02',
+      platform: '38.5M Views',
       description: 'Transforming epic movie scenes into scroll-stopping clips that grab attention and drive viral discovery.',
-      badge: '↗ 38.5M Views',
+      badge: 'Film Concept 02',
       before: ['BEFORE', 'Big Screen', 'Cinema Release'],
       after: ['AFTER', 'Social Feed', '38.5M+ Views'],
       meta: [
@@ -1541,13 +1542,17 @@ window.addEventListener('hv:themechange', () => {
     Array.from(words),
     ...(description ? [description] : [])
   ]);
+  // Sharpen the new theme in place. A vertical offset makes the whole hero
+  // look like it jumps even when its layout footprint is stable.
+  gsap.set(words, { y: 0 });
   gsap.fromTo(words,
-    { opacity: 0, y: 14, filter: 'blur(8px)' },
+    { opacity: 0, y: 0, filter: 'blur(8px)' },
     { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.48, stagger: 0.045, ease: 'power3.out', clearProps: 'filter,transform' }
   );
   if (description) {
+    gsap.set(description, { y: 0 });
     gsap.fromTo(description,
-      { opacity: 0, y: 10, filter: 'blur(6px)' },
+      { opacity: 0, y: 0, filter: 'blur(6px)' },
       { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.42, delay: 0.14, ease: 'power3.out', clearProps: 'filter,transform' }
     );
   }

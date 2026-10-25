@@ -2039,9 +2039,12 @@ body.mobile-menu-active .work-creator-card {
 
 /* Connector between the two hero statements. */
 .hero-headline-connector {
-  display: block;
+  display: grid;
+  place-items: center;
   width: max-content;
-  margin: 0.04em auto 0.04em;
+  height: clamp(3.6rem, 4vw, 4.1rem);
+  min-height: clamp(3.6rem, 4vw, 4.1rem);
+  margin: 0.02em auto;
   color: var(--accent-cyan);
   font-family: var(--font-display);
   font-size: 0.74em;
@@ -2082,7 +2085,9 @@ body.mobile-menu-active .work-creator-card {
   align-items: center;
   justify-content: center;
   width: max-content;
-  margin: 0.02em auto 0.02em;
+  height: clamp(3.6rem, 4vw, 4.1rem);
+  min-height: clamp(3.6rem, 4vw, 4.1rem);
+  margin: 0.02em auto;
   padding: 0;
   line-height: 1;
   vertical-align: middle;
@@ -2095,9 +2100,9 @@ body.mobile-menu-active .work-creator-card {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1;
-  width: clamp(32px, 2.35vw, 40px);
-  height: clamp(32px, 2.35vw, 40px);
-  padding: 2.5px;
+  width: clamp(54px, 4vw, 68px);
+  height: clamp(54px, 4vw, 68px);
+  padding: 4px;
   border-radius: 26%;
   background: #ffffff;
   box-shadow: 0 0.08em 0.22em rgba(0, 0, 0, 0.10), 0 0.02em 0.05em rgba(0, 0, 0, 0.06);
@@ -2112,7 +2117,7 @@ body.mobile-menu-active .work-creator-card {
 }
 
 [data-theme="light"] .hero-platform-snippet .platform-chip + .platform-chip {
-  margin-left: clamp(-10px, -0.75vw, -8px);
+  margin-left: clamp(-18px, -1.2vw, -14px);
 }
 
 [data-theme="light"] .hero-platform-snippet .platform-chip-inner {
@@ -2172,14 +2177,14 @@ body.mobile-menu-active .work-creator-card {
   }
 
   [data-theme="light"] .hero-platform-snippet .platform-chip {
-    width: 25px;
-    height: 25px;
-    padding: 2px;
+    width: 42px;
+    height: 42px;
+    padding: 3px;
     border-radius: 24%;
   }
 
   [data-theme="light"] .hero-platform-snippet .platform-chip + .platform-chip {
-    margin-left: -7px;
+    margin-left: -12px;
   }
 }
 
@@ -4456,7 +4461,7 @@ html.js .floating-badge-item {
    ========================================================================== */
 #hero.hero-section {
   min-height: auto;
-  padding: 5.5rem 0 clamp(1.5rem, 2.5vh, 2.25rem);
+  padding: 5.5rem 0 clamp(4.5rem, 6vw, 6rem);
   justify-content: flex-start;
   overflow: hidden;
   background: rgba(5, 11, 16, 0.58);
@@ -4693,6 +4698,8 @@ html.js .floating-badge-item {
   /* Give the outer perspective cards a breathing room before the page edge;
      this removes the hard corner cuts without changing card proportions. */
   padding-inline: clamp(2rem, 4.6vw, 5.5rem);
+  padding-top: clamp(3.5rem, 5vw, 5rem);
+  padding-bottom: clamp(3.5rem, 5vw, 5rem);
   margin: clamp(0.35rem, 0.8vw, 0.85rem) calc(50% - 50vw) 0;
   overflow: hidden;
   perspective: 880px;
@@ -6782,8 +6789,8 @@ html.js .floating-badge-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: nowrap;
+  gap: 0.6rem;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -6791,8 +6798,10 @@ html.js .floating-badge-item {
   min-width: 0;
   flex: 0 1 auto;
   white-space: nowrap;
-  font-size: clamp(1.2rem, 1.45vw, 1.55rem);
-  line-height: 1.15;
+  font-size: clamp(1.55rem, 2.1vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
 }
 
 .section-creators.is-movie-showcase .creator-img {
@@ -6806,9 +6815,9 @@ html.js .floating-badge-item {
   flex: 0 0 auto;
   min-width: 0;
   white-space: nowrap;
-  font-size: clamp(0.56rem, 0.66vw, 0.68rem);
-  padding: 0.28rem 0.55rem;
-  gap: 0.3rem;
+  font-size: clamp(0.62rem, 0.72vw, 0.74rem);
+  padding: 0.32rem 0.62rem;
+  gap: 0.32rem;
   line-height: 1;
 }
 
@@ -20041,6 +20050,12 @@ html.theme-switching.theme-target-dark::before {
   background: rgba(3, 8, 12, 0.24);
 }
 
+/* Keep the hero anchors stationary while only opacity and blur change. */
+html.theme-switching #hero .hero-content--centered,
+html.theme-switching #hero .carousel-viewport {
+  transform: none !important;
+}
+
 @keyframes theme-optical-veil {
   0% { opacity: 0; }
   18% { opacity: 1; }
@@ -20150,5 +20165,80 @@ html.theme-switching.theme-target-dark::before {
   [data-theme="light"] #hero .hero-movie-screen:focus-visible::after {
     opacity: 1;
     transform: scaleX(1);
+  }
+}
+
+/* The two theme variants share the exact same line and connector geometry.
+   This reserves the hero's vertical footprint before either copy is painted,
+   preventing the headline and reel rail from jumping during a theme switch. */
+#hero .hero-headline--centered,
+#hero .hero-headline-line {
+  line-height: 1.15 !important;
+}
+
+@media (max-width: 640px) {
+  #hero .hero-headline-connector,
+  [data-theme="light"] #hero .hero-platform-snippet {
+    height: 2.85rem;
+    min-height: 2.85rem;
+  }
+}
+
+/* Decorative platform marks never participate in the headline's line box.
+   Both themes therefore keep the same connector footprint during a toggle. */
+[data-theme="light"] #hero .hero-platform-snippet {
+  display: block !important;
+  position: relative;
+  width: clamp(10rem, 11vw, 11.5rem) !important;
+  height: clamp(3.6rem, 4vw, 4.1rem) !important;
+  min-height: clamp(3.6rem, 4vw, 4.1rem) !important;
+  margin: 0.02em auto !important;
+}
+
+[data-theme="light"] #hero .hero-platform-snippet .platform-chip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: 0 !important;
+  width: clamp(46px, 3.35vw, 56px);
+  height: clamp(46px, 3.35vw, 56px);
+  padding: 3px;
+}
+
+[data-theme="light"] #hero .hero-platform-snippet .platform-chip--yt {
+  transform: translate(calc(-50% - 2.65rem), -50%) rotate(6deg) !important;
+}
+
+[data-theme="light"] #hero .hero-platform-snippet .platform-chip--tt {
+  transform: translate(-50%, -50%) rotate(-6deg) !important;
+}
+
+[data-theme="light"] #hero .hero-platform-snippet .platform-chip--meta {
+  transform: translate(calc(-50% + 2.65rem), -50%) !important;
+}
+
+@media (max-width: 640px) {
+  [data-theme="light"] #hero .hero-platform-snippet {
+    width: 7.6rem !important;
+    height: 2.85rem !important;
+    min-height: 2.85rem !important;
+  }
+
+  [data-theme="light"] #hero .hero-platform-snippet .platform-chip--yt {
+    width: 38px;
+    height: 38px;
+    transform: translate(calc(-50% - 1.75rem), -50%) rotate(6deg) !important;
+  }
+
+  [data-theme="light"] #hero .hero-platform-snippet .platform-chip--meta {
+    width: 38px;
+    height: 38px;
+    transform: translate(calc(-50% + 1.75rem), -50%) !important;
+  }
+
+  [data-theme="light"] #hero .hero-platform-snippet .platform-chip--tt {
+    width: 38px;
+    height: 38px;
+    transform: translate(-50%, -50%) rotate(-6deg) !important;
   }
 }

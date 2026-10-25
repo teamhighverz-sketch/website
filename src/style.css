@@ -2280,14 +2280,19 @@ body.mobile-menu-active .work-creator-card {
   margin-top: -0.22em;
   margin-bottom: -0.26em;
   margin-left: -0.06em;
-  margin-right: -0.12em;
+  margin-right: 0.04em;
   overflow: visible;
   box-sizing: content-box;
 }
 
+.adscale-reveal-word.highlight-cyan:not(:last-child),
+.highlight-cyan .adscale-reveal-word:not(:last-child) {
+  margin-right: 0.04em !important;
+}
+
 .adscale-reveal-word.highlight-cyan:last-child,
 .highlight-cyan .adscale-reveal-word:last-child {
-  margin-right: -0.22em;
+  margin-right: -0.22em !important;
 }
 
 [data-theme="light"] .adscale-reveal-word.highlight-cyan,
@@ -8310,14 +8315,14 @@ html.js .floating-badge-item {
 
 [data-theme="light"] .accord-body-inner .founder-quote,
 [data-theme="light"] .founder-quote {
-  background: linear-gradient(135deg, rgba(235, 245, 252, 0.9) 0%, rgba(220, 235, 247, 0.75) 100%) !important;
-  border: 1px solid rgba(14, 165, 233, 0.22) !important;
-  border-left: 3.5px solid #0EA5E9 !important;
+  background: linear-gradient(135deg, rgba(126, 141, 155, 0.22) 0%, rgba(79, 95, 110, 0.14) 100%) !important;
+  border: 1px solid rgba(99, 116, 132, 0.28) !important;
+  border-left: 3.5px solid rgba(51, 65, 79, 0.72) !important;
   border-radius: 0 16px 16px 0;
-  color: #0f172a !important;
+  color: #172033 !important;
   backdrop-filter: blur(16px) saturate(135%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(135%) !important;
-  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.08), inset 0 1px 1px #ffffff !important;
+  box-shadow: 0 5px 18px rgba(40, 54, 68, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.42) !important;
   font-style: italic;
   font-size: 1rem;
   line-height: 1.6;
@@ -9480,6 +9485,11 @@ html.js .floating-badge-item {
   padding-right: 0.04em;
   padding-left: 0.02em;
   overflow: visible;
+}
+
+.work-hero-title .highlight-cyan .adscale-reveal-word:not(:last-child),
+.work-hero-title .adscale-reveal-word.highlight-cyan:not(:last-child) {
+  margin-right: 0.04em !important;
 }
 
 .work-hero-desc {
@@ -13006,6 +13016,16 @@ html.js .floating-badge-item {
   white-space: nowrap;
 }
 
+.team-hero-title .highlight-cyan .adscale-reveal-word,
+.team-hero-title .adscale-reveal-word.highlight-cyan {
+  padding-right: 0.14em !important;
+}
+
+.team-hero-title .highlight-cyan .adscale-reveal-word:not(:last-child),
+.team-hero-title .adscale-reveal-word.highlight-cyan:not(:last-child) {
+  margin-right: -0.06em !important;
+}
+
 .team-hero-desc {
   font-size: 1.12rem;
   line-height: 1.7;
@@ -13430,9 +13450,10 @@ html.js .floating-badge-item {
 .accord-body-inner {
   padding: 0 1.6rem 1.6rem;
   border-top: 1px solid rgba(205, 250, 253, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 1.3rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  align-items: center;
+  gap: 1.25rem 1.8rem;
   padding-top: 1.4rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 35%);
 }
@@ -13441,10 +13462,12 @@ html.js .floating-badge-item {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  grid-column: 1 / -1;
 }
 
 .accord-body-inner .founder-bio {
-  width: 100%;
+  grid-column: 1;
+  min-width: 0;
   margin: 0;
   color: rgba(205, 222, 226, 0.86);
   font-size: 0.96rem;
@@ -13459,18 +13482,20 @@ html.js .floating-badge-item {
   margin-top: 0.85rem;
 }
 
-/* Quote banner placed cleanly in the middle */
+/* Quote banner placed on the side, vertically centered in the middle */
 .accord-body-inner .founder-quote {
+  grid-column: 2;
+  align-self: center;
   width: 100%;
   box-sizing: border-box;
-  margin: 0.2rem 0;
-  padding: 1.15rem 1.45rem;
+  margin: 0;
+  padding: 1.35rem 1.55rem;
   border: 1px solid rgba(213, 221, 229, 0.16);
-  border-left: 3.5px solid rgba(0, 229, 255, 0.75);
+  border-left: 3px solid rgba(188, 202, 214, 0.8);
   border-radius: 0 16px 16px 0;
-  background: linear-gradient(135deg, rgba(70, 80, 92, 0.55), rgba(31, 39, 49, 0.65));
-  color: rgba(241, 246, 249, 0.95);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(70, 80, 92, 0.76), rgba(31, 39, 49, 0.84));
+  color: rgba(241, 246, 249, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   font-style: italic;
   font-size: 1.02rem;
   line-height: 1.6;
@@ -13479,12 +13504,12 @@ html.js .floating-badge-item {
 /* reuse .domain-chip from existing styles */
 
 .accord-stats {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.8rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 1.2rem;
-  grid-column: 1 / -1;
 }
 
 .accord-stat {
@@ -13513,22 +13538,40 @@ html.js .floating-badge-item {
   color: rgba(178, 202, 209, 0.68);
 }
 
-/* Vivekk's three principles use the existing stat-card structure, but read
+/* Founder principle cards use the existing stat-card structure, but read
    as concise statements rather than artificial operational metrics. */
+.accord-stat--principle,
+#founder-krishna .accord-stat--principle,
 #founder-vivek .accord-stat--principle {
   gap: 0.38rem;
 }
 
+.accord-stat--principle .accord-stat-val,
+#founder-krishna .accord-stat--principle .accord-stat-val,
 #founder-vivek .accord-stat--principle .accord-stat-val {
   font-size: clamp(1rem, 1.3vw, 1.18rem);
   letter-spacing: -0.015em;
 }
 
+.accord-stat--principle .accord-stat-lbl,
+#founder-krishna .accord-stat--principle .accord-stat-lbl,
 #founder-vivek .accord-stat--principle .accord-stat-lbl {
   font-size: 0.74rem;
   line-height: 1.45;
   letter-spacing: 0;
   text-transform: none;
+}
+
+@media (max-width: 768px) {
+  .accord-body-inner {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .accord-body-inner .founder-bio,
+  .accord-body-inner .founder-quote {
+    grid-column: 1;
+  }
 }
 
 @media (max-width: 640px) {
@@ -14024,6 +14067,11 @@ html.js .floating-badge-item {
   padding-right: 0.04em;
   padding-left: 0.02em;
   overflow: visible;
+}
+
+.why-hero-title .highlight-cyan .adscale-reveal-word:not(:last-child),
+.why-hero-title .adscale-reveal-word.highlight-cyan:not(:last-child) {
+  margin-right: 0.04em !important;
 }
 
 .why-hero-subtitle {
@@ -15175,7 +15223,7 @@ main+footer {
 .growth-widgets-heading h2 .highlight-cyan,
 .growth-widgets-heading h2 .adscale-reveal-word.highlight-cyan {
   margin-left: 0;
-  margin-right: -0.12em;
+  margin-right: 0.04em;
   padding-right: 0.22em;
   padding-bottom: 0.26em;
   overflow: visible;
@@ -18625,7 +18673,7 @@ body::after {
 .cta-main-title .adscale-reveal-word.highlight-cyan,
 .cta-main-title .highlight-cyan .adscale-reveal-word {
   padding-right: 0.26em;
-  margin-right: -0.16em;
+  margin-right: 0.04em;
   overflow: visible;
 }
 

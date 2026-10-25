@@ -3820,17 +3820,14 @@ export function initHeroReelCarousel() {
     const carouselViewport = viewport;
     carouselViewport.classList.add('theme-media-swapping');
 
-    // On phones, only the five cards currently occupying the rail need an
-    // immediate source swap. Loading all ten alternate films at once was
-    // enough to starve the active reel and make the carousel look frozen.
-    const isMobileThemeSwap = cachedViewportWidth <= 768;
+    // On both desktop and mobile, prioritize the visible cards currently occupying
+    // the forward perspective rail. Loading 10 alternate videos at once starves
+    // browser hardware decoders and causes uneven carousel stutter.
+    let centerIdx = Math.round(scrollPosition / stageStep) % count;
+    if (centerIdx < 0) centerIdx += count;
     const visibleThemeIndexes = new Set();
-    if (isMobileThemeSwap) {
-      let centerIdx = Math.round(scrollPosition / stageStep) % count;
-      if (centerIdx < 0) centerIdx += count;
-      for (let offset = -2; offset <= 2; offset += 1) {
-        visibleThemeIndexes.add((centerIdx + offset + count) % count);
-      }
+    for (let offset = -2; offset <= 2; offset += 1) {
+      visibleThemeIndexes.add((centerIdx + offset + count) % count);
     }
 
     // Cancel stale pending clones from a rapid light/dark/light toggle before
@@ -3838,6 +3835,7 @@ export function initHeroReelCarousel() {
     // the active card and keeps one source per slot.
     carouselViewport.querySelectorAll('.card-video-theme-next').forEach((pending) => pending.remove());
 
+    const pendingHandoffs = [];
     activeVideos.forEach((video, index) => {
       if (!video) return;
       const nextSrc = getThemeVideoSource(video);
@@ -3850,11 +3848,8 @@ export function initHeroReelCarousel() {
         video.setAttribute('poster', video.dataset.darkPoster);
       }
 
-      // Hidden mobile slots keep only the new poster until they enter the
-      // five-card window. Clearing their old source prevents a stale dark
-      // frame from appearing at the edge of a light-theme rail; loadVideo()
-      // will attach the current theme when that card becomes active.
-      if (isMobileThemeSwap && !visibleThemeIndexes.has(index)) {
+      // Non-visible peripheral cards only receive the new poster until they rotate into view
+      if (!visibleThemeIndexes.has(index)) {
         try {
           video.pause();
           video.removeAttribute('src');
@@ -3886,58 +3881,17 @@ export function initHeroReelCarousel() {
       nextVideo.setAttribute('autoplay', '');
 
       if (theme === 'light') {
-        nextVideo.setAttribute('poster', video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`);
+        nextVideo.setAttribute('poster', lightPoster);
       } else if (video.dataset.darkPoster) {
         nextVideo.setAttribute('poster', video.dataset.darkPoster);
       }
 
-      const shouldResume = !video.paused && !document.hidden;
-      let revealed = false;
-      let swapFallbackId = null;
-      const revealThemeVideo = () => {
-        if (revealed) return;
-        revealed = true;
-        if (swapFallbackId !== null) window.clearTimeout(swapFallbackId);
-        if (swapGeneration !== themeSwapGeneration) {
-          video.dataset.themeSwapPending = '';
-          nextVideo.remove();
-          return;
-        }
-        if (shouldResume) {
-          const playAttempt = nextVideo.play();
-          playAttempt?.catch?.(() => {});
-        }
-        requestAnimationFrame(() => {
-          nextVideo.style.opacity = '1';
-          video.style.opacity = '0';
-        });
-        window.setTimeout(() => {
-          if (swapGeneration !== themeSwapGeneration) {
-            nextVideo.remove();
-            return;
-          }
-          if (video.isConnected) video.remove();
-          nextVideo.classList.remove('card-video-theme-next');
-          nextVideo.style.opacity = '';
-          videos[index] = nextVideo;
-          if (videos.every((item) => item?.dataset.activeThemeSrc === getThemeVideoSource(item))) {
-            carouselViewport.classList.remove('theme-media-swapping');
-          }
-        }, 260);
-      };
-
-      nextVideo.addEventListener('canplay', revealThemeVideo, { once: true });
-      nextVideo.addEventListener('loadeddata', revealThemeVideo, { once: true });
-      nextVideo.addEventListener('error', revealThemeVideo, { once: true });
-      // A slow or unsupported alternate source must never hold the carousel
-      // in its swapping state indefinitely. The poster remains visible while
-      // the next source continues buffering in the background.
-      swapFallbackId = window.setTimeout(revealThemeVideo, 420);
       videoCard.appendChild(nextVideo);
       nextVideo.setAttribute('src', nextSrc);
       nextVideo.load();
-      if (nextVideo.readyState >= 2) revealThemeVideo();
+      pendingHandoffs.push({ video, nextVideo, index });
     });
+
     cardPositions.forEach((position, index) => {
       const viewCount = position.querySelector('.reel-view-count');
       if (!viewCount) return;
@@ -3946,13 +3900,34 @@ export function initHeroReelCarousel() {
       if (text) text.textContent = `${count} views`;
       viewCount.setAttribute('aria-label', `${count} views`);
     });
-    lastVideoPriorityIndex = -1;
-    window.setTimeout(() => {
-      if (swapGeneration === themeSwapGeneration) {
-        updateVideoPriority(true);
+
+    // Synchronized crossfade: transition all visible cards together under the optical veil
+    const triggerSynchronizedSwap = () => {
+      if (swapGeneration !== themeSwapGeneration) return;
+      pendingHandoffs.forEach(({ video, nextVideo }) => {
+        nextVideo.style.opacity = '1';
+        video.style.opacity = '0';
+        try {
+          const playAttempt = nextVideo.play();
+          playAttempt?.catch?.(() => {});
+        } catch (_) {}
+      });
+
+      window.setTimeout(() => {
+        if (swapGeneration !== themeSwapGeneration) return;
+        pendingHandoffs.forEach(({ video, nextVideo, index }) => {
+          if (video.isConnected) video.remove();
+          nextVideo.classList.remove('card-video-theme-next');
+          nextVideo.style.opacity = '';
+          videos[index] = nextVideo;
+        });
         carouselViewport.classList.remove('theme-media-swapping');
-      }
-    }, isMobileThemeSwap ? 280 : 380);
+        lastVideoPriorityIndex = -1;
+        updateVideoPriority(true);
+      }, 340);
+    };
+
+    window.setTimeout(triggerSynchronizedSwap, 140);
   };
   window.addEventListener('hv:themechange', onThemeChange);
   window.__hvHeroReelRefreshTheme = onThemeChange;

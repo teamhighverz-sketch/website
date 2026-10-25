@@ -22,57 +22,16 @@ function getInitialTheme() {
 // ─── Apply theme to DOM ───
 let themeTransitionTimer = null;
 
-// The home hero contains theme-specific copy and media. Lock the dimensions
-// of the flow-sensitive blocks before swapping the theme so the carousel keeps
-// the exact same vertical anchor while the new content and reels crossfade in.
-let homeHeroLayoutLocked = false;
-function lockHomeHeroLayout() {
-  const selectors = [
-    // Freeze only the flow-sensitive hero blocks. Keeping the outer section
-    // height locked permanently leaves a large empty tail after the theme
-    // copy settles, while these inner locks preserve the handoff anchor.
-    '#hero .hero-trust-badge-wrap',
-    '#hero #hero-headline',
-    '#hero #hero-desc',
-    '#hero #hero-actions',
-    '#hero #heroCarouselViewport'
-  ];
-  const elements = selectors
-    .map((selector) => document.querySelector(selector))
-    .filter(Boolean);
-  if (!elements.length) return;
-  elements.forEach((element) => {
-    if (!element.dataset.themeLayoutHeight) {
-      const height = element.getBoundingClientRect().height;
-      if (height > 0) element.dataset.themeLayoutHeight = String(Math.ceil(height));
-    }
-    const height = element.dataset.themeLayoutHeight;
-    if (height) element.style.height = `${height}px`;
-  });
-  homeHeroLayoutLocked = true;
-}
 
-function unlockHomeHeroLayout() {
-  if (!homeHeroLayoutLocked) return;
-  document.querySelectorAll('[data-theme-layout-height]').forEach((element) => {
-    element.style.removeProperty('height');
-    delete element.dataset.themeLayoutHeight;
-  });
-  homeHeroLayoutLocked = false;
-}
-
-window.addEventListener('resize', unlockHomeHeroLayout, { passive: true });
 
 function applyTheme(theme, animate = false) {
   if (animate) {
-    lockHomeHeroLayout();
     const root = document.documentElement;
     root.classList.remove('theme-target-light', 'theme-target-dark');
     root.classList.add('theme-switching', theme === 'light' ? 'theme-target-light' : 'theme-target-dark');
     if (themeTransitionTimer) window.clearTimeout(themeTransitionTimer);
     themeTransitionTimer = window.setTimeout(() => {
       root.classList.remove('theme-switching', 'theme-target-light', 'theme-target-dark');
-      unlockHomeHeroLayout();
       themeTransitionTimer = null;
     }, 760);
   }

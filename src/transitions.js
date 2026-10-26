@@ -192,15 +192,15 @@ let isTransitioning = false;
 // page, and navbar from resolving at different speeds (the source of the
 // brief snap users could see on slower devices).
 const ROUTE_TRANSITION = Object.freeze({
-  safetyMs: 4200,
-  outgoingDuration: 0.48,
-  incomingDelay: 0.12,
-  incomingDuration: 0.86,
-  outgoingBlur: 32,
-  incomingBlur: 48,
-  navbarOutDuration: 0.46,
-  navbarInDelay: 0.16,
-  navbarInDuration: 0.56,
+  safetyMs: 5000,
+  outgoingDuration: 0.72,
+  incomingDelay: 0.15,
+  incomingDuration: 1.1,
+  outgoingBlur: 88,
+  incomingBlur: 100,
+  navbarOutDuration: 0.55,
+  navbarInDelay: 0.20,
+  navbarInDuration: 0.75,
 });
 
 /**
@@ -498,8 +498,9 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       }
     };
 
-    // 7. Execute the synchronized blur handoff. Text choreography runs under
-    // the incoming blur, so it sharpens directly with the page reveal.
+    const fluidCanvas = document.querySelector('.global-fluid-canvas');
+    const ambientGlow = document.querySelector('.ambient-glow');
+
     const transitionTimeline = gsap.timeline({
       defaults: { overwrite: 'auto' },
       onStart: startIncomingScripts,
@@ -517,6 +518,12 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         shell.remove();
         if (navbar) {
           gsap.set(navbar, { clearProps: 'all' });
+        }
+        if (fluidCanvas) {
+          gsap.set(fluidCanvas, { clearProps: 'all' });
+        }
+        if (ambientGlow) {
+          gsap.set(ambientGlow, { clearProps: 'all' });
         }
 
         // Route classes were installed before initialization; preserve any
@@ -600,6 +607,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         clearProps: 'filter,willChange',
       }, ROUTE_TRANSITION.incomingDelay);
 
+
     if (navbar) {
       transitionTimeline.to(navbar, {
         opacity: 0,
@@ -627,6 +635,10 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
   } catch (err) {
     console.error('Page transition encountered an error:', err);
     window.clearTimeout(transitionSafetyTimer);
+    const fluidCanvas = document.querySelector('.global-fluid-canvas');
+    if (fluidCanvas) gsap.set(fluidCanvas, { clearProps: 'all' });
+    const ambientGlow = document.querySelector('.ambient-glow');
+    if (ambientGlow) gsap.set(ambientGlow, { clearProps: 'all' });
     window.location.href = targetHref;
     isTransitioning = false;
   }

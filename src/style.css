@@ -4773,8 +4773,6 @@ html.js .floating-badge-item {
   opacity: 0.75;
   background: transparent !important;
   mix-blend-mode: normal;
-  filter: none !important;
-  transform: none !important;
 }
 
 [data-theme="light"] main,
@@ -4819,7 +4817,6 @@ html.js .floating-badge-item {
 
   [data-theme="light"] .global-fluid-canvas {
     opacity: 0.65;
-    filter: none !important;
   }
 }
 
@@ -4896,21 +4893,17 @@ html.js .floating-badge-item {
    The rail geometry and perspective stay 100% stable while cards softly
    dissolve into blur and smoothly re-emerge with the new theme's media. */
 .carousel-viewport.theme-reels-dissolving .video-card {
-  opacity: 0.12;
-  filter: blur(12px) saturate(85%);
-  transform: scale(0.975);
-  transition: opacity 220ms cubic-bezier(0.4, 0, 0.2, 1),
-              filter 220ms cubic-bezier(0.4, 0, 0.2, 1),
-              transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.38;
+  filter: blur(3px);
+  transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1),
+              filter 160ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .carousel-viewport.theme-reels-revealing .video-card {
   opacity: 1;
-  filter: blur(0px) saturate(100%);
-  transform: scale(1);
-  transition: opacity 560ms cubic-bezier(0.16, 1, 0.3, 1),
-              filter 560ms cubic-bezier(0.16, 1, 0.3, 1),
-              transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
+  filter: blur(0px);
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 320ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .carousel-viewport.theme-reels-deferred {
@@ -14964,7 +14957,6 @@ html {
 
 [data-theme="light"] body.page-is-transitioning .global-fluid-canvas {
   opacity: 0.75 !important;
-  filter: none !important;
 }
 
 /* Lock scroll and interactions during transition */
@@ -15006,13 +14998,10 @@ body.cursor-active .cursor-ring {
   inset: 0 !important;
   z-index: 5 !important;
   pointer-events: none !important;
-  /* The blurred incoming shell and outgoing page remain visible together. A
-     solid backdrop here creates the black flash users see on slow phones. */
   background-color: transparent !important;
 }
 
-body.page-is-transitioning,
-body.page-is-transitioning .ambient-glow {
+body.page-is-transitioning {
   transition: none !important;
 }
 
@@ -15026,11 +15015,15 @@ body.page-is-transitioning *::after {
   transition: none !important;
 }
 
+/* Fluid background remains continuous, crisp, and unblurred */
 body.page-is-transitioning .global-fluid-canvas {
   transition: none !important;
+  animation: none !important;
+  filter: none !important;
+  transform: none !important;
 }
 
-/* Atmospheric decoration remains stable during route transitions to prevent flash or flicker */
+/* Atmospheric decoration remains stable during route transitions */
 body.page-is-transitioning .ambient-glow,
 body.page-is-transitioning .grain-overlay,
 body.page-is-transitioning .hero-bg-accent {
@@ -19855,12 +19848,12 @@ body::after {
    keeping the content at a fixed scale so there is no perceived jump. */
 ::view-transition-old(root) {
   z-index: 1;
-  animation: route-page-blur-out 0.48s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: route-page-blur-out 0.72s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 ::view-transition-new(root) {
   z-index: 2;
-  animation: route-page-blur-in 0.86s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: route-page-blur-in 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes route-page-blur-out {
@@ -19869,21 +19862,31 @@ body::after {
     filter: blur(0px);
   }
 
+  60% {
+    opacity: 0.4;
+    filter: blur(48px);
+  }
+
   100% {
     opacity: 0;
-    filter: blur(32px);
+    filter: blur(88px);
   }
 }
 
 @keyframes route-page-blur-in {
   0% {
     opacity: 0;
-    filter: blur(48px);
+    filter: blur(100px);
   }
 
-  35% {
-    opacity: 0.85;
-    filter: blur(20px);
+  30% {
+    opacity: 0.7;
+    filter: blur(52px);
+  }
+
+  70% {
+    opacity: 0.95;
+    filter: blur(16px);
   }
 
   100% {
@@ -19894,11 +19897,11 @@ body::after {
 
 @media (max-width: 720px) {
   ::view-transition-old(root) {
-    animation-duration: 0.40s;
+    animation-duration: 0.60s;
   }
 
   ::view-transition-new(root) {
-    animation-duration: 0.68s;
+    animation-duration: 0.90s;
   }
 
   @keyframes route-page-blur-out {
@@ -19909,14 +19912,14 @@ body::after {
 
     100% {
       opacity: 0;
-      filter: blur(24px);
+      filter: blur(64px);
     }
   }
 
   @keyframes route-page-blur-in {
     0% {
       opacity: 0;
-      filter: blur(34px);
+      filter: blur(72px);
     }
 
     100% {
@@ -20565,22 +20568,20 @@ html.theme-switching::before {
   pointer-events: none;
   opacity: 0;
   background: rgba(3, 8, 12, 0.16);
-  backdrop-filter: blur(2.5px) saturate(106%);
-  -webkit-backdrop-filter: blur(2.5px) saturate(106%);
-  animation: theme-optical-veil 680ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: theme-optical-veil 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: opacity;
   transform: translateZ(0);
 }
 
 html.theme-switching.theme-target-light::before {
   background:
-    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.28), transparent 65%),
-    rgba(224, 242, 254, 0.24);
-  animation: theme-optical-veil-light 680ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.35), transparent 70%),
+    rgba(224, 242, 254, 0.22);
+  animation: theme-optical-veil-light 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 html.theme-switching.theme-target-dark::before {
-  background: rgba(3, 8, 12, 0.20);
+  background: rgba(3, 8, 12, 0.22);
 }
 
 /* Keep the hero anchors stationary while only opacity and blur change. */
@@ -20591,8 +20592,8 @@ html.theme-switching #hero .carousel-viewport {
 
 @keyframes theme-optical-veil {
   0% { opacity: 0; }
-  22% { opacity: 0.72; }
-  60% { opacity: 0.32; }
+  30% { opacity: 0.65; }
+  70% { opacity: 0.25; }
   100% { opacity: 0; }
 }
 
@@ -20600,8 +20601,8 @@ html.theme-switching #hero .carousel-viewport {
    Light mode uses the same blur language, with a gentler blue-white ramp. */
 @keyframes theme-optical-veil-light {
   0% { opacity: 0; }
-  22% { opacity: 0.65; }
-  60% { opacity: 0.28; }
+  30% { opacity: 0.60; }
+  70% { opacity: 0.22; }
   100% { opacity: 0; }
 }
 

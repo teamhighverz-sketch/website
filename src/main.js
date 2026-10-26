@@ -3332,6 +3332,7 @@ export function initHeroReelCarousel() {
     video.setAttribute('autoplay', '');
 
     const tryPlay = () => {
+      delete video.dataset.playPending;
       if (!video.paused) return;
       const playAttempt = video.play();
       if (playAttempt && playAttempt.catch) {
@@ -3342,6 +3343,8 @@ export function initHeroReelCarousel() {
     if (video.readyState >= 2) {
       tryPlay();
     } else {
+      if (video.dataset.playPending === 'true') return;
+      video.dataset.playPending = 'true';
       video.addEventListener('canplay', tryPlay, { once: true });
       video.addEventListener('loadeddata', tryPlay, { once: true });
       tryPlay();
@@ -3434,17 +3437,24 @@ export function initHeroReelCarousel() {
         }
       });
     } else {
-      // The desktop composition is a live reel wall: every visible card plays,
-      // not just the focused card.
+      // The desktop amphitheater wall keeps visible cards (center ± 3) playing
+      // while reserving decoders from the hidden rear cards to prevent GPU decoder stall.
       let centerIdx = Math.round(scrollPosition / stageStep) % count;
       if (centerIdx < 0) centerIdx += count;
       if (!force && centerIdx === lastVideoPriorityIndex) return;
       lastVideoPriorityIndex = centerIdx;
 
-      videos.forEach((video) => {
+      videos.forEach((video, idx) => {
         if (!video) return;
-        loadVideo(video, 'high');
-        playVideo(video);
+        let dist = Math.abs(idx - centerIdx);
+        if (dist > count / 2) dist = count - dist;
+        if (dist <= 3) {
+          loadVideo(video, 'high');
+          playVideo(video);
+        } else {
+          loadVideo(video, 'low');
+          try { video.pause(); } catch (_) { }
+        }
       });
     }
   };
@@ -3863,14 +3873,27 @@ export function initHeroReelCarousel() {
   // source, retain the existing card geometry/animation, and let the browser
   // cache serve any previously loaded reel immediately on subsequent swaps.
   let themeSwapGeneration = 0;
+  let themeTransitionTimers = [];
+  const clearThemeTransitionTimers = () => {
+    themeTransitionTimers.forEach((t) => clearTimeout(t));
+    themeTransitionTimers = [];
+  };
+
   const onThemeChange = (options = {}) => {
-    // The source swap happens at the text handoff. Do not construct clone
-    // videos here: detached clones were intermittently losing autoplay when
-    // reattached, which left the rail frozen on some browsers.
     if (options.preloadOnly) return;
     const swapGeneration = ++themeSwapGeneration;
+    clearThemeTransitionTimers();
     const activeVideos = videos.slice();
     const carouselViewport = viewport;
+
+    // Fail-safe unlock: under NO circumstance can the reel remain stuck or frozen
+    const safetyTimer = window.setTimeout(() => {
+      isThemeReelTransitioning = false;
+      carouselViewport.classList.remove('theme-reels-dissolving', 'theme-media-swapping', 'theme-reels-deferred', 'theme-reels-revealing');
+      lastVideoPriorityIndex = -1;
+      updateVideoPriority(true);
+    }, 650);
+    themeTransitionTimers.push(safetyTimer);
 
     // Lock loop priority swaps while transition is active so cards dissolve in unison
     isThemeReelTransitioning = true;
@@ -3879,60 +3902,55 @@ export function initHeroReelCarousel() {
     carouselViewport.classList.remove('theme-reels-revealing');
     carouselViewport.classList.add('theme-reels-dissolving');
 
-    window.setTimeout(() => {
+    const dissolveTimer = window.setTimeout(() => {
       if (swapGeneration !== themeSwapGeneration) return;
       const theme = document.documentElement.dataset.theme;
 
-      // Update the poster before the source. It prevents a black video surface
-      // while the browser seeks the first frame of the correct theme's reel.
       let centerIdx = Math.round(scrollPosition / stageStep) % count;
       if (centerIdx < 0) centerIdx += count;
-      const isMobileDevice = cachedViewportWidth <= 768;
+
+      // Limit active hardware decoding on theme change to the visible front cards (center ± 2)
+      // This prevents GPU decoder saturation and completely eliminates frame drops
       const activeIndexes = new Set();
       activeVideos.forEach((_, index) => {
         let distance = Math.abs(index - centerIdx);
         if (distance > count / 2) distance = count - distance;
-        // Desktop shows the complete reel wall; on mobile only the five cards
-        // actually rendered in the rail should consume a video decoder.
-        if (!isMobileDevice || distance <= 2) activeIndexes.add(index);
+        if (distance <= 2) activeIndexes.add(index);
       });
 
-      activeVideos.forEach((video) => {
+      // 1. Immediately update posters on ALL cards so there are never black frames
+      activeVideos.forEach((video, index) => {
         if (!video) return;
-        video.style.opacity = '';
+        const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`;
+        const darkPoster = video.dataset.darkPoster || `/assets/creators/reels/clean/posters/reel_${index + 1}.jpg`;
+        if (theme === 'light') {
+          video.setAttribute('poster', lightPoster);
+        } else {
+          video.setAttribute('poster', darkPoster);
+        }
       });
 
+      // 2. Swap media sources on active front cards
       activeVideos.forEach((video, index) => {
         if (!video) return;
         const nextSrc = getThemeVideoSource(video);
         if (!nextSrc) return;
 
-        const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`;
-        if (theme === 'light') {
-          video.setAttribute('poster', lightPoster);
-        } else if (video.dataset.darkPoster) {
-          video.setAttribute('poster', video.dataset.darkPoster);
-        }
-
         if (!activeIndexes.has(index)) {
-          // Preserve the correct poster on cards in the depth of the rail, but
-          // do not make them compete for a video decoder.
+          // Keep poster visible on cards outside the center view without competing for decoders
           try {
             video.pause();
-            video.removeAttribute('src');
-            video.load();
           } catch (_) { }
           video.dataset.activeThemeSrc = nextSrc;
           return;
         }
 
-        // Directly replace the source on the live element, then explicitly
-        // restart it. This retains browser autoplay eligibility and avoids a
-        // blank or permanently paused cloned video layer.
+        // Active front card: directly load and play
         loadVideo(video, 'high');
         playVideo(video);
       });
 
+      // 3. Update view count labels
       cardPositions.forEach((position, index) => {
         const viewCount = position.querySelector('.reel-view-count');
         if (!viewCount) return;
@@ -3943,7 +3961,6 @@ export function initHeroReelCarousel() {
       });
 
       // Phase 2: Silky smooth reveal into the incoming theme once media buffer is ready
-      const centerVideo = activeVideos[centerIdx];
       let hasRevealed = false;
       const triggerReveal = () => {
         if (hasRevealed || swapGeneration !== themeSwapGeneration) return;
@@ -3952,19 +3969,21 @@ export function initHeroReelCarousel() {
         carouselViewport.classList.add('theme-reels-revealing');
         lastVideoPriorityIndex = -1;
 
-        // Keep priority changes locked until bloom has visually settled
-        window.setTimeout(() => {
+        const settleTimer = window.setTimeout(() => {
           if (swapGeneration !== themeSwapGeneration) return;
           isThemeReelTransitioning = false;
           updateVideoPriority(true);
-        }, 260);
+        }, 180);
+        themeTransitionTimers.push(settleTimer);
 
-        window.setTimeout(() => {
+        const cleanTimer = window.setTimeout(() => {
           if (swapGeneration !== themeSwapGeneration) return;
           carouselViewport.classList.remove('theme-reels-revealing');
-        }, 580);
+        }, 400);
+        themeTransitionTimers.push(cleanTimer);
       };
 
+      const centerVideo = activeVideos[centerIdx];
       if (centerVideo && centerVideo.readyState >= 2) {
         requestAnimationFrame(triggerReveal);
       } else if (centerVideo) {
@@ -3975,16 +3994,20 @@ export function initHeroReelCarousel() {
         };
         centerVideo.addEventListener('loadeddata', onReady, { once: true });
         centerVideo.addEventListener('canplay', onReady, { once: true });
-        window.setTimeout(triggerReveal, 220);
+        const readyTimer = window.setTimeout(triggerReveal, 180);
+        themeTransitionTimers.push(readyTimer);
       } else {
-        window.setTimeout(triggerReveal, 160);
+        const fallbackTimer = window.setTimeout(triggerReveal, 120);
+        themeTransitionTimers.push(fallbackTimer);
       }
-    }, 180);
+    }, 140);
+    themeTransitionTimers.push(dissolveTimer);
   };
   window.__hvHeroReelRefreshTheme = onThemeChange;
   window.__hvHeroReelCommitThemeSwap = () => {};
 
   window.__hvHeroReelCleanup = () => {
+    clearThemeTransitionTimers();
     if (animId) cancelAnimationFrame(animId);
     if (layoutRetryId) cancelAnimationFrame(layoutRetryId);
     clearTimeout(resumeTimer);

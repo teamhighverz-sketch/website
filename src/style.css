@@ -640,6 +640,8 @@ body.cursor-active .custom-cursor {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: fit-content;
+  max-width: fit-content;
   font-family: var(--font-tag, 'Space Grotesk', sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
@@ -7951,15 +7953,6 @@ html.js .floating-badge-item {
   background: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.05) 0%, transparent 65%);
 }
 
-[data-theme="light"] .work-hero-tag {
-  background: transparent;
-  border: none;
-  color: #0284C7;
-}
-
-[data-theme="light"] .work-hero-tag::before {
-  background-color: #0284C7;
-}
 
 [data-theme="light"] .work-hero-title {
   background-image: var(--hero-headline-gradient);
@@ -9640,6 +9633,7 @@ html.js .floating-badge-item {
 .work-hero-left {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .work-hero-line {
@@ -9647,26 +9641,10 @@ html.js .floating-badge-item {
 }
 
 .work-hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--accent-cyan);
-  text-transform: uppercase;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: fit-content;
   margin-bottom: 1.15rem;
-  background: transparent;
-  border: none;
-}
-
-.work-hero-tag::before {
-  content: "";
-  display: inline-block;
-  width: 16px;
-  height: 1px;
-  flex-shrink: 0;
-  background-color: var(--accent-cyan);
 }
 
 .work-hero-title {

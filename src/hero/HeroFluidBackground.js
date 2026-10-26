@@ -212,6 +212,13 @@ export function initHeroFluidBackground() {
     pointer.lerp(targetPointer, 0.18);
     material.uniforms.uPointer.value.copy(pointer);
     material.uniforms.uTime.value = reducedMotion ? 0 : now * 0.001;
+    if (Math.abs(targetThemeValue - currentThemeValue) > 0.001) {
+      currentThemeValue += (targetThemeValue - currentThemeValue) * 0.06;
+      material.uniforms.uTheme.value = currentThemeValue;
+    } else if (currentThemeValue !== targetThemeValue) {
+      currentThemeValue = targetThemeValue;
+      material.uniforms.uTheme.value = targetThemeValue;
+    }
     renderer.render(scene, camera);
     if (!reducedMotion) frameId = requestAnimationFrame(render);
   };
@@ -254,9 +261,17 @@ export function initHeroFluidBackground() {
     else cancelAnimationFrame(frameId);
   }, { threshold: 0.01 });
   visibilityObserver.observe(root);
+  let currentThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
+  let targetThemeValue = currentThemeValue;
+  material.uniforms.uTheme.value = currentThemeValue;
+
   const updateThemeUniform = () => {
-    material.uniforms.uTheme.value = document.documentElement.getAttribute('data-theme') === 'light' ? 1 : 0;
-    if (reducedMotion || isMobile()) render(performance.now());
+    targetThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
+    if (reducedMotion || isMobile()) {
+      currentThemeValue = targetThemeValue;
+      material.uniforms.uTheme.value = targetThemeValue;
+      render(performance.now());
+    }
   };
   const themeObserver = new MutationObserver(updateThemeUniform);
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });

@@ -46,7 +46,7 @@ body.enquiry-modal-open .admin-leads-close {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   touch-action: pan-y;
   opacity: 0;
@@ -158,6 +158,8 @@ body.enquiry-modal-open .admin-leads-close {
 .enquiry-header {
   margin-bottom: 2rem;
   text-align: left;
+  padding-right: 2.8rem;
+  flex-shrink: 0;
 }
 
 .enquiry-badge {

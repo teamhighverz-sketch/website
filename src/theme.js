@@ -33,7 +33,7 @@ function applyTheme(theme, animate = false) {
     themeTransitionTimer = window.setTimeout(() => {
       root.classList.remove('theme-switching', 'theme-target-light', 'theme-target-dark');
       themeTransitionTimer = null;
-    }, 760);
+    }, 680);
   }
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem(STORAGE_KEY, theme);

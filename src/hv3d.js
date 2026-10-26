@@ -64,7 +64,7 @@ export function initHV3D(canvasId, containerId) {
   const modelStage = new THREE.Group();
   // Give the complete sculpture a little more presence while preserving the
   // existing proportions, pedestal alignment, and full rotation range.
-  modelStage.scale.setScalar(1.24);
+  modelStage.scale.setScalar(1.48);
   modelStage.rotation.y = -0.28;
   let autoRotationY = modelStage.rotation.y;
   let dragYaw = 0;

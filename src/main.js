@@ -579,6 +579,17 @@ function initCustomCursor() {
         return;
       }
 
+      // Platform Chips in hero headline: keep standard cursor with no text or badge
+      const platformChip = e.target.closest('.platform-chip');
+      if (platformChip) {
+        if (cursorRing) {
+          cursorRing.classList.remove('is-interactive', 'is-view-detail', 'is-text-input', 'is-badge');
+        }
+        if (cursorDot) cursorDot.classList.remove('is-hidden');
+        if (cursorText) cursorText.textContent = '';
+        return;
+      }
+
       // Give case-study links a larger transparent lens cursor.
       const viewDetailEl = e.target.closest('.view-detail-chip');
       if (viewDetailEl) {
@@ -621,7 +632,7 @@ function initCustomCursor() {
       const target = e.target;
       const related = e.relatedTarget;
 
-      const hoveredEl = target.closest('input, textarea, .campaign-movie-card, .work-creator-card, .portfolio-vertical-card, .creator-card, a, button, select, [role="button"], [data-cursor-badge], .glass-dropdown-trigger, .glass-option-item');
+      const hoveredEl = target.closest('input, textarea, .campaign-movie-card, .work-creator-card, .portfolio-vertical-card, .creator-card, a, button, select, [role="button"], [data-cursor-badge], .glass-dropdown-trigger, .glass-option-item, .platform-chip');
       if (!hoveredEl) return;
       if (related && hoveredEl.contains(related)) return;
 
@@ -1301,9 +1312,9 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>Feeds,</span>
       </span>
       <span class="hero-headline-connector hero-platform-snippet hl-platform-chips" aria-label="YouTube Shorts, TikTok, and Meta">
-        <span class="platform-chip platform-chip--yt" aria-hidden="true"><span class="platform-chip-inner"><img src="/logos/youtube-shorts.png" alt="YouTube Shorts" class="platform-chip-img platform-chip-img--yt" /></span></span>
-        <span class="platform-chip platform-chip--tt" aria-hidden="true"><span class="platform-chip-inner"><img src="/logos/tiktok.svg" alt="TikTok" class="platform-chip-img platform-chip-img--tt" /></span></span>
-        <span class="platform-chip platform-chip--meta" aria-hidden="true"><span class="platform-chip-inner"><img src="/logos/meta.png" alt="Meta" class="platform-chip-img platform-chip-img--meta" /></span></span>
+        <span class="platform-chip platform-chip--yt" aria-label="YouTube Shorts"><span class="platform-chip-inner"><img src="/logos/youtube-shorts.png" alt="YouTube Shorts" class="platform-chip-img platform-chip-img--yt" /></span></span>
+        <span class="platform-chip platform-chip--tt" aria-label="TikTok"><span class="platform-chip-inner"><img src="/logos/tiktok.svg" alt="TikTok" class="platform-chip-img platform-chip-img--tt" /></span></span>
+        <span class="platform-chip platform-chip--meta" aria-label="Meta"><span class="platform-chip-inner"><img src="/logos/meta.png" alt="Meta" class="platform-chip-img platform-chip-img--meta" /></span></span>
       </span>
       <span class="hero-headline-line">
         <span class="hl-word" data-word>Turning</span>
@@ -1524,15 +1535,17 @@ window.addEventListener('hv:themechange', () => {
   // one cinematic transition.
   const reelViewport = document.getElementById('heroCarouselViewport');
   if (reelViewport) {
-    reelViewport.classList.remove('theme-reels-deferred', 'theme-reels-revealing');
+    reelViewport.classList.remove('theme-reels-deferred');
   }
   window.__hvHeroReelRefreshTheme?.();
 
-  const words = headline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller');
+  const words = headline.querySelectorAll('.hl-word, .hero-word-roller');
+  const connector = headline.querySelector('.hero-headline-connector');
   const description = document.getElementById('hero-desc');
   if (typeof gsap === 'undefined') return;
-  gsap.killTweensOf([...
-    Array.from(words),
+  gsap.killTweensOf([
+    ...Array.from(words),
+    ...(connector ? [connector] : []),
     ...(description ? [description] : [])
   ]);
   // Sharpen the new theme in place. A vertical offset makes the whole hero
@@ -1540,13 +1553,31 @@ window.addEventListener('hv:themechange', () => {
   gsap.set(words, { y: 0 });
   gsap.fromTo(words,
     { opacity: 0, y: 0, filter: 'blur(8px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.48, stagger: 0.045, ease: 'power3.out', clearProps: 'filter,transform' }
+    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.44, stagger: 0.028, ease: 'power3.out', clearProps: 'filter,transform' }
   );
+
+  if (connector) {
+    if (document.documentElement.dataset.theme === 'light') {
+      const chipInners = connector.querySelectorAll('.platform-chip-inner');
+      if (chipInners.length) {
+        gsap.fromTo(chipInners,
+          { opacity: 0, scale: 0.55 },
+          { opacity: 1, scale: 1, duration: 0.52, delay: 0.08, stagger: 0.06, ease: 'back.out(1.6)', clearProps: 'opacity,scale' }
+        );
+      }
+    } else {
+      gsap.fromTo(connector,
+        { opacity: 0, filter: 'blur(6px)' },
+        { opacity: 1, filter: 'blur(0px)', duration: 0.38, delay: 0.06, ease: 'power2.out', clearProps: 'filter' }
+      );
+    }
+  }
+
   if (description) {
     gsap.set(description, { y: 0 });
     gsap.fromTo(description,
       { opacity: 0, y: 0, filter: 'blur(6px)' },
-      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.42, delay: 0.14, ease: 'power3.out', clearProps: 'filter,transform' }
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.42, delay: 0.12, ease: 'power3.out', clearProps: 'filter,transform' }
     );
   }
 
@@ -3373,8 +3404,10 @@ export function initHeroReelCarousel() {
   let isCarouselVisible = true;
   let lastVideoPriorityIndex = -1;
   let videosUnlocked = true;
+  let isThemeReelTransitioning = false;
 
   const updateVideoPriority = (force = false) => {
+    if (isThemeReelTransitioning) return;
     if (!videosUnlocked || !stageStep || !videos.length || !isCarouselVisible) return;
 
     const isMobileDevice = cachedViewportWidth <= 768;
@@ -3837,84 +3870,116 @@ export function initHeroReelCarousel() {
     if (options.preloadOnly) return;
     const swapGeneration = ++themeSwapGeneration;
     const activeVideos = videos.slice();
-    const theme = document.documentElement.dataset.theme;
     const carouselViewport = viewport;
-    carouselViewport.classList.add('theme-media-swapping');
 
-    // Update the poster before the source. It prevents a black video surface
-    // while the browser seeks the first frame of the correct theme's reel.
-    let centerIdx = Math.round(scrollPosition / stageStep) % count;
-    if (centerIdx < 0) centerIdx += count;
-    const isMobileDevice = cachedViewportWidth <= 768;
-    const activeIndexes = new Set();
-    activeVideos.forEach((_, index) => {
-      let distance = Math.abs(index - centerIdx);
-      if (distance > count / 2) distance = count - distance;
-      // Desktop shows the complete reel wall; on mobile only the five cards
-      // actually rendered in the rail should consume a video decoder.
-      if (!isMobileDevice || distance <= 2) activeIndexes.add(index);
-    });
+    // Lock loop priority swaps while transition is active so cards dissolve in unison
+    isThemeReelTransitioning = true;
 
-    activeVideos.forEach((video) => {
-      if (!video) return;
-      video.style.opacity = '';
-    });
+    // Phase 1: Soft dissolve out while the theme transition veil rises
+    carouselViewport.classList.remove('theme-reels-revealing');
+    carouselViewport.classList.add('theme-reels-dissolving');
 
-    activeVideos.forEach((video, index) => {
-      if (!video) return;
-      const nextSrc = getThemeVideoSource(video);
-      if (!nextSrc) return;
-
-      const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`;
-      if (theme === 'light') {
-        video.setAttribute('poster', lightPoster);
-      } else if (video.dataset.darkPoster) {
-        video.setAttribute('poster', video.dataset.darkPoster);
-      }
-
-      if (!activeIndexes.has(index)) {
-        // Preserve the correct poster on cards in the depth of the rail, but
-        // do not make them compete for a video decoder.
-        try {
-          video.pause();
-          video.removeAttribute('src');
-          video.load();
-        } catch (_) { }
-        video.dataset.activeThemeSrc = nextSrc;
-        return;
-      }
-
-      // Directly replace the source on the live element, then explicitly
-      // restart it. This retains browser autoplay eligibility and avoids a
-      // blank or permanently paused cloned video layer.
-      loadVideo(video, 'high');
-      playVideo(video);
-    });
-
-    cardPositions.forEach((position, index) => {
-      const viewCount = position.querySelector('.reel-view-count');
-      if (!viewCount) return;
-      const count = getReelViewCount(index);
-      const text = viewCount.querySelector('.rvc-text');
-      if (text) text.textContent = `${count} views`;
-      viewCount.setAttribute('aria-label', `${count} views`);
-    });
-
-    // Reveal on the next paint, after the poster/source assignments have been
-    // committed. There is no arbitrary media timeout in this path.
-    requestAnimationFrame(() => {
+    window.setTimeout(() => {
       if (swapGeneration !== themeSwapGeneration) return;
-      carouselViewport.classList.remove('theme-media-swapping');
-      carouselViewport.classList.remove('theme-reels-deferred');
-      carouselViewport.classList.add('theme-reels-revealing');
-      lastVideoPriorityIndex = -1;
-      updateVideoPriority(true);
-      const reelRevealDuration = theme === 'light' ? 460 : 380;
-      window.setTimeout(() => {
-        if (swapGeneration !== themeSwapGeneration) return;
-        carouselViewport.classList.remove('theme-reels-revealing');
-      }, reelRevealDuration);
-    });
+      const theme = document.documentElement.dataset.theme;
+
+      // Update the poster before the source. It prevents a black video surface
+      // while the browser seeks the first frame of the correct theme's reel.
+      let centerIdx = Math.round(scrollPosition / stageStep) % count;
+      if (centerIdx < 0) centerIdx += count;
+      const isMobileDevice = cachedViewportWidth <= 768;
+      const activeIndexes = new Set();
+      activeVideos.forEach((_, index) => {
+        let distance = Math.abs(index - centerIdx);
+        if (distance > count / 2) distance = count - distance;
+        // Desktop shows the complete reel wall; on mobile only the five cards
+        // actually rendered in the rail should consume a video decoder.
+        if (!isMobileDevice || distance <= 2) activeIndexes.add(index);
+      });
+
+      activeVideos.forEach((video) => {
+        if (!video) return;
+        video.style.opacity = '';
+      });
+
+      activeVideos.forEach((video, index) => {
+        if (!video) return;
+        const nextSrc = getThemeVideoSource(video);
+        if (!nextSrc) return;
+
+        const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`;
+        if (theme === 'light') {
+          video.setAttribute('poster', lightPoster);
+        } else if (video.dataset.darkPoster) {
+          video.setAttribute('poster', video.dataset.darkPoster);
+        }
+
+        if (!activeIndexes.has(index)) {
+          // Preserve the correct poster on cards in the depth of the rail, but
+          // do not make them compete for a video decoder.
+          try {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+          } catch (_) { }
+          video.dataset.activeThemeSrc = nextSrc;
+          return;
+        }
+
+        // Directly replace the source on the live element, then explicitly
+        // restart it. This retains browser autoplay eligibility and avoids a
+        // blank or permanently paused cloned video layer.
+        loadVideo(video, 'high');
+        playVideo(video);
+      });
+
+      cardPositions.forEach((position, index) => {
+        const viewCount = position.querySelector('.reel-view-count');
+        if (!viewCount) return;
+        const count = getReelViewCount(index);
+        const text = viewCount.querySelector('.rvc-text');
+        if (text) text.textContent = `${count} views`;
+        viewCount.setAttribute('aria-label', `${count} views`);
+      });
+
+      // Phase 2: Silky smooth reveal into the incoming theme once media buffer is ready
+      const centerVideo = activeVideos[centerIdx];
+      let hasRevealed = false;
+      const triggerReveal = () => {
+        if (hasRevealed || swapGeneration !== themeSwapGeneration) return;
+        hasRevealed = true;
+        carouselViewport.classList.remove('theme-media-swapping', 'theme-reels-deferred', 'theme-reels-dissolving');
+        carouselViewport.classList.add('theme-reels-revealing');
+        lastVideoPriorityIndex = -1;
+
+        // Keep priority changes locked until bloom has visually settled
+        window.setTimeout(() => {
+          if (swapGeneration !== themeSwapGeneration) return;
+          isThemeReelTransitioning = false;
+          updateVideoPriority(true);
+        }, 260);
+
+        window.setTimeout(() => {
+          if (swapGeneration !== themeSwapGeneration) return;
+          carouselViewport.classList.remove('theme-reels-revealing');
+        }, 580);
+      };
+
+      if (centerVideo && centerVideo.readyState >= 2) {
+        requestAnimationFrame(triggerReveal);
+      } else if (centerVideo) {
+        const onReady = () => {
+          centerVideo.removeEventListener('loadeddata', onReady);
+          centerVideo.removeEventListener('canplay', onReady);
+          triggerReveal();
+        };
+        centerVideo.addEventListener('loadeddata', onReady, { once: true });
+        centerVideo.addEventListener('canplay', onReady, { once: true });
+        window.setTimeout(triggerReveal, 220);
+      } else {
+        window.setTimeout(triggerReveal, 160);
+      }
+    }, 180);
   };
   window.__hvHeroReelRefreshTheme = onThemeChange;
   window.__hvHeroReelCommitThemeSwap = () => {};

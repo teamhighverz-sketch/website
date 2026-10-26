@@ -1539,49 +1539,125 @@ window.addEventListener('hv:themechange', () => {
   }
   window.__hvHeroReelRefreshTheme?.();
 
-  const words = headline.querySelectorAll('.hl-word, .hero-word-roller');
-  const connector = headline.querySelector('.hero-headline-connector');
+  const isLight = document.documentElement.dataset.theme === 'light';
+  if (!isLight) {
+    prepareHeroWordRoller();
+  }
+
+  const headlineLines = headline.querySelectorAll('.hero-headline-line');
+  headlineLines.forEach((line) => { line.style.overflow = 'visible'; });
+
+  // Collect every word token in natural visual/reading order
+  let revealItems = [];
+  if (isLight) {
+    const line1Words = Array.from(headlineLines[0]?.querySelectorAll('.hl-word') || []);
+    const chips = Array.from(headline.querySelectorAll('.hl-platform-chips .platform-chip') || []);
+    const line2Words = Array.from(headlineLines[1]?.querySelectorAll('.hl-word') || []);
+    revealItems = [...line1Words, ...chips, ...line2Words];
+  } else {
+    const line1Items = Array.from(headlineLines[0]?.querySelectorAll('.hl-word, .hero-word-roller') || []);
+    const connector = headline.querySelector('.hero-headline-connector:not(.hl-platform-chips)');
+    const line2Words = Array.from(headlineLines[1]?.querySelectorAll('.hl-word') || []);
+    revealItems = [...line1Items, ...(connector ? [connector] : []), ...line2Words];
+  }
+
+  if (!revealItems.length) {
+    revealItems = Array.from(headline.querySelectorAll('.hl-word, .hero-word-roller, .platform-chip, .hero-headline-connector'));
+  }
+
   const description = document.getElementById('hero-desc');
+  const descSpans = description ? Array.from(description.querySelectorAll('span')) : [];
+
   if (typeof gsap === 'undefined') return;
+
   gsap.killTweensOf([
-    ...Array.from(words),
-    ...(connector ? [connector] : []),
+    ...revealItems,
+    ...descSpans,
     ...(description ? [description] : [])
   ]);
-  // Sharpen the new theme in place. A vertical offset makes the whole hero
-  // look like it jumps even when its layout footprint is stable.
-  gsap.set(words, { y: 0 });
-  gsap.fromTo(words,
-    { opacity: 0, y: 0, filter: 'blur(8px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.44, stagger: 0.028, ease: 'power3.out', clearProps: 'filter,transform' }
-  );
 
-  if (connector) {
-    if (document.documentElement.dataset.theme === 'light') {
-      const chipInners = connector.querySelectorAll('.platform-chip-inner');
-      if (chipInners.length) {
-        gsap.fromTo(chipInners,
-          { opacity: 0, scale: 0.55 },
-          { opacity: 1, scale: 1, duration: 0.52, delay: 0.08, stagger: 0.06, ease: 'back.out(1.6)', clearProps: 'opacity,scale' }
-        );
+  const isMobile = window.innerWidth <= 768;
+  const initialBlur = isMobile ? 'blur(12px)' : 'blur(18px)';
+  const initialY = isMobile ? 12 : 16;
+  const wordStagger = isMobile ? 0.048 : 0.062;
+  const wordDuration = isMobile ? 0.52 : 0.65;
+
+  // Staggered one-by-one text reveal with kinetic blur
+  gsap.set(revealItems, {
+    opacity: 0,
+    y: initialY,
+    filter: initialBlur,
+    willChange: 'opacity, transform, filter'
+  });
+
+  gsap.to(revealItems, {
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    duration: wordDuration,
+    stagger: wordStagger,
+    ease: 'power3.out',
+    clearProps: 'filter,transform,willChange',
+    onComplete: () => {
+      if (document.documentElement.dataset.theme === 'dark') {
+        initHeroWordRoller();
       }
-    } else {
-      gsap.fromTo(connector,
-        { opacity: 0, filter: 'blur(6px)' },
-        { opacity: 1, filter: 'blur(0px)', duration: 0.38, delay: 0.06, ease: 'power2.out', clearProps: 'filter' }
+    }
+  });
+
+  // Light mode platform chip popping spring in sequence
+  if (isLight) {
+    const chipInners = headline.querySelectorAll('.platform-chip-inner');
+    if (chipInners.length) {
+      const line1Count = headlineLines[0]?.querySelectorAll('.hl-word').length || 4;
+      gsap.fromTo(chipInners,
+        { scale: 0.55 },
+        {
+          scale: 1,
+          duration: 0.48,
+          delay: line1Count * wordStagger,
+          stagger: 0.05,
+          ease: 'back.out(1.6)',
+          clearProps: 'scale'
+        }
       );
     }
   }
 
-  if (description) {
-    gsap.set(description, { y: 0 });
+  // Subtitle description lines smoothly de-blur in sequence
+  if (descSpans.length) {
+    gsap.set(descSpans, {
+      opacity: 0,
+      y: 12,
+      filter: isMobile ? 'blur(8px)' : 'blur(12px)',
+      display: 'inline-block'
+    });
+    gsap.to(descSpans, {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      duration: 0.65,
+      delay: 0.24,
+      stagger: 0.12,
+      ease: 'power3.out',
+      clearProps: 'filter,transform'
+    });
+  } else if (description) {
     gsap.fromTo(description,
-      { opacity: 0, y: 0, filter: 'blur(6px)' },
-      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.42, delay: 0.12, ease: 'power3.out', clearProps: 'filter,transform' }
+      { opacity: 0, y: 12, filter: 'blur(10px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.65, delay: 0.24, ease: 'power3.out', clearProps: 'filter,transform' }
     );
   }
 
-  if (document.documentElement.dataset.theme === 'dark') initHeroWordRoller();
+  // Smooth trust badge copy update
+  const activeTrustCopy = document.querySelector(isLight ? '.hero-trust-copy--movies' : '.hero-trust-copy--creators');
+  if (activeTrustCopy) {
+    gsap.fromTo(activeTrustCopy,
+      { opacity: 0, filter: 'blur(8px)', y: 4 },
+      { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.45, ease: 'power2.out', clearProps: 'filter,transform' }
+    );
+  }
+
   if (isHomeRoute(window.location.pathname)) {
     initAdscaleTextEffects();
     initCreatorsSection();

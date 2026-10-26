@@ -1578,26 +1578,26 @@ window.addEventListener('hv:themechange', () => {
 
   const isMobile = window.innerWidth <= 768;
   const initialBlur = isMobile ? 'blur(12px)' : 'blur(18px)';
-  const initialY = isMobile ? 12 : 16;
   const wordStagger = isMobile ? 0.048 : 0.062;
   const wordDuration = isMobile ? 0.52 : 0.65;
 
-  // Staggered one-by-one text reveal with kinetic blur
+  // Staggered one-by-one text reveal with optical blur only. Keeping the
+  // layout coordinates untouched is important here: a translate-based reveal
+  // makes the headline and the reel rail appear to jump when the theme swaps
+  // between two copy variants with different line lengths.
   gsap.set(revealItems, {
     opacity: 0,
-    y: initialY,
     filter: initialBlur,
-    willChange: 'opacity, transform, filter'
+    willChange: 'opacity, filter'
   });
 
   gsap.to(revealItems, {
     opacity: 1,
-    y: 0,
     filter: 'blur(0px)',
     duration: wordDuration,
     stagger: wordStagger,
     ease: 'power3.out',
-    clearProps: 'filter,transform,willChange',
+    clearProps: 'filter,willChange',
     onComplete: () => {
       if (document.documentElement.dataset.theme === 'dark') {
         initHeroWordRoller();
@@ -1611,14 +1611,15 @@ window.addEventListener('hv:themechange', () => {
     if (chipInners.length) {
       const line1Count = headlineLines[0]?.querySelectorAll('.hl-word').length || 4;
       gsap.fromTo(chipInners,
-        { scale: 0.55 },
+        { opacity: 0, filter: 'blur(6px)' },
         {
-          scale: 1,
+          opacity: 1,
+          filter: 'blur(0px)',
           duration: 0.48,
           delay: line1Count * wordStagger,
           stagger: 0.05,
-          ease: 'back.out(1.6)',
-          clearProps: 'scale'
+          ease: 'power2.out',
+          clearProps: 'filter,opacity'
         }
       );
     }
@@ -1628,24 +1629,22 @@ window.addEventListener('hv:themechange', () => {
   if (descSpans.length) {
     gsap.set(descSpans, {
       opacity: 0,
-      y: 12,
       filter: isMobile ? 'blur(8px)' : 'blur(12px)',
       display: 'inline-block'
     });
     gsap.to(descSpans, {
       opacity: 1,
-      y: 0,
       filter: 'blur(0px)',
       duration: 0.65,
       delay: 0.24,
       stagger: 0.12,
       ease: 'power3.out',
-      clearProps: 'filter,transform'
+      clearProps: 'filter'
     });
   } else if (description) {
     gsap.fromTo(description,
-      { opacity: 0, y: 12, filter: 'blur(10px)' },
-      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.65, delay: 0.24, ease: 'power3.out', clearProps: 'filter,transform' }
+      { opacity: 0, filter: 'blur(10px)' },
+      { opacity: 1, filter: 'blur(0px)', duration: 0.65, delay: 0.24, ease: 'power3.out', clearProps: 'filter' }
     );
   }
 
@@ -1653,8 +1652,8 @@ window.addEventListener('hv:themechange', () => {
   const activeTrustCopy = document.querySelector(isLight ? '.hero-trust-copy--movies' : '.hero-trust-copy--creators');
   if (activeTrustCopy) {
     gsap.fromTo(activeTrustCopy,
-      { opacity: 0, filter: 'blur(8px)', y: 4 },
-      { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.45, ease: 'power2.out', clearProps: 'filter,transform' }
+      { opacity: 0, filter: 'blur(8px)' },
+      { opacity: 1, filter: 'blur(0px)', duration: 0.45, ease: 'power2.out', clearProps: 'filter' }
     );
   }
 

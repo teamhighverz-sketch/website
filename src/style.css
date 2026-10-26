@@ -20590,6 +20590,14 @@ html.theme-switching #hero .carousel-viewport {
   transform: none !important;
 }
 
+/* Freeze the decorative light-mode platform marks for the duration of the
+   theme handoff. Their ambient float animation uses translateY; allowing it
+   to continue while the copy is replaced can make the whole headline read as
+   if it moved. Resume it naturally once the optical veil has cleared. */
+html.theme-switching #hero .hero-platform-snippet .platform-chip {
+  animation-play-state: paused !important;
+}
+
 @keyframes theme-optical-veil {
   0% { opacity: 0; }
   30% { opacity: 0.65; }

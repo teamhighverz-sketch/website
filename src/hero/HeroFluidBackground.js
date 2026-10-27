@@ -178,6 +178,8 @@ export function initHeroFluidBackground() {
   scene.add(mesh);
 
   let frameId = null;
+  let lastFrameTime = null;
+  let elapsedTime = 0;
   let isVisible = true;
   let isDestroyed = false;
   const pointer = new THREE.Vector2(0.5, 0.5);
@@ -190,14 +192,19 @@ export function initHeroFluidBackground() {
     const isMobile = window.innerWidth < 768;
     const width = Math.max(1, window.innerWidth);
     const height = Math.max(1, window.innerHeight);
-    renderer.setPixelRatio(isMobile ? 0.65 : Math.min(window.devicePixelRatio || 1, 1.5));
-    renderer.setSize(width, height, false);
+    const pixelRatio = isMobile ? 0.65 : Math.min(window.devicePixelRatio || 1, 1.5);
+    // Resizing clears the drawing buffer, even if dimensions did not change.
+    if (renderer.getPixelRatio() !== pixelRatio) renderer.setPixelRatio(pixelRatio);
+    if (canvas.width !== Math.floor(width * pixelRatio) || canvas.height !== Math.floor(height * pixelRatio)) {
+      renderer.setSize(width, height, false);
+    }
     material.uniforms.uResolution.value.set(width, height);
   };
 
   const isMobile = () => window.innerWidth < 768;
 
   const render = (now = 0) => {
+    frameId = null;
     if (isDestroyed || !isVisible) return;
 
     if (isMobile()) {
@@ -211,7 +218,11 @@ export function initHeroFluidBackground() {
 
     pointer.lerp(targetPointer, 0.18);
     material.uniforms.uPointer.value.copy(pointer);
-    material.uniforms.uTime.value = reducedMotion ? 0 : now * 0.001;
+    // Resume from the displayed frame after suspension, not wall-clock time.
+    // A route handoff or background tab must never skip the fluid ahead.
+    if (lastFrameTime !== null) elapsedTime += Math.min(Math.max(now - lastFrameTime, 0), 32) * 0.001;
+    lastFrameTime = now;
+    material.uniforms.uTime.value = reducedMotion ? 0 : elapsedTime;
     if (Math.abs(targetThemeValue - currentThemeValue) > 0.001) {
       currentThemeValue += (targetThemeValue - currentThemeValue) * 0.06;
       material.uniforms.uTheme.value = currentThemeValue;
@@ -226,6 +237,7 @@ export function initHeroFluidBackground() {
   const start = () => {
     if (!isVisible || isDestroyed) return;
     cancelAnimationFrame(frameId);
+    lastFrameTime = null;
     if (isMobile()) {
       render(0);
       return;
@@ -246,21 +258,22 @@ export function initHeroFluidBackground() {
 
   const onResize = () => {
     resize();
-    if (!isMobile() && !reducedMotion && isVisible && !frameId) {
-      start();
-    } else if (isMobile()) {
-      cancelAnimationFrame(frameId);
-      frameId = null;
-      render(0);
-    }
+    // Repaint in the same task: never expose a cleared canvas on resize.
+    start();
   };
 
   const visibilityObserver = new IntersectionObserver(([entry]) => {
     isVisible = entry.isIntersecting;
     if (isVisible) start();
-    else cancelAnimationFrame(frameId);
+    else {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+      lastFrameTime = null;
+    }
   }, { threshold: 0.01 });
-  visibilityObserver.observe(root);
+  // The document body can collapse while both route layers are fixed. The
+  // viewport canvas itself stays visible and must keep rendering throughout.
+  visibilityObserver.observe(canvas);
   let currentThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
   let targetThemeValue = currentThemeValue;
   material.uniforms.uTheme.value = currentThemeValue;
@@ -281,7 +294,8 @@ export function initHeroFluidBackground() {
     if (document.hidden) {
       cancelAnimationFrame(frameId);
       frameId = null;
-    } else if (isVisible && !reducedMotion && !isDestroyed && !isMobile()) {
+      lastFrameTime = null;
+    } else if (isVisible && !isDestroyed) {
       start();
     }
   };
@@ -302,6 +316,7 @@ export function initHeroFluidBackground() {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       visibilityObserver.disconnect();
       themeObserver.disconnect();
+      window.removeEventListener('hv:themechange', updateThemeUniform);
       window.removeEventListener('pointermove', onPointerMove);
       mesh.geometry.dispose();
       material.dispose();

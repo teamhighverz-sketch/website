@@ -167,9 +167,9 @@ function startIncomingMetricCounters(content) {
 /**
  * Prefetches target HTML for instantaneous transition response
  */
-export async function prefetchPage(urlStr) {
+export async function prefetchPage(urlStr, timeoutMs = 8000) {
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
     const normUrl = urlStr.split('#')[0];
     if (htmlCache.has(normUrl)) return htmlCache.get(normUrl);
@@ -192,15 +192,17 @@ let isTransitioning = false;
 // page, and navbar from resolving at different speeds (the source of the
 // brief snap users could see on slower devices).
 const ROUTE_TRANSITION = Object.freeze({
-  safetyMs: 5000,
-  outgoingDuration: 0.72,
-  incomingDelay: 0.15,
-  incomingDuration: 1.1,
-  outgoingBlur: 88,
-  incomingBlur: 100,
-  navbarOutDuration: 0.55,
-  navbarInDelay: 0.20,
-  navbarInDuration: 0.75,
+  // Keep route changes responsive even when a page initializer or network
+  // request is slow. The old 5s/100px handoff could feel like a frozen click.
+  safetyMs: 3000,
+  outgoingDuration: 0.42,
+  incomingDelay: 0.06,
+  incomingDuration: 0.62,
+  outgoingBlur: 24,
+  incomingBlur: 28,
+  navbarOutDuration: 0.32,
+  navbarInDelay: 0.08,
+  navbarInDuration: 0.46,
 });
 
 /**
@@ -247,7 +249,10 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     // 1. Retrieve target document HTML (from memory cache or network)
     let htmlText = htmlCache.get(targetUrl.href.split('#')[0]);
     if (!htmlText) {
-      htmlText = await prefetchPage(targetUrl.href);
+      // Do not leave a click waiting behind a slow fetch. If the cache is
+      // cold, native navigation takes over quickly and the browser can show
+      // its normal loading state instead of leaving the old page locked.
+      htmlText = await prefetchPage(targetUrl.href, 1800);
     }
     if (!htmlText) {
       // Fallback to native navigation if fetch fails
@@ -274,6 +279,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
 
     const targetTitle = newDoc.title;
     const targetBodyClass = newDoc.body.className;
+    const isLightTransition = document.documentElement.dataset.theme === 'light';
 
     // 2. Update Browser History & Document Title
     if (!isPopState) {
@@ -333,6 +339,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     // 6. Mount incoming content inside an isolated 100vw x 100vh viewport shell
     const shell = document.createElement('div');
     shell.className = 'page-transition-shell';
+    if (isLightTransition) shell.classList.add('page-transition-shell--glass');
     shell.id = 'page-transition-shell';
 
     document.documentElement.classList.add('page-transitioned');
@@ -450,7 +457,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     ).forEach((copy) => {
       copy.style.opacity = '0';
     });
-    if (navbar) {
+    if (navbar && !isLightTransition) {
       gsap.set(navbar, {
         opacity: 1,
         y: 0,
@@ -461,11 +468,14 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       });
     }
     gsap.set(shell, {
-      opacity: 0,
+      // A filtered/faded ancestor creates a backdrop root. Glass cards then
+      // cannot sample the persistent canvas outside this shell until removal.
+      // Light routes reveal individual content, keeping the glass root intact.
+      opacity: isLightTransition ? 1 : 0,
       y: 0,
       scale: 1,
-      filter: `blur(${ROUTE_TRANSITION.incomingBlur}px)`,
-      willChange: 'opacity, transform, filter',
+      filter: isLightTransition ? 'none' : `blur(${ROUTE_TRANSITION.incomingBlur}px)`,
+      willChange: isLightTransition ? 'auto' : 'opacity, transform, filter',
     });
     gsap.set(glow, { opacity: 0 });
 
@@ -599,7 +609,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       }, 0)
       .to(shell, {
         opacity: 1,
-        filter: 'blur(0px)',
+        filter: isLightTransition ? 'none' : 'blur(0px)',
         y: 0,
         scale: 1,
         duration: ROUTE_TRANSITION.incomingDuration,
@@ -608,7 +618,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       }, ROUTE_TRANSITION.incomingDelay);
 
 
-    if (navbar) {
+    if (navbar && !isLightTransition) {
       transitionTimeline.to(navbar, {
         opacity: 0,
         y: 0,

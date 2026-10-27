@@ -4889,27 +4889,37 @@ html.js .floating-badge-item {
   cursor: grabbing;
 }
 
-/* Seamless cinematic reel transition across theme toggles.
-   The rail geometry and perspective stay 100% stable while cards softly
-   dissolve into blur and smoothly re-emerge with the new theme's media. */
-.carousel-viewport.theme-reels-dissolving .video-card {
-  opacity: 0.38;
-  filter: blur(3px);
-  transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1),
-              filter 160ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.carousel-viewport.theme-reels-revealing .video-card {
-  opacity: 1;
-  filter: blur(0px);
-  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
-              filter 320ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.carousel-viewport.theme-reels-deferred {
-  opacity: 0 !important;
+/* Only the media crossfades. Filtering/fading the 3D card containers flattens
+   their perspective layers and makes the moving rail look frozen. */
+.reel-theme-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
   pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  filter: blur(0);
+  transition: opacity 320ms ease, filter 320ms ease;
+}
+.reel-media-loading .reel-theme-poster {
+  opacity: 1;
+  filter: blur(2px);
+  transition: none;
+}
+.reel-media-loading .card-video {
+  opacity: 0 !important;
   transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel-theme-poster,
+  #heroCarouselTrack .card-video {
+    transition: none !important;
+    filter: none !important;
+  }
 }
 
 .carousel-track {
@@ -14952,16 +14962,24 @@ html {
 }
 
 [data-theme="light"] body.page-is-transitioning {
-  background-color: var(--bg-primary, #f8f9fa) !important;
+  /* Match the normal light canvas instead of switching to the pure white
+     theme token while the incoming page is still being promoted. */
+  background-color: #f6f9fc !important;
 }
 
-[data-theme="light"] body.page-is-transitioning .global-fluid-canvas {
-  opacity: 0.75 !important;
+/* Keep the ambient blue canvas visible under incoming light-theme pages.
+   .page-content carries the white design token by default; inside the route
+   shell that opaque surface briefly hides the fluid layer, creating a white
+   flash before the blue atmosphere reappears. */
+[data-theme="light"] .page-content,
+[data-theme="light"] .page-transition-shell .page-content {
+  background: transparent !important;
 }
 
 /* Lock scroll and interactions during transition */
 body.page-is-transitioning {
   overflow: hidden !important;
+  min-height: 100vh;
 }
 
 body.page-is-transitioning>#page-content {
@@ -15050,6 +15068,25 @@ body.page-is-transitioning .navbar,
 
 body.page-is-transitioning .navbar {
   transition: none !important;
+}
+
+/* Retain the same backdrop root while light-page glass is mounted/promoted.
+   Even blur(0px) or will-change: opacity prevents nested backdrop filters
+   from sampling the ambient canvas outside the transition wrapper. */
+[data-theme="light"] #page-transition-shell.page-transition-shell--glass {
+  opacity: 1;
+  filter: none;
+  will-change: auto;
+  isolation: auto;
+}
+
+/* Keep discovered entrance glass on the same backdrop before, during and
+   after its reveal. This also overrides persistent will-change: opacity on
+   campaign groups once GSAP has cleared its temporary inline styles. */
+[data-theme="light"] .light-entry-glass {
+  opacity: 1 !important;
+  filter: none !important;
+  will-change: auto !important;
 }
 
 /* Clear, low-contrast section rhythm. These lines sit behind the content and
@@ -20567,21 +20604,19 @@ html.theme-switching::before {
   z-index: 9998;
   pointer-events: none;
   opacity: 0;
-  background: rgba(3, 8, 12, 0.16);
-  animation: theme-optical-veil 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: rgba(3, 8, 12, 0.12);
+  animation: theme-optical-veil 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: opacity;
   transform: translateZ(0);
 }
 
 html.theme-switching.theme-target-light::before {
-  background:
-    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.35), transparent 70%),
-    rgba(224, 242, 254, 0.22);
-  animation: theme-optical-veil-light 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: rgba(255, 255, 255, 0.14);
+  animation: theme-optical-veil-light 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 html.theme-switching.theme-target-dark::before {
-  background: rgba(3, 8, 12, 0.22);
+  background: rgba(3, 8, 12, 0.15);
 }
 
 /* Keep the hero anchors stationary while only opacity and blur change. */
@@ -20600,8 +20635,8 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
 
 @keyframes theme-optical-veil {
   0% { opacity: 0; }
-  30% { opacity: 0.65; }
-  70% { opacity: 0.25; }
+  22% { opacity: 0.16; }
+  58% { opacity: 0.12; }
   100% { opacity: 0; }
 }
 
@@ -20609,8 +20644,8 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
    Light mode uses the same blur language, with a gentler blue-white ramp. */
 @keyframes theme-optical-veil-light {
   0% { opacity: 0; }
-  30% { opacity: 0.60; }
-  70% { opacity: 0.22; }
+  22% { opacity: 0.14; }
+  58% { opacity: 0.10; }
   100% { opacity: 0; }
 }
 

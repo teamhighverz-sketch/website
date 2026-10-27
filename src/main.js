@@ -353,7 +353,7 @@ function boot() {
 
     // Register high-performance Service Worker for video and asset caching
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => { });
     }
 
     // If page is loaded with an anchor hash (e.g. /work.html#work), scroll smoothly to target
@@ -2864,6 +2864,8 @@ function restoreHomeStableState(isFromTransition = false) {
   window.__hvResetNavbar?.(window.location.pathname);
 }
 
+let homeSecondaryInitTimer = null;
+
 function initHomePageScripts(isFromTransition = false) {
   // Route swaps reuse the incoming document's static markup. Re-apply the
   // active theme before measuring or animating the hero so returning to Home
@@ -2871,22 +2873,35 @@ function initHomePageScripts(isFromTransition = false) {
   applyThemeHeroCopy();
   applyThemeCreatorsCopy();
   restoreHomeStableState(isFromTransition);
-  initAdscaleTextEffects();
-  init3DScene();
   initHeroReelCarousel();
-  initStatsMarquee();
-  initCreatorsSection();
-  initGrowthWidgets();
-  initStatementParallax();
-  initServicesReveal(isFromTransition);
-  initPortfolioGrid();
-  initTestimonialsReveal();
-  initProcessScrollDraw();
-  initFaqAccordion();
-  initCTAReveal();
+  const homeRoot = document.querySelector('.hero-section');
+  const initializeSecondary = () => {
+    homeSecondaryInitTimer = null;
+    if (!homeRoot?.isConnected) return;
+    initAdscaleTextEffects();
+    init3DScene();
+    initStatsMarquee();
+    initCreatorsSection();
+    initGrowthWidgets();
+    initStatementParallax();
+    initServicesReveal(isFromTransition);
+    initPortfolioGrid();
+    initTestimonialsReveal();
+    initProcessScrollDraw();
+    initFaqAccordion();
+    initCTAReveal();
+    if (isFromTransition) ScrollTrigger.refresh();
+  };
+  clearTimeout(homeSecondaryInitTimer);
+  // The hero is interactive immediately. Initialize offscreen sections after
+  // the route focus animation, rather than blocking its midpoint on Home.
+  if (isFromTransition) homeSecondaryInitTimer = setTimeout(initializeSecondary, 1000);
+  else initializeSecondary();
 }
 
 function disposePageRuntime() {
+  clearTimeout(homeSecondaryInitTimer);
+  homeSecondaryInitTimer = null;
   [
     '__hvHeroReelCleanup',
     '__hv3DCleanup',
@@ -3051,7 +3066,15 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   // stable; text-only targets retain their reveals.
   const glassAncestors = new Set();
   if (lightEntry) {
-    document.querySelectorAll('#page-content *').forEach((element) => {
+    // Only entrance targets can change the glass backdrop during this reveal.
+    // Scanning the entire page forced style calculation for every footer,
+    // testimonial and offscreen reel in the middle of the route handoff.
+    const entryNodes = new Set();
+    allSupportingElements.forEach((element) => {
+      entryNodes.add(element);
+      element.querySelectorAll('*').forEach(child => entryNodes.add(child));
+    });
+    entryNodes.forEach((element) => {
       const style = getComputedStyle(element);
       if (style.backdropFilter === 'none' && (!style.webkitBackdropFilter || style.webkitBackdropFilter === 'none')) return;
       for (let parent = element; parent && parent.id !== 'page-content'; parent = parent.parentElement) {
@@ -3413,7 +3436,7 @@ export function initHeroReelCarousel() {
     poster.alt = '';
     poster.setAttribute('aria-hidden', 'true');
     video.insertAdjacentElement('afterend', poster);
-    mediaStates.set(video, { poster, cancelReady: () => {}, playAttempt: null });
+    mediaStates.set(video, { poster, cancelReady: () => { }, playAttempt: null, priority: null });
     for (const src of [video.dataset.darkPoster, video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`]) {
       if (!src) continue;
       const image = new Image();
@@ -3426,6 +3449,10 @@ export function initHeroReelCarousel() {
   const loadVideo = (video, priority = 'low') => {
     if (!video || !mediaStates.has(video)) return;
     const targetSrc = getThemeVideoSource(video);
+    const state = mediaStates.get(video);
+    // Playback checks must not rewrite media attributes on every rail update.
+    if (video.getAttribute('src') === targetSrc && state.priority === priority) return;
+    state.priority = priority;
     video.defaultMuted = true;
     video.muted = true;
     video.playsInline = true;
@@ -3439,7 +3466,6 @@ export function initHeroReelCarousel() {
     else video.removeAttribute('autoplay');
     video.preload = priority === 'high' ? 'auto' : 'metadata';
     if (targetSrc && video.getAttribute('src') !== targetSrc) {
-      const state = mediaStates.get(video);
       state.cancelReady();
       state.playAttempt = null;
       const card = video.closest('.video-card');
@@ -3486,23 +3512,13 @@ export function initHeroReelCarousel() {
     loadVideo(video, 'high');
     // Buffer behind the loader without spending that buffer on hidden playback.
     if (document.documentElement.classList.contains('intro-pending')) return;
-    video.defaultMuted = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.loop = true;
-    video.autoplay = true;
-    video.setAttribute('playsinline', '');
-    video.setAttribute('webkit-playsinline', '');
-    video.setAttribute('muted', '');
-    video.setAttribute('autoplay', '');
-
     const state = mediaStates.get(video);
     if (!video.paused || state.playAttempt) return;
     // play() already waits for data. Adding new canplay/loadeddata listeners
     // on every switch left stale playback attempts attached to old sources.
     const attempt = video.play();
     state.playAttempt = attempt;
-    attempt?.catch(() => {}).finally(() => {
+    attempt?.catch(() => { }).finally(() => {
       if (state.playAttempt === attempt) state.playAttempt = null;
     });
   };
@@ -3522,6 +3538,7 @@ export function initHeroReelCarousel() {
   let resumeTimer = null;
   let animId = null;
   let layoutRetryId = null;
+  let resizeFrameId = null;
   let lastTime = performance.now();
   let cachedViewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
 
@@ -3561,26 +3578,46 @@ export function initHeroReelCarousel() {
   measure();
 
   let isCarouselVisible = true;
-  let lastVideoPriorityIndex = -1;
   let videosUnlocked = true;
+  const visibleReels = new Set();
 
-  const updateVideoPriority = (force = false) => {
-    if (!videosUnlocked || !stageStep || !videos.length || !isCarouselVisible) return;
-
-    const slot = Math.floor(scrollPosition / stageStep * 2);
-    if (!force && slot === lastVideoPriorityIndex) return;
-    lastVideoPriorityIndex = slot;
-    // Use the actual projected card bounds, not a fixed centre ± N window:
-    // the enlarged corner reels are visible too. Read all bounds together.
-    const bounds = cardPerspectives.map(position => position.getBoundingClientRect());
-    videos.forEach((video, index) => {
+  const pauseVideo = (video) => {
+    if (!video) return;
+    // A pending load must not start autoplay after the rail leaves the screen.
+    video.autoplay = false;
+    const state = mediaStates.get(video);
+    if (!video.paused || state?.playAttempt) video.pause();
+    // Allow an immediate return onscreen to issue a fresh play() even while
+    // the cancelled attempt's rejection is still queued as a microtask.
+    if (state) state.playAttempt = null;
+  };
+  const updateVideoPriority = () => {
+    if (!videosUnlocked) return;
+    videos.forEach((video) => {
       if (!video) return;
-      const rect = bounds[index];
-      const visible = rect.width > 0 && rect.right > -80 && rect.left < window.innerWidth + 80;
-      if (visible && !document.hidden) playVideo(video);
-      else { try { video.pause(); } catch (_) {} }
+      if (visibleReels.has(video) && isCarouselVisible && !document.hidden) playVideo(video);
+      else pauseVideo(video);
     });
   };
+
+  // Let the browser report projected visibility after layout. Measuring all
+  // cards immediately after writing their 3D transforms forced synchronous
+  // layouts during scrolling and every drag update.
+  const reelByPerspective = new Map(cardPerspectives.map((card, index) => [card, videos[index]]));
+  const reelVisibilityObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        const video = reelByPerspective.get(entry.target);
+        if (entry.isIntersecting) visibleReels.add(video);
+        else visibleReels.delete(video);
+      });
+      updateVideoPriority();
+    }, { rootMargin: '80px', threshold: 0 })
+    : null;
+  cardPerspectives.forEach((card, index) => {
+    if (card && reelVisibilityObserver) reelVisibilityObserver.observe(card);
+    else if (videos[index]) visibleReels.add(videos[index]);
+  });
 
   // Desktop can afford metadata warm-up. On phones, only the visible
   // reel receives sources; poster images keep the other cards lightweight.
@@ -3593,21 +3630,20 @@ export function initHeroReelCarousel() {
   const unlockOnInteraction = () => {
     updateVideoPriority(true);
   };
-  ['pointerdown', 'touchstart', 'scroll', 'wheel', 'click', 'keydown', 'pointerup', 'mousemove'].forEach((evt) => {
+  const unlockEvents = ['pointerdown', 'touchstart', 'keydown'];
+  unlockEvents.forEach((evt) => {
     window.addEventListener(evt, unlockOnInteraction, { once: true, passive: true });
   });
 
   // Expose global unlock so the intro preloader can trigger video buffering during loading screen
-  window.__hvUnlockHeroVideos = () => {
+  const unlockHeroVideos = () => {
     videosUnlocked = true;
     updateVideoPriority(true);
   };
+  window.__hvUnlockHeroVideos = unlockHeroVideos;
 
-  if (document.readyState !== 'complete') {
-    window.addEventListener('load', () => {
-      window.__hvUnlockHeroVideos();
-    }, { once: true });
-  }
+  const onLoad = () => updateVideoPriority();
+  if (document.readyState !== 'complete') window.addEventListener('load', onLoad, { once: true });
 
   const heroVisibilityObserver = 'IntersectionObserver' in window
     ? new IntersectionObserver(([entry]) => {
@@ -3620,14 +3656,13 @@ export function initHeroReelCarousel() {
         }
         // Immediately pause all hero reels when scrolled out of view on BOTH mobile and desktop!
         // This stops all background hardware video decode and network traffic.
-        videos.forEach((video) => { try { video?.pause(); } catch (_) { } });
+        videos.forEach(pauseVideo);
         return;
       }
       if (!wasVisible && isCarouselVisible) {
         lastTime = performance.now();
-        lastVideoPriorityIndex = -1;
         updateVideoPriority(true);
-        if (!animId) {
+        if (!animId && !document.hidden) {
           animId = requestAnimationFrame(loop);
         }
       }
@@ -3711,14 +3746,13 @@ export function initHeroReelCarousel() {
       }
       // Fisheye amphitheater layering: enlarged foreground corner cards sit cleanly in front
       pos.style.zIndex = String(Math.round(20 + Math.min(4.0, absU) * 20));
-      pos.classList.remove('is-center-card');
     });
   };
 
   const autoSpeed = 50; // pixels per second
 
   const loop = (currentTime) => {
-    if (!isCarouselVisible) {
+    if (!isCarouselVisible || document.hidden) {
       animId = null;
       return;
     }
@@ -3750,9 +3784,10 @@ export function initHeroReelCarousel() {
       }
 
       scrollPosition = ((scrollPosition % totalWidth) + totalWidth) % totalWidth;
-      render();
-      updateVideoPriority(false);
     }
+    // Pointer events may arrive faster than the display refreshes. Commit
+    // their latest position only once per animation frame, alongside autoplay.
+    render();
 
     animId = requestAnimationFrame(loop);
   };
@@ -3844,8 +3879,6 @@ export function initHeroReelCarousel() {
 
     scrollPosition = startScrollPosition - diff;
     scrollPosition = ((scrollPosition % totalWidth) + totalWidth) % totalWidth;
-    render();
-    updateVideoPriority();
   };
 
   const onPointerUp = (e) => {
@@ -3913,6 +3946,13 @@ export function initHeroReelCarousel() {
     measure();
     render();
   };
+  const scheduleResize = () => {
+    if (resizeFrameId !== null) return;
+    resizeFrameId = requestAnimationFrame(() => {
+      resizeFrameId = null;
+      onResize();
+    });
+  };
 
   const stabilizeLayout = (attempt = 0) => {
     const measuredWidth = viewport.getBoundingClientRect().width;
@@ -3942,12 +3982,11 @@ export function initHeroReelCarousel() {
         cancelAnimationFrame(animId);
         animId = null;
       }
-      videos.forEach((video) => { try { video?.pause(); } catch (_) { } });
+      videos.forEach(pauseVideo);
       return;
     }
     if (isCarouselVisible) {
       lastTime = performance.now();
-      lastVideoPriorityIndex = -1;
       updateVideoPriority(true);
       measure();
       render();
@@ -3957,12 +3996,11 @@ export function initHeroReelCarousel() {
     }
   };
   const onPageShow = () => {
-    lastVideoPriorityIndex = -1;
     updateVideoPriority();
     refreshHeroLayout();
   };
   const resizeObserver = 'ResizeObserver' in window
-    ? new ResizeObserver(() => requestAnimationFrame(onResize))
+    ? new ResizeObserver(scheduleResize)
     : null;
 
   const onWindowBlur = () => {
@@ -3972,12 +4010,12 @@ export function initHeroReelCarousel() {
   };
 
   track.addEventListener('pointerdown', onPointerDown);
-  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointermove', onPointerMove, { passive: true });
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('pointercancel', onPointerUp);
   window.addEventListener('blur', onWindowBlur);
   track.addEventListener('click', onClickCapture, true);
-  window.addEventListener('resize', onResize, { passive: true });
+  window.addEventListener('resize', scheduleResize, { passive: true });
   window.addEventListener('pageshow', onPageShow);
   document.addEventListener('visibilitychange', onVisibilityChange);
   resizeObserver?.observe(viewport);
@@ -4005,11 +4043,10 @@ export function initHeroReelCarousel() {
       if (text) text.textContent = label;
       viewCount.setAttribute('aria-label', label);
     });
-    lastVideoPriorityIndex = -1;
     updateVideoPriority(true);
   };
   window.__hvHeroReelRefreshTheme = onThemeChange;
-  window.__hvHeroReelCommitThemeSwap = () => {};
+  window.__hvHeroReelCommitThemeSwap = () => { };
 
   window.__hvHeroReelCleanup = () => {
     mediaStates.forEach(state => { state.cancelReady(); state.poster.remove(); });
@@ -4018,6 +4055,7 @@ export function initHeroReelCarousel() {
     cardPositions.forEach(position => position.querySelector('.video-card')?.classList.remove('reel-media-loading'));
     if (animId) cancelAnimationFrame(animId);
     if (layoutRetryId) cancelAnimationFrame(layoutRetryId);
+    if (resizeFrameId !== null) cancelAnimationFrame(resizeFrameId);
     clearTimeout(resumeTimer);
     activePointerId = null;
     isDragging = false;
@@ -4028,12 +4066,16 @@ export function initHeroReelCarousel() {
     window.removeEventListener('pointercancel', onPointerUp);
     window.removeEventListener('blur', onWindowBlur);
     track.removeEventListener('click', onClickCapture, true);
-    window.removeEventListener('resize', onResize);
+    window.removeEventListener('resize', scheduleResize);
+    window.removeEventListener('load', onLoad);
+    unlockEvents.forEach(evt => window.removeEventListener(evt, unlockOnInteraction));
     window.removeEventListener('pageshow', onPageShow);
     document.removeEventListener('visibilitychange', onVisibilityChange);
     resizeObserver?.disconnect();
     heroVisibilityObserver?.disconnect();
-    videos.forEach((v) => { try { v?.pause(); } catch (_) { } });
+    reelVisibilityObserver?.disconnect();
+    videos.forEach(pauseVideo);
+    if (window.__hvUnlockHeroVideos === unlockHeroVideos) window.__hvUnlockHeroVideos = null;
     if (window.__hvHeroReelRefresh === refreshHeroLayout) {
       window.__hvHeroReelRefresh = null;
     }

@@ -1,18 +1,12 @@
 /**
  * HIGHVERZ — Page Transition Engine
- * Recreates the Framer diagonal wipe transition from the reference recording.
- *
- * SPECIFICATION:
- * - Angle: 315° (135° in CSS linear-gradient coordinates, top-left to bottom-right)
- * - Feather / Softness Width: 30%
- * - Duration: 1.0s
- * - Easing: cubic-bezier(0.27, 0, 0.51, 1)
- *
- * Internal HTML routes use the same fade transition, including Home.
+ * Internal routes share a blur-out / blur-in handoff, including Home.
+ * A focus layer above the scene preserves the glass cards' backdrop.
  */
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import './route-transition.css';
 
 /**
  * Checks if a given path or URL represents the Home route.
@@ -171,7 +165,9 @@ export async function prefetchPage(urlStr, timeoutMs = 8000) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const normUrl = urlStr.split('#')[0];
+    // Prefetch links are relative; navigation requests are absolute. Use one
+    // cache key so clicking a warmed route doesn't fetch the document again.
+    const normUrl = new URL(urlStr, window.location.origin).href.split('#')[0];
     if (htmlCache.has(normUrl)) return htmlCache.get(normUrl);
     const res = await fetch(normUrl, { signal: controller.signal });
     if (!res.ok) return null;
@@ -187,22 +183,19 @@ export async function prefetchPage(urlStr, timeoutMs = 8000) {
 
 let isTransitioning = false;
 
-// Keep the route handoff deliberately longer than the page's component
-// entrances. A single set of timings prevents the outgoing page, incoming
-// page, and navbar from resolving at different speeds (the source of the
-// brief snap users could see on slower devices).
+// A short soft-focus crest bridges the document swap, followed by a longer
+// settle that overlaps the incoming page's text reveal.
 const ROUTE_TRANSITION = Object.freeze({
   // Keep route changes responsive even when a page initializer or network
   // request is slow. The old 5s/100px handoff could feel like a frozen click.
   safetyMs: 3000,
-  outgoingDuration: 0.42,
-  incomingDelay: 0.06,
-  incomingDuration: 0.62,
-  outgoingBlur: 24,
-  incomingBlur: 28,
-  navbarOutDuration: 0.32,
-  navbarInDelay: 0.08,
-  navbarInDuration: 0.46,
+  outgoingDuration: 0.32,
+  outgoingFadeStart: 0.16,
+  outgoingFadeDuration: 0.20,
+  focusHold: 0.04,
+  incomingDuration: 0.58,
+  desktopBlur: 16,
+  mobileBlur: 10,
 });
 
 /**
@@ -280,6 +273,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     const targetTitle = newDoc.title;
     const targetBodyClass = newDoc.body.className;
     const isLightTransition = document.documentElement.dataset.theme === 'light';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // 2. Update Browser History & Document Title
     if (!isPopState) {
@@ -326,8 +320,13 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
 
     // 5. Freeze current content in visual viewport (preserves exact visual frame without bottom cut-off)
     const currentScrollY = window.scrollY || window.pageYOffset || 0;
+    const currentContentTop = currentContent.getBoundingClientRect().top;
+    // On mobile, the audience toggle occupies normal flow above <main>.
+    // Preserve that offset in both layers: -scrollY alone moves the outgoing
+    // page up by the toggle's height, then promotion moves the incoming down.
+    const contentFlowOffset = currentContentTop + currentScrollY;
     currentContent.classList.add('page-outgoing-frozen');
-    currentContent.style.top = `-${currentScrollY}px`;
+    currentContent.style.top = `${currentContentTop}px`;
 
     // Immediately reset document scroll while outgoing content is pinned at -scrollY
     // This completely eliminates scroll-jump and bottom/top layout gaps when swapping pages
@@ -341,6 +340,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     shell.className = 'page-transition-shell';
     if (isLightTransition) shell.classList.add('page-transition-shell--glass');
     shell.id = 'page-transition-shell';
+    shell.style.paddingTop = `${Math.max(0, contentFlowOffset)}px`;
 
     document.documentElement.classList.add('page-transitioned');
 
@@ -405,11 +405,13 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     backdrop.id = 'page-transition-backdrop';
     backdrop.style.backgroundColor = getComputedStyle(document.body).backgroundColor || '#050809';
 
-    // Keep the old glow node for compatibility with the existing transition
-    // shell, while the route handoff itself uses a clean synchronized fade.
+    // Keep the focus layer outside page content so glass surfaces keep
+    // sampling the same background during both halves of the handoff.
     const glow = document.createElement('div');
     glow.className = 'page-transition-glow';
     glow.id = 'page-transition-glow';
+    glow.setAttribute('aria-hidden', 'true');
+    glow.classList.add('page-transition-focus');
 
     document.body.appendChild(backdrop);
     document.body.appendChild(shell);
@@ -440,44 +442,26 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     const navbar = document.getElementById('navbar');
     if (navbar) navbar.classList.add('page-nav-outgoing');
 
-    // Lightweight, high-performance blur transition (60fps optimized, clearProps on finish)
+    // The old content stays fully rendered while the focus layer blurs it.
     gsap.set(currentContent, {
       opacity: 1,
       y: 0,
       scale: 1,
-      filter: 'blur(0px)',
-      willChange: 'opacity, transform, filter',
+      filter: 'none',
+      willChange: 'auto',
     });
-    // Do not crossfade two different page subtitles over one another. The
-    // outgoing hero copy is intentionally removed before the blur handoff so
-    // the incoming sentence never appears duplicated or reflows mid-transition.
-    currentContent.querySelectorAll(
-      '#hero-desc, .work-hero-desc, .campaign-hero-sub, .team-hero-desc, ' +
-      '.why-hero-subtitle, .case-hero-desc'
-    ).forEach((copy) => {
-      copy.style.opacity = '0';
-    });
-    if (navbar && !isLightTransition) {
-      gsap.set(navbar, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        filter: 'blur(0px)',
-        transformOrigin: '50% 50%',
-        willChange: 'opacity, transform, filter',
-      });
-    }
     gsap.set(shell, {
       // A filtered/faded ancestor creates a backdrop root. Glass cards then
       // cannot sample the persistent canvas outside this shell until removal.
-      // Light routes reveal individual content, keeping the glass root intact.
-      opacity: isLightTransition ? 1 : 0,
+      // Both themes keep this root intact and reveal beneath the focus layer.
+      opacity: 1,
+      visibility: 'hidden',
       y: 0,
       scale: 1,
-      filter: isLightTransition ? 'none' : `blur(${ROUTE_TRANSITION.incomingBlur}px)`,
-      willChange: isLightTransition ? 'auto' : 'opacity, transform, filter',
+      filter: 'none',
+      willChange: 'auto',
     });
-    gsap.set(glow, { opacity: 0 });
+    gsap.set(glow, { opacity: 1 });
 
     // Start the incoming page choreography at the beginning of the handoff.
     // Previously this ran only after the blur completed, which made the hero
@@ -486,6 +470,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     const startIncomingScripts = () => {
       if (incomingScriptsStarted) return;
       incomingScriptsStarted = true;
+      shell.style.visibility = 'visible';
       // Fast route clicks can leave the browser/Lenis scroll state one frame
       // behind the new shell. Reset every scroll owner before measuring the
       // incoming hero so Home never opens halfway down the page.
@@ -513,7 +498,6 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
 
     const transitionTimeline = gsap.timeline({
       defaults: { overwrite: 'auto' },
-      onStart: startIncomingScripts,
       onComplete: () => {
         // Clean up glow & backdrop elements
         glow.remove();
@@ -558,89 +542,52 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
           window.lenis.resize();
         }
 
-      // Initialize page scripts in next animation frame once DOM is rendered
-      requestAnimationFrame(() => {
+        // One layout refresh after promotion. The carousel's own refresh
+        // already handles settling frames; the footer was initialized above.
+        requestAnimationFrame(() => {
           try {
             if (!incomingScriptsStarted) {
               startIncomingScripts();
             }
-
             window.__hvResetNavbar?.(window.location.pathname);
-
-            // Repeated frame passes ensure the carousel never gets stuck on 1 reel
-            let passes = 0;
-            const refreshPass = () => {
-              try {
-                window.__hvHeroReelRefresh?.();
-                window.__hvInitFooterScatterGrid?.();
-                window.__hvUpdateCapsuleSwitchers?.();
-                passes++;
-                if (passes < 4) {
-                  requestAnimationFrame(refreshPass);
-                } else {
-                  if (window.ScrollTrigger) {
-                    ScrollTrigger.refresh();
-                  }
-                  isTransitioning = false;
-                  window.clearTimeout(transitionSafetyTimer);
-                }
-              } catch (err) {
-                console.error('Page runtime refresh failed:', err);
-                isTransitioning = false;
-                window.clearTimeout(transitionSafetyTimer);
-              }
-            };
-            requestAnimationFrame(refreshPass);
+            window.__hvHeroReelRefresh?.();
+            window.__hvUpdateCapsuleSwitchers?.();
+            ScrollTrigger.refresh();
           } catch (err) {
             console.error('Incoming page initialization failed:', err);
+          } finally {
             isTransitioning = false;
             window.clearTimeout(transitionSafetyTimer);
           }
         });
       }
-    })
+    });
+
+    const blur = reducedMotion ? 'blur(0px)' : `blur(${window.innerWidth <= 768 ? ROUTE_TRANSITION.mobileBlur : ROUTE_TRANSITION.desktopBlur}px)`;
+    const swapAt = reducedMotion ? 0.01 : ROUTE_TRANSITION.outgoingFadeStart + ROUTE_TRANSITION.outgoingFadeDuration;
+    transitionTimeline
+      .to(glow, {
+        backdropFilter: blur,
+        webkitBackdropFilter: blur,
+        duration: reducedMotion ? 0.01 : ROUTE_TRANSITION.outgoingDuration,
+        ease: 'sine.inOut',
+      }, 0)
+      // Fade only the departing scene once it is already blurred. Incoming
+      // glass stays fully opaque, so its background never changes at cleanup.
       .to(currentContent, {
         opacity: 0,
-        filter: `blur(${ROUTE_TRANSITION.outgoingBlur}px)`,
-        y: 0,
-        scale: 1,
-        duration: ROUTE_TRANSITION.outgoingDuration,
-        ease: 'power2.inOut',
-      }, 0)
-      .to(shell, {
-        opacity: 1,
-        filter: isLightTransition ? 'none' : 'blur(0px)',
-        y: 0,
-        scale: 1,
-        duration: ROUTE_TRANSITION.incomingDuration,
-        ease: 'power3.out',
-        clearProps: 'filter,willChange',
-      }, ROUTE_TRANSITION.incomingDelay);
-
-
-    if (navbar && !isLightTransition) {
-      transitionTimeline.to(navbar, {
-        opacity: 0,
-        y: 0,
-        scale: 1,
-        filter: `blur(${ROUTE_TRANSITION.outgoingBlur}px)`,
-        duration: ROUTE_TRANSITION.navbarOutDuration,
-        ease: 'power2.inOut',
-      }, 0);
-      transitionTimeline.fromTo(navbar,
-        { opacity: 0, y: 0, scale: 1, filter: `blur(${ROUTE_TRANSITION.incomingBlur}px)` },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          filter: 'blur(0px)',
-          duration: ROUTE_TRANSITION.navbarInDuration,
-          ease: 'power2.out',
-          clearProps: 'all',
-        },
-        ROUTE_TRANSITION.navbarInDelay
-      );
-    }
+        duration: reducedMotion ? 0.01 : ROUTE_TRANSITION.outgoingFadeDuration,
+        ease: 'sine.inOut',
+      }, reducedMotion ? 0 : ROUTE_TRANSITION.outgoingFadeStart)
+      .call(startIncomingScripts, [], swapAt)
+      .to(glow, {
+        backdropFilter: 'blur(0px)',
+        webkitBackdropFilter: 'blur(0px)',
+        duration: reducedMotion ? 0.01 : ROUTE_TRANSITION.incomingDuration,
+        // Keep the first half blurred while the incoming text becomes visible;
+        // an ease-out used to clear before the heading could be seen.
+        ease: 'sine.inOut',
+      }, swapAt + (reducedMotion ? 0 : ROUTE_TRANSITION.focusHold));
 
   } catch (err) {
     console.error('Page transition encountered an error:', err);
@@ -714,7 +661,7 @@ export function initPageTransitions() {
     if (isHomeRoute(url) && !isHomeRoute(window.location.pathname)) {
       try {
         sessionStorage.setItem('hv_from_subpage', 'true');
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // Check if this navigation is between non-Home pages
@@ -729,7 +676,7 @@ export function initPageTransitions() {
     if (!isHomeRoute(window.location.pathname)) {
       try {
         sessionStorage.setItem('hv_from_subpage', 'true');
-      } catch (_) {}
+      } catch (_) { }
     }
   });
 
@@ -744,7 +691,7 @@ export function initPageTransitions() {
       if (canTransition(window.location.pathname, url)) {
         prefetchPage(url.href);
       }
-    } catch (err) {}
+    } catch (err) { }
   }, { passive: true });
 
   // Handle browser back and forward

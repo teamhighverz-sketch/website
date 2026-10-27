@@ -34,11 +34,16 @@ try {
           return rect.width && rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight;
         });
         const initial = visible.map(v => v.currentTime);
-        const pos = viewport.querySelector('.card-position');
+        const pos = viewport.querySelector('.card-position:not([style*="display: none"])') || viewport.querySelector('.card-position');
         const transform = pos.style.transform;
         await new Promise(resolve => setTimeout(resolve, 500));
         return { top: rail.top, height: rail.height, moving: pos.style.transform !== transform,
-          videos: visible.map((v, i) => ({ src: v.getAttribute('src'), ready: v.readyState, paused: v.paused, advancing: v.currentTime !== initial[i], loading: v.closest('.video-card').classList.contains('reel-media-loading') })) };
+          videos: visible.map((v, i) => {
+            const rect = v.getBoundingClientRect();
+            return { src: v.getAttribute('src'), ready: v.readyState, paused: v.paused,
+              advancing: v.currentTime !== initial[i], loading: v.closest('.video-card').classList.contains('reel-media-loading'),
+              stillVisible: rect.width > 0 && rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight };
+          }).filter(v => v.stillVisible) };
       });
       console.log(width, theme, JSON.stringify(playing));
       assert.ok(Math.abs(before.top - playing.top) < 2 && Math.abs(before.height - playing.height) < 2, 'Theme switch must preserve rail layout');

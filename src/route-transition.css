@@ -1,0 +1,18 @@
+/* A sibling focus layer preserves glass backdrop sampling during light
+   navigation. It never changes layout or paints a white/black cover. */
+.page-transition-focus {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  pointer-events: none;
+  background: transparent;
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+}
+
+/* The temporary viewport only clips the reveal; it must not become another
+   scroll container that can shift while incoming content is initialized. */
+#page-transition-shell {
+  overflow: clip !important;
+  overflow-anchor: none;
+}

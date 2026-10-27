@@ -2942,7 +2942,7 @@ body.page-campaigns {
 @media (max-width: 768px) {
   .campaign-hero {
     min-height: auto;
-    padding-top: 5.25rem;
+    padding-top: 1.25rem !important;
     padding-bottom: 0.85rem;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -2958,6 +2958,15 @@ body.page-campaigns {
     min-width: 0;
     margin: 0 auto;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .campaign-hero-tag {
+    align-self: center !important;
+    margin: 0 auto 1rem auto !important;
   }
 
   .campaign-search-section {
@@ -2969,32 +2978,44 @@ body.page-campaigns {
   }
 
   .campaign-hero-headline {
-    font-size: clamp(1.75rem, 6.5vw, 2.35rem);
-    line-height: 1.18;
-    max-width: 100%;
+    font-size: clamp(2.1rem, 7.6vw, 2.85rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.035em !important;
+    max-width: min(92vw, 440px) !important;
+    margin: 0 auto 0.85rem auto !important;
+    text-align: center !important;
     box-sizing: border-box;
     word-break: break-word;
     overflow-wrap: break-word;
-    margin-bottom: 0.85rem;
   }
 
   .campaign-hero-line {
-    white-space: normal;
-    display: block;
-    width: 100%;
-    max-width: 100%;
+    white-space: normal !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box;
-    padding-right: 0;
+    padding-right: 0 !important;
+    text-align: center !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
   }
 
   .campaign-hero-sub {
-    font-size: 0.92rem;
-    line-height: 1.55;
-    padding: 0 0.5rem;
-    margin: 0 auto 1.15rem;
-    width: 100%;
-    max-width: 100%;
+    font-size: clamp(0.78rem, 2.7vw, 0.85rem) !important;
+    line-height: 1.52 !important;
+    padding: 0 !important;
+    margin: 0 auto 1.35rem auto !important;
+    max-width: min(86vw, 340px) !important;
+    color: rgba(255, 255, 255, 0.50) !important;
+    font-weight: 400 !important;
+    text-align: center !important;
     box-sizing: border-box;
+  }
+
+  [data-theme="light"] .campaign-hero-sub {
+    color: rgba(71, 85, 105, 0.70) !important;
   }
 
   .campaign-hero-pillars {
@@ -3005,8 +3026,8 @@ body.page-campaigns {
     gap: 0.5rem 0.65rem;
     padding: 0.25rem 0.5rem 0.5rem;
     width: 100%;
-    max-width: 260px;
-    margin: 0 auto;
+    max-width: min(90vw, 320px);
+    margin: 0 auto 0.5rem auto;
     box-sizing: border-box;
     overflow: visible;
   }

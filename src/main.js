@@ -1299,7 +1299,7 @@ function applyThemeHeroCopy() {
   // Do not trust only the marker: Vite hot reloads and route handoffs can
   // preserve the marker while restoring the previous theme's DOM nodes.
   const hasExpectedMarkup = isLight
-    ? headline.querySelector('.hero-movie-screen') && headline.querySelector('.hero-platform-snippet')
+    ? headline.querySelector('.hero-global-sensation, .hero-movie-screen') && headline.querySelector('.hero-platform-snippet')
     : headline.querySelector('#hero-word-roller');
   if (headline.dataset.themeCopyApplied === document.documentElement.dataset.theme && hasExpectedMarkup) return;
   headline.innerHTML = isLight
@@ -1322,7 +1322,7 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>Scene</span>
         <span class="hl-word" data-word>Into</span>
         <span class="hl-word" data-word>a</span>
-        <span class="hl-word highlight-cyan font-bold-italic" data-word>Global Sensation.</span>
+        <span class="hl-word highlight-cyan font-bold-italic hero-global-sensation" data-word>Global Sensation.</span>
       </span>`
     : `<span class="hero-headline-line">
         <span class="hl-word" data-word>Turn</span>

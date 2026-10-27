@@ -47,6 +47,14 @@ function applyTheme(theme, animate = false) {
 
 // ─── Update Capsule Switchers (Creators ↔ Brands) ───
 export function updateCapsuleSwitchers(theme) {
+  // Deduplicate any stray capsule wraps across the document
+  const capsuleWraps = document.querySelectorAll('.home-theme-capsule-wrap');
+  if (capsuleWraps.length > 1) {
+    for (let i = 1; i < capsuleWraps.length; i++) {
+      capsuleWraps[i].remove();
+    }
+  }
+
   const current = theme || document.documentElement.getAttribute('data-theme') || 'dark';
   const capsules = document.querySelectorAll('.theme-capsule-switcher');
   capsules.forEach(capsule => {

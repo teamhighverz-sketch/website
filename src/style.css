@@ -2321,11 +2321,13 @@ body.mobile-menu-active .work-creator-card {
 
 .adscale-reveal-word.highlight-cyan:not(:last-child),
 .highlight-cyan .adscale-reveal-word:not(:last-child) {
-  margin-right: 0.04em !important;
+  padding-right: 0.04em !important;
+  margin-right: -0.16em !important;
 }
 
 .adscale-reveal-word.highlight-cyan:last-child,
 .highlight-cyan .adscale-reveal-word:last-child {
+  padding-right: 0.22em !important;
   margin-right: -0.22em !important;
 }
 
@@ -20201,48 +20203,146 @@ body::-webkit-scrollbar {
     font-size: 0.86rem;
   }
 
-  /* 4. Balanced Mobile Typography (No giant wrapping headers) */
+  /* Hide redundant circular theme button on mobile: the Creators ↔ Brands capsule is the official switcher */
+  .nav-actions .theme-switcher {
+    display: none !important;
+  }
+
+  /* 4. Bold, Authoritative Mobile Hero Typography */
   .hero-headline,
   .hero-headline--centered {
-    font-size: clamp(0.92rem, 4.25vw, 1.45rem) !important;
-    line-height: 1.22 !important;
-    margin-bottom: 0.9rem !important;
+    font-size: clamp(1.85rem, 6.8vw, 2.75rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.14 !important;
+    letter-spacing: -0.035em !important;
+    margin-bottom: 0.85rem !important;
     width: 100% !important;
-    max-width: 100% !important;
-    letter-spacing: -0.025em !important;
+    max-width: min(92vw, 440px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
   }
 
   #hero .hero-headline-line,
   .hero-headline-line {
-    white-space: nowrap !important;
+    white-space: normal !important;
     display: block !important;
     width: 100% !important;
     text-align: center !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+    line-height: 1.15 !important;
+    padding: 0.04em 0 !important;
   }
 
   @media (max-width: 360px) {
     .hero-headline,
     .hero-headline--centered {
-      font-size: clamp(0.8rem, 3.8vw, 0.95rem) !important;
+      font-size: clamp(1.65rem, 6vw, 1.95rem) !important;
+      line-height: 1.15 !important;
     }
   }
 
+  /* Refined secondary description: subtle, non-intrusive, perfectly balanced under the headline */
   .hero-description,
   .hero-description--centered {
-    font-size: 0.88rem !important;
-    line-height: 1.55 !important;
-    margin-bottom: 1.35rem !important;
+    font-size: clamp(0.78rem, 2.7vw, 0.85rem) !important;
+    line-height: 1.5 !important;
+    max-width: min(86vw, 320px) !important;
+    margin: 0 auto 1.35rem !important;
+    color: rgba(255, 255, 255, 0.48) !important;
+    font-weight: 400 !important;
+    text-align: center !important;
+  }
+
+  [data-theme="light"] .hero-description,
+  [data-theme="light"] .hero-description--centered {
+    color: rgba(71, 85, 105, 0.70) !important;
+  }
+
+  /* 5. Work Page Hero — Balanced, Authoritative Mobile Layout */
+  .work-hero-left {
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .work-hero-tag {
+    align-self: center !important;
+    margin: 0 auto 1rem auto !important;
   }
 
   .work-hero-title {
-    font-size: clamp(1.75rem, 6.5vw, 2.25rem) !important;
-    line-height: 1.14 !important;
-    margin-bottom: 0.85rem !important;
+    font-size: clamp(2.15rem, 7.8vw, 2.85rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.035em !important;
+    margin: 0 auto 0.85rem auto !important;
+    text-align: center !important;
+    max-width: min(92vw, 440px) !important;
+  }
+
+  .work-hero-line {
+    display: block !important;
+    text-align: center !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
   }
 
   .work-hero-desc {
-    font-size: 0.88rem !important;
-    line-height: 1.55 !important;
+    font-size: clamp(0.78rem, 2.7vw, 0.85rem) !important;
+    line-height: 1.52 !important;
+    max-width: min(86vw, 340px) !important;
+    margin: 0 auto 1.45rem auto !important;
+    color: rgba(255, 255, 255, 0.50) !important;
+    font-weight: 400 !important;
+    text-align: center !important;
+  }
+
+  [data-theme="light"] .work-hero-desc {
+    color: rgba(71, 85, 105, 0.70) !important;
+  }
+
+  .work-hero-cta {
+    align-self: center !important;
+    margin: 0 auto 2.25rem auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.72rem 1.65rem !important;
+    border-radius: 9999px !important;
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #FFFFFF !important;
+    text-decoration: none !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .work-hero-cta:hover,
+  .work-hero-cta:active {
+    background: rgba(0, 229, 255, 0.14) !important;
+    border-color: rgba(0, 229, 255, 0.4) !important;
+    color: #00E5FF !important;
+  }
+
+  [data-theme="light"] .work-hero-cta {
+    background: rgba(14, 165, 233, 0.08) !important;
+    border: 1px solid rgba(14, 165, 233, 0.25) !important;
+    color: #0284C7 !important;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.08) !important;
+  }
+
+  [data-theme="light"] .work-hero-cta:hover,
+  [data-theme="light"] .work-hero-cta:active {
+    background: rgba(14, 165, 233, 0.16) !important;
+    border-color: #0284C7 !important;
+    color: #0369A1 !important;
   }
 
   .work-capabilities-title {
@@ -20255,26 +20355,74 @@ body::-webkit-scrollbar {
     line-height: 1.55 !important;
   }
 
+  /* Team Hero — Balanced Mobile Typography & Spacing */
+  .team-hero-section {
+    padding-top: 1.25rem !important;
+    padding-bottom: 2.25rem !important;
+  }
+
+  .team-hero-tag {
+    align-self: center !important;
+    margin: 0 auto 1rem auto !important;
+    text-align: center !important;
+  }
+
   .team-hero-title {
-    font-size: clamp(1.75rem, 6.5vw, 2.25rem) !important;
-    line-height: 1.14 !important;
-    margin-bottom: 0.85rem !important;
+    font-size: clamp(2.15rem, 7.8vw, 2.85rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.035em !important;
+    margin: 0 auto 0.85rem auto !important;
+    text-align: center !important;
+    max-width: min(92vw, 440px) !important;
   }
 
   .team-hero-desc {
-    font-size: 0.88rem !important;
-    line-height: 1.55 !important;
+    font-size: clamp(0.78rem, 2.7vw, 0.85rem) !important;
+    line-height: 1.52 !important;
+    max-width: min(86vw, 340px) !important;
+    margin: 0 auto 1.65rem auto !important;
+    color: rgba(255, 255, 255, 0.50) !important;
+    font-weight: 400 !important;
+    text-align: center !important;
+  }
+
+  [data-theme="light"] .team-hero-desc {
+    color: rgba(71, 85, 105, 0.70) !important;
+  }
+
+  /* Why Us Hero — Balanced Mobile Typography & Spacing */
+  .why-hero-section {
+    padding-top: 1.25rem !important;
+    padding-bottom: 2.25rem !important;
+  }
+
+  .why-hero-container {
+    text-align: center !important;
   }
 
   .why-hero-title {
-    font-size: clamp(1.75rem, 6.5vw, 2.25rem) !important;
-    line-height: 1.14 !important;
-    margin-bottom: 0.85rem !important;
+    font-size: clamp(2.15rem, 7.8vw, 2.85rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.035em !important;
+    margin: 0 auto 0.85rem auto !important;
+    text-align: center !important;
+    max-width: min(92vw, 440px) !important;
   }
 
   .why-hero-subtitle {
-    font-size: 0.88rem !important;
-    line-height: 1.55 !important;
+    font-size: clamp(0.78rem, 2.7vw, 0.85rem) !important;
+    line-height: 1.52 !important;
+    max-width: min(86vw, 340px) !important;
+    margin: 0 auto 1.5rem auto !important;
+    color: rgba(255, 255, 255, 0.50) !important;
+    font-weight: 400 !important;
+    text-align: center !important;
+  }
+
+  [data-theme="light"] .why-hero-subtitle {
+    color: rgba(71, 85, 105, 0.70) !important;
   }
 
   .case-hero-title {
@@ -20298,8 +20446,8 @@ body::-webkit-scrollbar {
 
   /* 5. Work Page Hero & Metrics Grid */
   .work-hero-section {
-    padding-top: 5.5rem;
-    padding-bottom: 2rem;
+    padding-top: 1.25rem !important;
+    padding-bottom: 2.25rem !important;
   }
 
   .work-hero-metrics-grid {
@@ -20511,14 +20659,9 @@ body::-webkit-scrollbar {
     overflow-wrap: anywhere;
   }
 
-  .team-hero-desc,
-  .why-hero-subtitle {
-    font-size: 0.88rem;
-    line-height: 1.55;
-  }
-
   .why-hero-section {
-    padding: 6rem 0 2.5rem;
+    padding-top: 1.25rem !important;
+    padding-bottom: 2.25rem !important;
   }
 
   .footer a {
@@ -20715,19 +20858,20 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
   }
 }
 
-/* Cinema headline accent: underline only the Light-theme “Screen.” word. */
-[data-theme="light"] #hero .hero-movie-screen {
+/* Cinema headline accent: underline the Light-theme “Global Sensation.” phrase. */
+[data-theme="light"] #hero .hero-global-sensation {
   position: relative;
   isolation: isolate;
+  display: inline-block;
 }
 
-[data-theme="light"] #hero .hero-movie-screen::after {
+[data-theme="light"] #hero .hero-global-sensation::after {
   content: '';
   position: absolute;
-  left: 0.03em;
-  right: 0.03em;
+  left: 0.02em;
+  right: 0.02em;
   bottom: 0.02em;
-  height: 0.055em;
+  height: 0.06em;
   min-height: 3px;
   border-radius: 999px;
   background: linear-gradient(90deg, #0284c7, #38bdf8);
@@ -20739,11 +20883,17 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  [data-theme="light"] #hero .hero-movie-screen:hover::after,
-  [data-theme="light"] #hero .hero-movie-screen:focus-visible::after {
+  [data-theme="light"] #hero .hero-global-sensation:hover::after,
+  [data-theme="light"] #hero .hero-global-sensation:focus-visible::after,
+  [data-theme="light"] #hero .hero-headline:hover .hero-global-sensation::after {
     opacity: 1;
     transform: scaleX(1);
   }
+}
+
+[data-theme="light"] #hero .hero-global-sensation:active::after {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 /* The two theme variants share the exact same line and connector geometry.

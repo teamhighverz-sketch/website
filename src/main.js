@@ -1352,6 +1352,15 @@ function applyThemeHeroCopy() {
       : '<span>We build and manage distribution accounts, publish daily,</span><span>and turn short-form content into measurable growth.</span>';
   }
   headline.dataset.themeCopyApplied = document.documentElement.dataset.theme || 'dark';
+  if (isLight) {
+    const chips = headline.querySelectorAll('.hl-platform-chips .platform-chip');
+    const isIntroPending = document.documentElement.classList.contains('intro-pending') || document.body.classList.contains('intro-active');
+    if (chips.length && isIntroPending && typeof gsap !== 'undefined') {
+      gsap.set(chips, { opacity: 0, filter: 'blur(6px)' });
+    } else if (chips.length) {
+      gsap.set(chips, { opacity: 1, filter: 'none', clearProps: 'filter' });
+    }
+  }
 }
 
 // The Home case-study rail has two deliberate identities: creator growth in
@@ -1602,25 +1611,7 @@ window.addEventListener('hv:themechange', () => {
     }
   });
 
-  // Light mode platform chip popping spring in sequence
-  if (isLight) {
-    const chipInners = headline.querySelectorAll('.platform-chip-inner');
-    if (chipInners.length) {
-      const line1Count = headlineLines[0]?.querySelectorAll('.hl-word').length || 4;
-      gsap.fromTo(chipInners,
-        { opacity: 0, filter: 'blur(3px)' },
-        {
-          opacity: 1,
-          filter: 'blur(0px)',
-          duration: 0.48,
-          delay: line1Count * wordStagger,
-          stagger: 0.05,
-          ease: 'power2.out',
-          clearProps: 'filter,opacity'
-        }
-      );
-    }
-  }
+
 
   // Subtitle description lines smoothly de-blur in sequence
   if (descSpans.length) {
@@ -1672,6 +1663,7 @@ window.addEventListener('hv:themechange', () => {
 });
 
 export function prepareHeroInitialState() {
+  document.body.classList.remove('hero-revealed');
   applyThemeHeroCopy();
   const heroHeadline = document.getElementById('hero-headline');
   if (!heroHeadline) return;
@@ -1702,7 +1694,7 @@ export function prepareHeroInitialState() {
     willChange: 'opacity, transform, filter'
   });
   if (platformChips.length) {
-    gsap.set(platformChips, { opacity: 0, y: 20, scale: 0.95, filter: 'blur(6px)' });
+    gsap.set(platformChips, { opacity: 0, filter: 'blur(6px)' });
   }
   gsap.set('#hero-platform-icons', { opacity: 1 });
   gsap.set('#hero-desc', { opacity: 0, y: 25, filter: 'blur(10px)' });
@@ -1992,11 +1984,16 @@ function initHeroIntro(immediate = false) {
   const navbar = document.getElementById('navbar');
 
   const isMobile = window.innerWidth < 768;
-  if ((immediate && !isLightTheme) || (isMobile && !isLightTheme) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (immediate || (isMobile && !isLightTheme) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.body.classList.add('hero-revealed');
     gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller, #hero-platform-icons, .platform-chip, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', {
       opacity: 1, y: 0, x: 0, scale: 1, filter: 'none', clearProps: 'all'
     });
     if (navbar) gsap.set(navbar, { opacity: 1, y: 0, clearProps: 'opacity,transform,filter' });
+    const chips = heroHeadline.querySelectorAll('.platform-chip');
+    if (chips.length) {
+      gsap.set(chips, { opacity: 1, filter: 'none' });
+    }
     headlineLines.forEach((line) => { line.style.overflow = 'visible'; });
     const statsNumber = document.getElementById('stats-counter');
     if (statsNumber) {
@@ -2011,33 +2008,54 @@ function initHeroIntro(immediate = false) {
 
   headlineLines.forEach((line) => { line.style.overflow = 'visible'; });
 
-  // Hero entrance: same motion language as loader — blur + slide upward + sharp
-  const allWords = heroHeadline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller');
+  // Hero entrance: natural reading sequence with optical de-blur
+  const line1Words = Array.from(headlineLines[0]?.querySelectorAll('.hl-word') || []);
+  const chips = Array.from(heroHeadline.querySelectorAll('.hl-platform-chips .platform-chip') || []);
+  const line2Words = Array.from(headlineLines[1]?.querySelectorAll('.hl-word') || []);
+
+  const allWords = isLightTheme
+    ? [...line1Words, ...line2Words]
+    : Array.from(heroHeadline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller'));
+
   gsap.set(allWords, { opacity: 0, y: 25, filter: 'blur(10px)', willChange: 'opacity, transform, filter' });
-  if (platformChips.length) {
-    gsap.set(platformChips, { opacity: 0, y: 20, scale: 0.95, filter: 'blur(6px)' });
+  if (isLightTheme) {
+    if (chips.length) {
+      gsap.set(chips, { opacity: 0, filter: 'blur(6px)' });
+    }
+    const snippetConnector = heroHeadline.querySelector('.hero-headline-connector');
+    if (snippetConnector) {
+      gsap.set(snippetConnector, { opacity: 1, y: 0, filter: 'none' });
+    }
+  } else if (platformChips.length) {
+    gsap.set(platformChips, { opacity: 0, filter: 'blur(6px)' });
   }
+
   gsap.set('#hero-platform-icons', { opacity: 1 });
   gsap.set('#hero-desc', { opacity: 0, y: 25, filter: 'blur(10px)' });
   gsap.set('#hero-actions', { opacity: 0, y: 25, filter: 'blur(8px)' });
   gsap.set('.hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar', { opacity: 0, y: 20, filter: 'blur(6px)' });
   gsap.set('.section-trusted', { opacity: 0, y: 20, filter: 'blur(6px)' });
-  if (navbar) {
+  const isTransitioning = immediate || document.body.classList.contains('page-is-transitioning') || (navbar && navbar.classList.contains('page-nav-outgoing'));
+  if (navbar && !isTransitioning) {
     gsap.set(navbar, { opacity: 0, y: -15, filter: 'blur(6px)' });
+  } else if (navbar) {
+    gsap.set(navbar, { opacity: 1, y: 0, filter: 'none', clearProps: 'opacity,transform,filter' });
   }
 
   const tl = gsap.timeline({
     defaults: { ease: 'power3.out' },
     onComplete: () => {
+      document.body.classList.add('hero-revealed');
       gsap.set(allWords, { clearProps: 'filter,willChange,opacity,transform' });
-      gsap.set('#hero-platform-icons, .platform-chip, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', { clearProps: 'filter,willChange' });
+      gsap.set('.platform-chip', { opacity: 1, clearProps: 'filter,willChange' });
+      gsap.set('#hero-platform-icons, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', { clearProps: 'filter,willChange' });
       if (navbar) gsap.set(navbar, { clearProps: 'opacity,transform,filter' });
       initHeroWordRoller();
     }
   });
 
-  // 0. Navbar slides down from blur into sharp focus
-  if (navbar) {
+  // 0. Navbar slides down from blur into sharp focus (initial cold load only)
+  if (navbar && !isTransitioning) {
     tl.to(navbar, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out' }, 0);
   }
 
@@ -2048,37 +2066,64 @@ function initHeroIntro(immediate = false) {
     window.dispatchEvent(new Event('hv:hero-trust-ready'));
   }, [], 0.08);
 
-  // 1. Hero headline words: each slides UP from 25px below with de-blur
-  // This continues the loader's motion language into the hero
-  // Duration: 600-900ms as specified. Stagger creates word-by-word entrance.
-  tl.to(allWords,
-    {
-      opacity: 1,
-      y: 0,
-      filter: 'blur(0px)',
-      duration: 0.8,
-      stagger: 0.08,
-      ease: 'power3.out',
-      clearProps: 'filter,willChange'
-    },
-    0.1
-  );
-
-  // 2. Inline Platform Chips: slide-up from blur
-  if (platformChips.length) {
-    tl.fromTo(platformChips,
-      { opacity: 0, y: 20, scale: 0.95, filter: 'blur(6px)' },
+  // 1. Hero headline words in natural reading sequence:
+  if (isLightTheme) {
+    // Line 1: "From Movie Screens to Social Feeds,"
+    tl.to(line1Words,
       {
         opacity: 1,
         y: 0,
-        scale: 1,
         filter: 'blur(0px)',
-        duration: 0.6,
-        stagger: 0.06,
+        duration: 0.7,
+        stagger: 0.07,
         ease: 'power3.out',
-        clearProps: 'filter'
+        clearProps: 'filter,willChange'
       },
-      0.35
+      0.1
+    );
+
+    // Platform Chips: reveal right after Line 1 words
+    const chipsStartTime = 0.1 + (line1Words.length * 0.07);
+    if (chips.length) {
+      tl.to(chips,
+        {
+          opacity: 1,
+          filter: 'blur(0px)',
+          duration: 0.5,
+          stagger: 0.06,
+          ease: 'power3.out',
+          clearProps: 'filter,willChange'
+        },
+        chipsStartTime
+      );
+    }
+
+    // Line 2: "Turning Every Scene Into a Global Sensation." right after chips
+    const line2StartTime = chipsStartTime + ((chips.length || 1) * 0.06);
+    tl.to(line2Words,
+      {
+        opacity: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        duration: 0.75,
+        stagger: 0.08,
+        ease: 'power3.out',
+        clearProps: 'filter,willChange'
+      },
+      line2StartTime
+    );
+  } else {
+    tl.to(allWords,
+      {
+        opacity: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        duration: 0.8,
+        stagger: 0.08,
+        ease: 'power3.out',
+        clearProps: 'filter,willChange'
+      },
+      0.1
     );
   }
 
@@ -2499,8 +2544,7 @@ function initGrowthWidgets() {
     });
     if (chartLine) gsap.set(chartLine, { strokeDashoffset: 0 });
     if (chartFill) gsap.set(chartFill, { opacity: 1 });
-    if (chartDot) gsap.set(chartDot, { scale: 1 });
-    if (marker) gsap.set(marker, { opacity: 1, left: '80%', top: '36%' });
+    if (marker) gsap.set(marker, { opacity: 1, scale: 1 });
     if (progress) gsap.set(progress, { width: '32%' });
     activityDots.forEach((dot, index) => {
       dot.classList.toggle('is-complete', index < 3);
@@ -2526,8 +2570,7 @@ function initGrowthWidgets() {
   // Initialize initial animation states
   gsap.set(widgets, { opacity: 0, y: 24 });
   gsap.set(chartFill, { opacity: 0 });
-  if (chartDot) gsap.set(chartDot, { scale: 0, transformOrigin: 'center' });
-  if (marker) gsap.set(marker, { opacity: 0, left: '3%', top: '61%' });
+  if (marker) gsap.set(marker, { opacity: 0, scale: 0.35, transformOrigin: '50% calc(100% - 5.5px)' });
   if (progress) gsap.set(progress, { width: '0%' });
   activityDots.forEach((dot) => dot.classList.remove('is-complete', 'is-active'));
 
@@ -2586,24 +2629,15 @@ function initGrowthWidgets() {
       }, 0.55);
     }
 
+    // Marker springs into place precisely as line hits the September peak vertex
     if (marker) {
       tl.to(marker, {
         opacity: 1,
-        duration: 0.2
-      }, 0.4).to(marker, {
-        left: '80%',
-        top: '36%',
-        duration: 1.25,
-        ease: 'power2.inOut'
-      }, 0.45);
-    }
-
-    if (chartDot) {
-      tl.to(chartDot, {
         scale: 1,
-        duration: 0.35,
-        ease: 'back.out(2)'
-      }, 1.15);
+        duration: 0.5,
+        ease: 'back.out(2.2)',
+        clearProps: 'scale'
+      }, 1.12);
     }
 
     // 4. Cadence progress & activity dots
@@ -2818,6 +2852,11 @@ function restoreHomeStableState(isFromTransition = false) {
     filter: 'none',
     clearProps: 'opacity,transform,filter',
   });
+  document.body.classList.add('hero-revealed');
+  const chips = hero.querySelectorAll('.platform-chip');
+  if (chips.length) {
+    gsap.set(chips, { opacity: 1, filter: 'none' });
+  }
   // On internal navigation, keep the reel rail behind the text reveal. The
   // carousel is initialized immediately for buffering, but its viewport must
   // not paint before the Home headline and supporting copy have entered.

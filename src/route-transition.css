@@ -3,7 +3,7 @@
 .page-transition-focus {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: 25;
   pointer-events: none;
   background: transparent;
   -webkit-backdrop-filter: blur(0px);

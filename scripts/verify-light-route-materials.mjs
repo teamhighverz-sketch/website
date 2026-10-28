@@ -54,7 +54,7 @@ try {
               const style = getComputedStyle(el);
               if (style.opacity !== '1' || style.filter !== 'none' || /opacity|filter/.test(style.willChange)) problems.add(`unstable material: ${el.className}`);
             }
-            if (performance.now() - started >= 2200) { clearInterval(timer); resolve(); }
+            if ((!document.querySelector('#page-transition-shell') && !document.body.classList.contains('page-is-transitioning') && shellSamples > 0 && performance.now() - started >= 1200) || performance.now() - started >= 5000) { clearInterval(timer); resolve(); }
           }, 100);
         });
         navigateWithTransition(`/${route}.html`);

@@ -2479,6 +2479,7 @@ html.js .floating-badge-item {
 }
 
 .btn-primary-cyan .btn-label,
+.btn-primary-cyan-large .btn-label,
 .btn-primary-cyan .btn-arrow,
 .btn-secondary-dark .btn-label,
 .btn-secondary-dark .btn-arrow {
@@ -2521,11 +2522,13 @@ html.js .floating-badge-item {
 }
 
 .btn-primary-cyan:hover .btn-label>span:first-child,
+.btn-primary-cyan-large:hover .btn-label>span:first-child,
 .btn-secondary-dark:hover .btn-label>span:first-child {
   transform: translateY(-125%);
 }
 
 .btn-primary-cyan:hover .btn-label>span:last-child,
+.btn-primary-cyan-large:hover .btn-label>span:last-child,
 .btn-secondary-dark:hover .btn-label>span:last-child {
   transform: translateY(0);
 }
@@ -16190,6 +16193,12 @@ main+footer {
   background: rgba(237, 251, 253, 0.95);
   color: #087b8c;
   box-shadow: 0 5px 14px rgba(21, 83, 94, 0.1);
+}
+
+[data-theme="light"] .widget-chart-marker i {
+  background: #0284c7;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.22), 0 0 14px rgba(14, 165, 233, 0.6);
 }
 
 [data-theme="light"] .cadence-days b,

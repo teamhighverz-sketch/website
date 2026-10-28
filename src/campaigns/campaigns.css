@@ -152,7 +152,11 @@ body.page-campaigns {
 }
 
 .campaign-hero-line:last-child .hl-base {
-  margin-right: 0;
+  margin-right: 0.04em;
+}
+
+.campaign-hero-headline .hl-base .adscale-reveal-word:last-child {
+  margin-right: 0.04em !important;
 }
 
 .campaign-hero-headline .hl-cyan,

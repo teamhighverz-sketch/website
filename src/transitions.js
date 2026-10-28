@@ -440,7 +440,10 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     ScrollTrigger.getAll().forEach((t) => t.kill());
     startIncomingMetricCounters(incomingContent);
     const navbar = document.getElementById('navbar');
-    if (navbar) navbar.classList.add('page-nav-outgoing');
+    if (navbar) {
+      navbar.classList.add('page-nav-outgoing');
+      gsap.set(navbar, { filter: 'none', clearProps: 'filter' });
+    }
 
     // The old content stays fully rendered while the focus layer blurs it.
     gsap.set(currentContent, {

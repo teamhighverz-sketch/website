@@ -856,33 +856,38 @@ body.page-campaigns {
 }
 
 [data-theme="light"] .campaign-glass-console {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: visible !important;
   background: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(242, 249, 251, 0.58) 100%) padding-box,
-    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(0, 229, 255, 0.35) 45%, rgba(14, 165, 233, 0.15) 100%) border-box !important;
-  border: 1px solid transparent !important;
-  backdrop-filter: blur(28px) saturate(190%) contrast(104%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(104%);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.62) 0%, rgba(246, 250, 254, 0.32) 48%, rgba(234, 242, 252, 0.45) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.95) 18%, rgba(186, 230, 253, 0.55) 50%, rgba(14, 165, 233, 0.25) 75%, #FFFFFF 100%) border-box !important;
+  border: 1.5px solid transparent !important;
+  backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.03),
-    0 4px 10px rgba(15, 23, 42, 0.03),
-    0 14px 32px rgba(15, 23, 42, 0.06),
-    0 28px 60px rgba(15, 23, 42, 0.05),
-    inset 0 1px 1.5px #fff,
-    inset 0 -1px 1px rgba(0, 229, 255, 0.15) !important;
+    0 4px 10px rgba(15, 23, 42, 0.02),
+    0 10px 24px -2px rgba(15, 23, 42, 0.04),
+    0 24px 48px -6px rgba(15, 23, 42, 0.06),
+    0 44px 84px -12px rgba(15, 23, 42, 0.07),
+    inset 0 1.8px 2px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75) !important;
 }
 
 [data-theme="light"] .campaign-glass-console:hover,
 [data-theme="light"] .campaign-glass-console:focus-within {
   background: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(244, 250, 252, 0.68) 100%) padding-box,
-    linear-gradient(180deg, #ffffff 0%, rgba(0, 229, 255, 0.55) 45%, rgba(14, 165, 233, 0.25) 100%) border-box !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(250, 252, 255, 0.48) 48%, rgba(240, 248, 255, 0.62) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 1) 22%, rgba(14, 165, 233, 0.55) 58%, rgba(2, 132, 199, 0.65) 82%, #FFFFFF 100%) border-box !important;
   box-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 8px 18px rgba(15, 23, 42, 0.05),
-    0 20px 42px rgba(0, 229, 255, 0.12),
-    0 36px 70px rgba(15, 23, 42, 0.07),
-    inset 0 1.5px 2px #fff,
-    inset 0 -1px 1px rgba(0, 229, 255, 0.25) !important;
+    0 6px 14px rgba(15, 23, 42, 0.025),
+    0 16px 32px -4px rgba(14, 165, 233, 0.1),
+    0 36px 72px -8px rgba(14, 165, 233, 0.14),
+    0 58px 106px -16px rgba(15, 23, 42, 0.08),
+    inset 0 2px 2.5px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 [data-theme="light"] .campaign-console-divider {
@@ -3066,19 +3071,7 @@ body.page-campaigns {
   }
 
   [data-theme="light"] .campaign-movie-card {
-    background: 
-      linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(246, 250, 252, 0.72) 100%) padding-box,
-      linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(0, 229, 255, 0.28) 45%, rgba(14, 165, 233, 0.12) 100%) border-box !important;
-    border: 1px solid transparent !important;
-    backdrop-filter: blur(28px) saturate(185%) contrast(104%) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(185%) contrast(104%) !important;
-    box-shadow: 
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 4px 10px rgba(15, 23, 42, 0.04),
-      0 12px 28px rgba(15, 23, 42, 0.06),
-      0 24px 48px rgba(15, 23, 42, 0.05),
-      inset 0 1px 1.5px rgba(255, 255, 255, 1),
-      inset 0 -1px 1px rgba(0, 229, 255, 0.12) !important;
+    border: 1.5px solid transparent !important;
   }
 
   .campaign-card-image-wrap {
@@ -3347,35 +3340,67 @@ body.page-campaigns {
 
 [data-theme="light"] .campaign-card,
 [data-theme="light"] .campaign-movie-card {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
   background: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(246, 250, 252, 0.72) 100%) padding-box,
-    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(0, 229, 255, 0.28) 45%, rgba(14, 165, 233, 0.12) 100%) border-box !important;
-  border: 1px solid transparent !important;
-  backdrop-filter: blur(28px) saturate(185%) contrast(104%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(185%) contrast(104%) !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58) 0%, rgba(246, 250, 254, 0.28) 48%, rgba(234, 242, 252, 0.42) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.95) 18%, rgba(186, 230, 253, 0.55) 50%, rgba(14, 165, 233, 0.25) 75%, #FFFFFF 100%) border-box !important;
+  border: 1.5px solid transparent !important;
+  border-radius: 24px !important;
+  backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
   box-shadow: 
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 4px 10px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(15, 23, 42, 0.06),
-    0 24px 48px rgba(15, 23, 42, 0.05),
-    inset 0 1px 1.5px rgba(255, 255, 255, 1),
-    inset 0 -1px 1px rgba(0, 229, 255, 0.12) !important;
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease, border-color 0.4s ease !important;
+    0 4px 10px rgba(15, 23, 42, 0.02),
+    0 10px 24px -2px rgba(15, 23, 42, 0.04),
+    0 24px 48px -6px rgba(15, 23, 42, 0.06),
+    0 44px 84px -12px rgba(15, 23, 42, 0.07),
+    inset 0 1.8px 2px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75) !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, background 0.3s ease, border-color 0.3s ease !important;
+}
+
+[data-theme="light"] .campaign-card::before,
+[data-theme="light"] .campaign-movie-card::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 48% !important;
+  border-radius: inherit !important;
+  background: radial-gradient(ellipse at 50% -10%, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.2) 45%, transparent 75%) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+[data-theme="light"] .campaign-card::after,
+[data-theme="light"] .campaign-movie-card::after {
+  display: none !important;
+}
+
+[data-theme="light"] .campaign-card > *,
+[data-theme="light"] .campaign-movie-card > * {
+  position: relative !important;
+  z-index: 2 !important;
 }
 
 [data-theme="light"] .campaign-card:hover,
 [data-theme="light"] .campaign-movie-card:hover {
-  transform: translateY(-8px) !important;
+  transform: translateY(-8px) scale(1.015) !important;
   background: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 250, 252, 0.82) 100%) padding-box,
-    linear-gradient(180deg, #ffffff 0%, rgba(0, 229, 255, 0.5) 45%, rgba(14, 165, 233, 0.25) 100%) border-box !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(250, 252, 255, 0.48) 48%, rgba(240, 248, 255, 0.62) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 1) 22%, rgba(14, 165, 233, 0.55) 58%, rgba(2, 132, 199, 0.65) 82%, #FFFFFF 100%) border-box !important;
   box-shadow: 
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 8px 18px rgba(15, 23, 42, 0.06),
-    0 18px 36px rgba(0, 229, 255, 0.12),
-    0 32px 64px rgba(15, 23, 42, 0.08),
-    inset 0 1.5px 2px rgba(255, 255, 255, 1),
-    inset 0 -1px 1px rgba(0, 229, 255, 0.2) !important;
+    0 6px 14px rgba(15, 23, 42, 0.025),
+    0 16px 32px -4px rgba(14, 165, 233, 0.1),
+    0 36px 72px -8px rgba(14, 165, 233, 0.14),
+    0 58px 106px -16px rgba(15, 23, 42, 0.08),
+    inset 0 2px 2.5px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 [data-theme="light"] .campaign-card-content {
@@ -3526,7 +3551,7 @@ body.page-campaigns {
   color: var(--accent-cyan-dark);
 }
 
-/* Modal Cards in Light Theme */
+/* Modal Cards in Light Theme — Framer Liquid Glass */
 [data-theme="light"] .modal-metric-card,
 [data-theme="light"] .modal-cast-card,
 [data-theme="light"] .modal-overview-card,
@@ -3537,11 +3562,20 @@ body.page-campaigns {
 [data-theme="light"] .modal-takeaway-card,
 [data-theme="light"] .modal-request-box,
 [data-theme="light"] .modal-content-node {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.22) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(24px) saturate(170%) contrast(105%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(170%) contrast(105%) !important;
-  box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.05), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(255, 255, 255, 0.3) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.62) 0%, rgba(246, 250, 254, 0.32) 48%, rgba(234, 242, 252, 0.45) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.95) 18%, rgba(186, 230, 253, 0.55) 50%, rgba(14, 165, 233, 0.25) 75%, #FFFFFF 100%) border-box !important;
+  border: 1.5px solid transparent !important;
+  backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.02),
+    0 10px 24px -2px rgba(15, 23, 42, 0.04),
+    0 24px 48px -6px rgba(15, 23, 42, 0.06),
+    0 44px 84px -12px rgba(15, 23, 42, 0.07),
+    inset 0 1.8px 2px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75) !important;
 }
 
 [data-theme="light"] .modal-metric-card:hover,
@@ -3552,9 +3586,17 @@ body.page-campaigns {
 [data-theme="light"] .modal-format-card:hover,
 [data-theme="light"] .modal-reason-item:hover,
 [data-theme="light"] .modal-takeaway-card:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.36) 100%) !important;
-  border-color: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(250, 252, 255, 0.48) 48%, rgba(240, 248, 255, 0.62) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 1) 22%, rgba(14, 165, 233, 0.55) 58%, rgba(2, 132, 199, 0.65) 82%, #FFFFFF 100%) border-box !important;
+  box-shadow:
+    0 6px 14px rgba(15, 23, 42, 0.025),
+    0 16px 32px -4px rgba(14, 165, 233, 0.1),
+    0 36px 72px -8px rgba(14, 165, 233, 0.14),
+    0 58px 106px -16px rgba(15, 23, 42, 0.08),
+    inset 0 2px 2.5px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
 }
 
 /* Cast Photos in Light Theme */
@@ -3570,11 +3612,20 @@ body.page-campaigns {
 }
 
 [data-theme="light"] .modal-calc-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.25) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(28px) saturate(180%) contrast(105%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) contrast(105%) !important;
-  box-shadow: 0 18px 45px -10px rgba(15, 23, 42, 0.06), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.62) 0%, rgba(246, 250, 254, 0.32) 48%, rgba(234, 242, 252, 0.45) 100%) padding-box,
+    linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.95) 18%, rgba(186, 230, 253, 0.55) 50%, rgba(14, 165, 233, 0.25) 75%, #FFFFFF 100%) border-box !important;
+  border: 1.5px solid transparent !important;
+  backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(210%) contrast(102%) !important;
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.02),
+    0 10px 24px -2px rgba(15, 23, 42, 0.04),
+    0 24px 48px -6px rgba(15, 23, 42, 0.06),
+    0 44px 84px -12px rgba(15, 23, 42, 0.07),
+    inset 0 1.8px 2px 0 #FFFFFF,
+    inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75) !important;
 }
 
 [data-theme="light"] .modal-calc-pct-badge {

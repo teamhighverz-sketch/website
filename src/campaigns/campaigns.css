@@ -3741,3 +3741,125 @@ body.page-campaigns {
 [data-theme="light"] .modal-footer-brand-text {
   color: var(--text-secondary);
 }
+
+/* Shared light-theme fluid glass surfaces. Keep color in the page backdrop;
+   use translucent neutral fills here so search, filters and cards pick it up. */
+[data-theme="light"] .campaign-glass-console {
+  background: var(--hv-fluid-glass-fill) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  border: 1px solid transparent !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: 0 14px 36px rgba(20, 36, 48, 0.075), inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+[data-theme="light"] .campaign-glass-console::before {
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0.14), transparent 32%, transparent 70%, rgba(255, 255, 255, 0.045)) !important;
+}
+
+[data-theme="light"] .campaign-glass-console:hover,
+[data-theme="light"] .campaign-glass-console:focus-within {
+  background: var(--hv-fluid-glass-fill-hover) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  box-shadow: 0 18px 42px rgba(20, 36, 48, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.76) !important;
+}
+
+[data-theme="light"] .glass-dropdown-trigger,
+[data-theme="light"] .campaign-filter-tab,
+[data-theme="light"] .campaign-page-btn:not(.active),
+[data-theme="light"] .campaign-pillar:not(.active) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.52) !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 4px 14px rgba(20, 36, 48, 0.045) !important;
+}
+
+[data-theme="light"] .glass-dropdown-trigger:hover,
+[data-theme="light"] .glass-dropdown-trigger.is-active,
+[data-theme="light"] .glass-dropdown-trigger[aria-expanded="true"],
+[data-theme="light"] .campaign-filter-tab.active,
+[data-theme="light"] .campaign-page-btn.active,
+[data-theme="light"] .campaign-pillar.active,
+[data-theme="light"] .campaign-pillar[aria-selected="true"] {
+  color: var(--accent-cyan-dark) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 5px 16px rgba(20, 36, 48, 0.06) !important;
+}
+
+[data-theme="light"] .glass-dropdown-popover {
+  background: var(--hv-fluid-glass-fill) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  border-color: transparent !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: 0 18px 42px rgba(20, 36, 48, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+[data-theme="light"] .campaign-tag-pill {
+  color: var(--accent-cyan-dark);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.52);
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur);
+  backdrop-filter: var(--hv-fluid-glass-blur);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 4px 14px rgba(20, 36, 48, 0.045);
+}
+
+[data-theme="light"] .campaign-card,
+[data-theme="light"] .campaign-movie-card {
+  background: var(--hv-fluid-glass-fill) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  border: 1px solid transparent !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: 0 14px 34px rgba(23, 35, 44, 0.075), inset 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+[data-theme="light"] .campaign-card::before,
+[data-theme="light"] .campaign-movie-card::before {
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.025) 42%, transparent 74%) !important;
+}
+
+[data-theme="light"] .campaign-card:hover,
+[data-theme="light"] .campaign-movie-card:hover {
+  background: var(--hv-fluid-glass-fill-hover) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  box-shadow: 0 18px 42px rgba(23, 35, 44, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.74) !important;
+}
+
+[data-theme="light"] .campaign-modal {
+  background: var(--hv-fluid-glass-fill) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  border-color: transparent !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: 0 24px 68px rgba(20, 36, 48, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.68) !important;
+}
+
+[data-theme="light"] :is(
+  .modal-metric-card,
+  .modal-cast-card,
+  .modal-overview-card,
+  .modal-strategy-card,
+  .modal-platform-card,
+  .modal-format-card,
+  .modal-takeaway-card,
+  .modal-calc-card
+) {
+  background: var(--hv-fluid-glass-fill) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  border-color: rgba(255, 255, 255, 0.54) !important;
+  -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  backdrop-filter: var(--hv-fluid-glass-blur) !important;
+  box-shadow: 0 12px 30px rgba(23, 35, 44, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+[data-theme="light"] :is(
+  .modal-metric-card,
+  .modal-cast-card,
+  .modal-overview-card,
+  .modal-strategy-card,
+  .modal-platform-card,
+  .modal-format-card,
+  .modal-takeaway-card,
+  .modal-calc-card
+):hover {
+  background: var(--hv-fluid-glass-fill-hover) padding-box, var(--hv-fluid-glass-rim) border-box !important;
+  box-shadow: 0 16px 36px rgba(23, 35, 44, 0.085), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+}

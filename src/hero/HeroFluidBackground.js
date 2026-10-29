@@ -208,11 +208,12 @@ export function initHeroFluidBackground() {
     if (isDestroyed || !isVisible) return;
 
     if (isMobile()) {
-      // Mobile: Render one static initial frame, but do NOT run continuous RAF loop
-      // to keep mobile GPU 100% free for fluid touch scrolling and instant animations
+      // Keep the fluid static on mobile except for the short theme-color blend.
       material.uniforms.uPointer.value.set(0.5, 0.5);
       material.uniforms.uTime.value = 0.5;
+      const themeStillBlending = updateThemeMix(now || performance.now());
       renderer.render(scene, camera);
+      if (themeStillBlending) frameId = requestAnimationFrame(render);
       return;
     }
 
@@ -223,13 +224,7 @@ export function initHeroFluidBackground() {
     if (lastFrameTime !== null) elapsedTime += Math.min(Math.max(now - lastFrameTime, 0), 32) * 0.001;
     lastFrameTime = now;
     material.uniforms.uTime.value = reducedMotion ? 0 : elapsedTime;
-    if (Math.abs(targetThemeValue - currentThemeValue) > 0.001) {
-      currentThemeValue += (targetThemeValue - currentThemeValue) * 0.06;
-      material.uniforms.uTheme.value = currentThemeValue;
-    } else if (currentThemeValue !== targetThemeValue) {
-      currentThemeValue = targetThemeValue;
-      material.uniforms.uTheme.value = targetThemeValue;
-    }
+    updateThemeMix(now || performance.now());
     renderer.render(scene, camera);
     if (!reducedMotion) frameId = requestAnimationFrame(render);
   };
@@ -276,14 +271,41 @@ export function initHeroFluidBackground() {
   visibilityObserver.observe(canvas);
   let currentThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
   let targetThemeValue = currentThemeValue;
+  let themeTransitionStart = null;
+  let themeTransitionFrom = currentThemeValue;
+  const themeTransitionDuration = 560;
   material.uniforms.uTheme.value = currentThemeValue;
+
+  const updateThemeMix = (now) => {
+    if (themeTransitionStart !== null) {
+      const progress = Math.min(1, Math.max(0, (now - themeTransitionStart) / themeTransitionDuration));
+      const eased = progress * progress * (3 - 2 * progress);
+      currentThemeValue = themeTransitionFrom + (targetThemeValue - themeTransitionFrom) * eased;
+      if (progress >= 1) {
+        currentThemeValue = targetThemeValue;
+        themeTransitionStart = null;
+      }
+    } else {
+      currentThemeValue = targetThemeValue;
+    }
+    material.uniforms.uTheme.value = currentThemeValue;
+    return themeTransitionStart !== null;
+  };
 
   const updateThemeUniform = () => {
     targetThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
-    if (reducedMotion || isMobile()) {
+    if (reducedMotion) {
       currentThemeValue = targetThemeValue;
+      themeTransitionStart = null;
       material.uniforms.uTheme.value = targetThemeValue;
       render(performance.now());
+      return;
+    }
+
+    themeTransitionFrom = currentThemeValue;
+    themeTransitionStart = performance.now();
+    if (isMobile() && isVisible && frameId === null) {
+      frameId = requestAnimationFrame(render);
     }
   };
   const themeObserver = new MutationObserver(updateThemeUniform);

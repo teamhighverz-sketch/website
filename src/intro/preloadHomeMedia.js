@@ -1,6 +1,7 @@
 // Load the real Home media elements so decoded images and buffered video are
 // reused by the page. Do not download a second copy of each reel via fetch().
-export const HOME_MEDIA_TIMEOUT = 12000;
+// Keep the intro from holding the first screen while large reel files buffer.
+export const HOME_MEDIA_TIMEOUT = 3000;
 
 // The carousel keeps both creator and cinema sources on each video element.
 // Resolve the source for the active theme here as well so the loading screen
@@ -77,16 +78,12 @@ export function preloadHomeMedia(onProgress = () => {}) {
     }, source);
   }
 
-  // On mobile, prioritize buffering ONLY the single initially visible center reel
-  // so the intro finishes promptly without saturating mobile cellular pipelines.
-  // The other reels remain lightweight with their posters until scrolled to.
-  // On desktop, warm all reels.
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const targetVideos = isMobile && videos.length > 0
-    ? [videos[0]].filter(Boolean)
-    : videos;
+  // Buffer one lead reel while the intro is visible. Loading every large reel
+  // here saturates the network and delays the first screen; the carousel loads
+  // its other visible reels after reveal, with posters covering them meanwhile.
+  const targetVideos = videos.length > 0 ? [videos[0]] : [];
 
-  if (isMobile) {
+  if (targetVideos.length > 0) {
     targetVideos.forEach((video) => {
       if (!video) return;
       video.muted = true;

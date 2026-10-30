@@ -3865,3 +3865,37 @@ body.page-campaigns {
   background: var(--hv-fluid-glass-fill-hover) padding-box, var(--hv-fluid-glass-rim) border-box !important;
   box-shadow: 0 16px 36px rgba(23, 35, 44, 0.085), inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
 }
+
+/* Keep the campaign headline compact and balanced on narrow screens only. */
+@media (max-width: 600px) {
+  .campaign-hero-headline {
+    width: 100%;
+    max-width: min(92vw, 400px) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: clamp(1.95rem, 8.1vw, 2.45rem) !important;
+    line-height: 1.06 !important;
+    letter-spacing: -0.04em !important;
+    margin-bottom: 0.7rem !important;
+    text-align: center !important;
+  }
+
+  .campaign-hero-line {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    padding-inline: 0.03em !important;
+    text-align: center !important;
+  }
+
+  .campaign-hero-line .hl-base,
+  .campaign-hero-line .hl-cyan,
+  .campaign-hero-line .highlight-cyan {
+    display: block !important;
+    max-width: 100%;
+    text-align: center;
+  }
+}

@@ -15423,8 +15423,9 @@ main+footer {
 
 .work-metric-item {
   --metric-accent: #23c7d8;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(2.7em, auto);
   min-height: 176px;
-  justify-content: flex-end;
   padding: 1.45rem 1.5rem 1.35rem;
   border: 1px solid transparent;
   border-radius: 22px;
@@ -15522,7 +15523,8 @@ main+footer {
 .work-metric-val {
   position: relative;
   z-index: 1;
-  margin-bottom: 0.65rem;
+  align-self: end;
+  margin: 0 0 0.65rem;
   font-size: clamp(2rem, 3vw, 2.65rem);
   line-height: 0.95;
   letter-spacing: -0.06em;
@@ -15534,7 +15536,8 @@ main+footer {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  min-height: 2.7em;
   gap: 0.6rem;
   font-size: 0.66rem;
   line-height: 1.35;
@@ -18356,6 +18359,142 @@ main+footer {
 [data-theme="light"] .cap-podcast-clips span {
   background: rgba(255, 255, 255, .75);
   border-color: rgba(0, 137, 152, .2);
+}
+
+/* Light-theme capability illustrations: bring back the fine detail that was
+   getting lost against the pale card surfaces. */
+[data-theme="light"] body.page-work .capability-desc {
+  color: #3e4b57;
+}
+
+[data-theme="light"] body.page-work .capability-flow {
+  color: #087184;
+}
+
+[data-theme="light"] body.page-work .cap-agency-orbit {
+  border-color: rgba(12, 105, 119, 0.34);
+}
+
+[data-theme="light"] body.page-work .cap-agency-orbit--two {
+  border-color: rgba(8, 125, 139, 0.48);
+}
+
+[data-theme="light"] body.page-work .cap-agency-core,
+[data-theme="light"] body.page-work .cap-logo-mark {
+  border-color: rgba(0, 77, 91, 0.48);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.48), 0 5px 16px rgba(5, 61, 76, 0.24);
+}
+
+[data-theme="light"] body.page-work .cap-agency-clip {
+  border-color: rgba(31, 92, 106, 0.42);
+  background: linear-gradient(145deg, rgba(115, 203, 210, 0.94), rgba(23, 55, 72, 0.92));
+  box-shadow: 0 6px 14px rgba(20, 51, 67, 0.2);
+}
+
+[data-theme="light"] body.page-work .cap-agency-clip i {
+  opacity: 0.38;
+}
+
+[data-theme="light"] body.page-work .cap-agency-clip b {
+  color: #f5ffff;
+  text-shadow: 0 1px 2px rgba(0, 31, 40, 0.38);
+}
+
+[data-theme="light"] body.page-work .cap-agency-status,
+[data-theme="light"] body.page-work .cap-logo-metric,
+[data-theme="light"] body.page-work .cap-music-pill,
+[data-theme="light"] body.page-work .cap-podcast-clips span {
+  color: #25444b;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(23, 100, 112, 0.28);
+  box-shadow: 0 3px 9px rgba(32, 67, 79, 0.14);
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-chart {
+  border-color: rgba(39, 92, 103, 0.25);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 25%, rgba(49, 91, 101, 0.13) 25.8% 26.5%),
+    repeating-linear-gradient(90deg, transparent 0 24%, rgba(49, 91, 101, 0.11) 24.8% 25.5%),
+    rgba(224, 242, 244, 0.42);
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-chart > span {
+  background: linear-gradient(180deg, rgba(5, 143, 151, 0.5), rgba(5, 143, 151, 0.12));
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-chart path {
+  stroke: #087f89;
+  filter: drop-shadow(0 1px 2px rgba(4, 98, 108, 0.3));
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-chart > i {
+  border-color: #f5ffff;
+  background: #087f89;
+  box-shadow: 0 0 0 2px rgba(8, 127, 137, 0.16);
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-stats span {
+  border-color: rgba(39, 92, 103, 0.2);
+  background: rgba(229, 244, 246, 0.68);
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-stats b {
+  color: #173f48;
+}
+
+[data-theme="light"] body.page-work .cap-dashboard-stats small {
+  color: #4b646a;
+}
+
+[data-theme="light"] body.page-work .cap-logo-signal {
+  background: linear-gradient(90deg, transparent, rgba(7, 116, 132, 0.68), transparent);
+}
+
+[data-theme="light"] body.page-work .cap-logo-phone {
+  border-color: rgba(31, 92, 106, 0.38);
+  background: linear-gradient(160deg, rgba(237, 250, 252, 0.98), rgba(194, 226, 232, 0.96));
+  box-shadow: 0 8px 18px rgba(20, 51, 67, 0.18), inset 0 1px rgba(255, 255, 255, 0.96);
+  color: #24434c;
+}
+
+[data-theme="light"] body.page-work .cap-logo-phone i {
+  background: linear-gradient(145deg, rgba(14, 166, 177, 0.76), rgba(77, 111, 161, 0.68) 48%, rgba(50, 78, 96, 0.7));
+}
+
+[data-theme="light"] body.page-work .cap-edit-frame,
+[data-theme="light"] body.page-work .cap-edit-inspector,
+[data-theme="light"] body.page-work .cap-edit-timeline {
+  border-color: rgba(35, 91, 103, 0.3);
+  box-shadow: 0 5px 14px rgba(20, 51, 67, 0.14), inset 0 1px rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="light"] body.page-work .cap-edit-inspector i {
+  background: linear-gradient(90deg, rgba(4, 137, 149, 0.88), rgba(68, 109, 123, 0.28));
+}
+
+[data-theme="light"] body.page-work .cap-edit-timeline b {
+  background: #145f70;
+  box-shadow: 0 0 7px rgba(8, 127, 137, 0.58);
+}
+
+[data-theme="light"] body.page-work .cap-music-wave i,
+[data-theme="light"] body.page-work .cap-podcast-wave i {
+  background: #0c8994;
+  box-shadow: 0 0 5px rgba(12, 137, 148, 0.42);
+}
+
+[data-theme="light"] body.page-work .cap-music-wave i:nth-child(3n) {
+  background: #7169ba;
+}
+
+[data-theme="light"] body.page-work .cap-podcast-rings,
+[data-theme="light"] body.page-work .cap-podcast-rings i {
+  border-color: rgba(8, 127, 137, 0.48);
+}
+
+[data-theme="light"] body.page-work .capability-glow-overlay {
+  display: block !important;
+  background: linear-gradient(180deg, transparent 64%, rgba(18, 62, 73, 0.1) 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -22965,5 +23104,144 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
   #process .process-step-desc {
     font-size: 0.8rem;
     line-height: 1.45;
+  }
+}
+
+/* Screenshot-led mobile fit for the home/work shared hero details. */
+@media (max-width: 600px) {
+  #hero .hero-tag-bar {
+    width: calc(100% - 2rem);
+    max-width: 360px;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 0.55rem;
+    row-gap: 0.35rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 18px;
+    white-space: normal;
+    font-size: clamp(0.58rem, 2.8vw, 0.68rem);
+    line-height: 1.25;
+  }
+
+  #hero .hero-tag {
+    flex: 0 0 auto;
+    gap: 0.28rem;
+  }
+
+  #hero .hero-tag-dot {
+    display: none;
+  }
+
+  body.page-work .work-hero-metrics-grid {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  body.page-work .work-metric-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 108px;
+    gap: 0.3rem;
+    padding: 0.85rem 0.7rem 0.7rem;
+    border-radius: 17px;
+  }
+
+  body.page-work .work-metric-item::before {
+    top: 0.65rem;
+    left: 0.7rem;
+    font-size: 0.56rem;
+  }
+
+  body.page-work .work-metric-val {
+    align-self: flex-start;
+    margin: 1rem 0 0;
+    font-size: clamp(1.3rem, 6vw, 1.65rem) !important;
+    line-height: 1;
+  }
+
+  body.page-work .work-metric-label {
+    align-items: flex-end;
+    min-height: 2.7em;
+    margin-top: auto;
+    gap: 0.25rem;
+    font-size: clamp(0.51rem, 2.35vw, 0.62rem);
+    line-height: 1.28;
+    letter-spacing: 0.075em;
+  }
+
+  body.page-work .work-metric-item:nth-child(4) .work-metric-label {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    font-size: clamp(0.48rem, 2.15vw, 0.56rem);
+    letter-spacing: 0.035em;
+  }
+
+  body.page-work .work-metric-item:nth-child(4) .work-metric-label::after {
+    display: none;
+  }
+
+  body.page-work .work-metric-label::after {
+    flex: 0 0 14px;
+    width: 14px;
+  }
+
+  body.page-work .work-metric-label {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    font-size: clamp(0.48rem, 2.1vw, 0.56rem);
+    letter-spacing: 0.035em;
+  }
+
+  body.page-work .work-metric-label::after {
+    display: none;
+  }
+
+  :is(.footer-home, .footer-compact-mobile) .footer-watermark-logo {
+    width: min(185px, 52vw);
+    margin: 1.8rem auto 1.25rem;
+  }
+}
+
+/* Improve light-theme card separation on phones, where the pale fluid backdrop
+   can wash out the glass rims. Keep the existing dark surfaces unchanged. */
+@media (max-width: 768px) {
+  [data-theme="light"] body.page-work .work-metric-item,
+  [data-theme="light"] body.page-work .capability-card,
+  [data-theme="light"] body.page-work .workflow-card {
+    border-color: rgba(49, 91, 110, 0.22) !important;
+    box-shadow:
+      0 0 0 1px rgba(53, 97, 117, 0.1),
+      -5px 0 16px rgba(55, 103, 128, 0.075),
+      5px 0 16px rgba(55, 103, 128, 0.075),
+      0 12px 26px rgba(38, 66, 82, 0.11),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+  }
+
+  [data-theme="light"] body.page-work .capability-card:hover,
+  [data-theme="light"] body.page-work .workflow-card:hover {
+    transform: none !important;
+    box-shadow:
+      0 0 0 1px rgba(14, 165, 233, 0.2),
+      -6px 0 18px rgba(14, 165, 233, 0.1),
+      6px 0 18px rgba(14, 165, 233, 0.1),
+      0 14px 30px rgba(38, 66, 82, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+  }
+
+  /* Retain the animated highlight in the light theme; the illustrations keep
+     their existing motion and the sheen now reads clearly against pale cards. */
+  [data-theme="light"] body.page-work .capability-visual-wrap::before {
+    display: block !important;
+    opacity: 0.62;
+    background: linear-gradient(112deg, transparent 30%, rgba(255, 255, 255, 0.62) 48%, transparent 62%);
+    animation: capabilityGlassSweep 8s ease-in-out infinite;
+  }
+
+  [data-theme="light"] body.page-work .capability-visual-wrap::after {
+    display: block !important;
+    border-color: rgba(35, 119, 139, 0.18);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.56), inset 0 -24px 30px rgba(23, 68, 85, 0.08);
   }
 }

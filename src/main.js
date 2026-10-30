@@ -2906,6 +2906,13 @@ function restoreHomeStableState(isFromTransition = false) {
 let homeSecondaryInitTimer = null;
 
 function initHomePageScripts(isFromTransition = false) {
+  // A Home route handoff schedules the secondary section setup below. The
+  // global early-interaction listener can fire while that setup is waiting
+  // for the entrance animation and otherwise initialize the same ScrollTriggers
+  // and section tweens a second time on the user's first scroll. Claim the
+  // below-fold runtime here; the scheduled initializer remains its sole owner.
+  belowFoldInitialized = true;
+
   // Route swaps reuse the incoming document's static markup. Re-apply the
   // active theme before measuring or animating the hero so returning to Home
   // in Light mode cannot briefly restore the creator (dark-theme) headline.

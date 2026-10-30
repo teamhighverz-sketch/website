@@ -2949,6 +2949,27 @@ body.page-campaigns {
    RESPONSIVE — Mobile
    ========================================================================== */
 @media (max-width: 768px) {
+  /* Theme changes only repaint campaign surfaces and type. Prevent mobile
+     Safari's scroll anchoring and any active transform transition from
+     nudging the campaign page while those colors are changing. */
+  html.theme-switching body.page-campaigns {
+    overflow-anchor: none;
+  }
+
+  html.theme-switching body.page-campaigns .campaign-hero,
+  html.theme-switching body.page-campaigns .campaign-hero-content,
+  html.theme-switching body.page-campaigns .campaign-hero-tag,
+  html.theme-switching body.page-campaigns .campaign-hero-headline,
+  html.theme-switching body.page-campaigns .campaign-hero-line,
+  html.theme-switching body.page-campaigns .campaign-hero-sub,
+  html.theme-switching body.page-campaigns .campaign-hero-pillars,
+  html.theme-switching body.page-campaigns .campaign-search-section,
+  html.theme-switching body.page-campaigns .campaign-grid-section,
+  html.theme-switching body.page-campaigns .campaign-movie-card {
+    transition-property: color, background-color, border-color, box-shadow, opacity, filter !important;
+    animation-play-state: paused !important;
+  }
+
   .campaign-hero {
     min-height: auto;
     padding-top: 1.25rem !important;

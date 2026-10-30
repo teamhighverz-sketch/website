@@ -23381,3 +23381,16 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
     object-position: center center;
   }
 }
+
+/* Keep the mobile Home reel rail's clipping identical in both themes. The
+   dark hero used overflow:hidden while the light hero allowed vertical
+   overflow, so toggling themes exposed a hard horizontal cut through the
+   moving cards. Clip only the horizontal axis and let the rail breathe above
+   and below its viewport. */
+@media (max-width: 768px) {
+  #hero.hero-section,
+  #hero .carousel-viewport {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+  }
+}

@@ -23292,3 +23292,92 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
     object-position: center 22%;
   }
 }
+
+/* Mobile light-theme glass: use a neutral translucent pane so the live page
+   backdrop provides the color. A clean rim and soft depth do the glass work;
+   avoid tinted multi-stop fills that read as plastic. */
+@media (max-width: 768px) {
+  html[data-theme="light"] {
+    --hv-fluid-glass-fill: rgba(255, 255, 255, 0.24);
+    --hv-fluid-glass-fill-hover: rgba(255, 255, 255, 0.30);
+    --hv-fluid-glass-rim: rgba(255, 255, 255, 0.72);
+    --hv-fluid-glass-blur: blur(20px) saturate(135%);
+  }
+
+  [data-theme="light"] :is(
+    .founder-accord-card,
+    .pillar-card,
+    .accord-stat,
+    .founder-quote,
+    .service-card-item,
+    .comp-card,
+    .work-creator-card,
+    .work-creator-stat-box,
+    .team-metric-item,
+    .testi-card,
+    .workflow-card,
+    .capability-card,
+    .growth-widget,
+    .process-col-card,
+    .standard-card,
+    .case-hud-card,
+    .case-follower-transform-card,
+    .breakdown-card
+  ) {
+    background: rgba(255, 255, 255, 0.24) !important;
+    border: 1px solid rgba(255, 255, 255, 0.76) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(135%) !important;
+    backdrop-filter: blur(20px) saturate(135%) !important;
+    box-shadow:
+      0 10px 26px rgba(24, 39, 50, 0.09),
+      0 1px 3px rgba(24, 39, 50, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      inset 0 -1px 0 rgba(35, 54, 67, 0.055) !important;
+  }
+
+  [data-theme="light"] :is(
+    .domain-chip,
+    .work-filter-chip,
+    .comp-badge,
+    .work-creator-tag-item,
+    .campaign-pillar,
+    .campaign-hero-tag
+  ) {
+    background: rgba(255, 255, 255, 0.28) !important;
+    border: 1px solid rgba(255, 255, 255, 0.78) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+    backdrop-filter: blur(16px) saturate(130%) !important;
+    box-shadow:
+      0 4px 12px rgba(24, 39, 50, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+  }
+
+  [data-theme="light"] :is(
+    .founder-accord-card,
+    .pillar-card,
+    .service-card-item,
+    .comp-card,
+    .work-creator-card,
+    .workflow-card,
+    .capability-card
+  )::before {
+    background: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* The light-theme movie showcase uses portrait posters. Keep the full
+   artwork visible on phones instead of inheriting the creator-photo 16:10 crop. */
+@media (max-width: 600px) {
+  [data-theme="light"] .section-creators.is-movie-showcase .creator-image-wrap {
+    aspect-ratio: 0.695 / 1 !important;
+    max-height: none !important;
+  }
+
+  [data-theme="light"] .section-creators.is-movie-showcase .creator-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+}

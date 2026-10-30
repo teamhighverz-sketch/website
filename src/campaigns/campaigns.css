@@ -3898,4 +3898,12 @@ body.page-campaigns {
     max-width: 100%;
     text-align: center;
   }
+
+  /* Keep the final punctuation attached to the highlighted word when the
+     reveal engine wraps each word for its entrance animation. */
+  .campaign-hero-line .hl-cyan,
+  .campaign-hero-line .hl-cyan .adscale-reveal-word {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
 }

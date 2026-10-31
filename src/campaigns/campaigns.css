@@ -3068,11 +3068,16 @@ body.page-campaigns {
   }
 
   .campaign-pillar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex: 0 1 auto;
     min-width: 0;
     font-size: clamp(0.5rem, 2.25vw, 0.58rem);
     padding: 0.34rem clamp(0.35rem, 1.5vw, 0.52rem);
     letter-spacing: 0.07em;
+    line-height: 1;
+    white-space: nowrap;
   }
 
   .campaign-pillar-divider {
@@ -3366,7 +3371,7 @@ body.page-campaigns {
    reducing the amount of backdrop filtering the browser must repaint. */
 @media (max-width: 768px) {
   [data-theme="light"] body.page-campaigns :is(
-    .campaign-pillar, .campaign-glass-console, .campaign-movie-card, .campaign-tag-pill
+    .campaign-glass-console, .campaign-movie-card, .campaign-tag-pill
   ) {
     -webkit-backdrop-filter: blur(10px) saturate(135%) !important;
     backdrop-filter: blur(10px) saturate(135%) !important;
@@ -3839,8 +3844,7 @@ body.page-campaigns {
 
 [data-theme="light"] .glass-dropdown-trigger,
 [data-theme="light"] .campaign-filter-tab,
-[data-theme="light"] .campaign-page-btn:not(.active),
-[data-theme="light"] .campaign-pillar:not(.active) {
+[data-theme="light"] .campaign-page-btn:not(.active) {
   background: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(255, 255, 255, 0.52) !important;
   -webkit-backdrop-filter: var(--hv-fluid-glass-blur) !important;
@@ -3852,9 +3856,7 @@ body.page-campaigns {
 [data-theme="light"] .glass-dropdown-trigger.is-active,
 [data-theme="light"] .glass-dropdown-trigger[aria-expanded="true"],
 [data-theme="light"] .campaign-filter-tab.active,
-[data-theme="light"] .campaign-page-btn.active,
-[data-theme="light"] .campaign-pillar.active,
-[data-theme="light"] .campaign-pillar[aria-selected="true"] {
+[data-theme="light"] .campaign-page-btn.active {
   color: var(--accent-cyan-dark) !important;
   background: rgba(255, 255, 255, 0.22) !important;
   border-color: rgba(255, 255, 255, 0.72) !important;
@@ -4042,11 +4044,32 @@ body.page-campaigns {
     transform: none !important;
   }
 
+  /* The 4 small pillar chips sit directly over the WebGL fluid canvas.
+     backdrop-filter on these tiny elements causes constant re-rasterization
+     jitter on Mobile Safari. Remove it entirely on mobile and use solid backgrounds. */
+  [data-theme="light"] body.page-campaigns .campaign-pillar,
+  [data-theme="light"] body.page-campaigns .campaign-pillar:not(.active) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    border: 1px solid rgba(220, 232, 240, 0.9) !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 1px #fff !important;
+    transition-property: color, background-color, border-color, box-shadow !important;
+  }
+
+  [data-theme="light"] body.page-campaigns .campaign-pillar.active,
+  [data-theme="light"] body.page-campaigns .campaign-pillar[aria-selected="true"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(224, 248, 252, 0.95) !important;
+    border: 1px solid rgba(14, 165, 233, 0.45) !important;
+    box-shadow: 0 2px 10px rgba(0, 229, 255, 0.18), inset 0 1px 1px #fff !important;
+  }
+
   /* Keep blur constant on mobile Safari to avoid heavy re-rasterization */
   @supports (-webkit-touch-callout: none) {
     [data-theme="light"] body.page-campaigns :is(
       .campaign-hero-tag,
-      .campaign-pillar,
       .campaign-glass-console,
       .campaign-movie-card,
       .campaign-card,

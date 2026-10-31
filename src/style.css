@@ -23443,9 +23443,7 @@ html.theme-switching #hero .hero-global-sensation::after {
     .domain-chip,
     .work-filter-chip,
     .comp-badge,
-    .work-creator-tag-item,
-    .campaign-pillar,
-    .campaign-hero-tag
+    .work-creator-tag-item
   ) {
     background: rgba(255, 255, 255, 0.28) !important;
     border: 1px solid rgba(255, 255, 255, 0.78) !important;

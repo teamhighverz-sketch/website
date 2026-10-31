@@ -1632,21 +1632,22 @@ window.addEventListener('hv:themechange', (event) => {
 
 
 
-  // Subtitle description lines smoothly de-blur in sequence
+  // Keep the subtitle transition smooth without filtering each inline line
+  // separately. Mobile Safari can leave thin coloured compositor seams around
+  // those filtered spans, and inline-block changes the paragraph geometry.
   if (descSpans.length) {
-    gsap.set(descSpans, {
+    gsap.set(descSpans, { clearProps: 'filter,opacity,display,willChange,transform' });
+    gsap.set(description, {
       opacity: 0,
-      filter: isMobile ? 'blur(4px)' : 'blur(6px)',
-      display: 'inline-block'
+      filter: isMobile ? 'blur(4px)' : 'blur(6px)'
     });
-    gsap.to(descSpans, {
+    gsap.to(description, {
       opacity: 1,
       filter: 'blur(0px)',
       duration: 0.65,
       delay: 0.24,
-      stagger: 0.12,
       ease: 'power3.out',
-      clearProps: 'filter'
+      clearProps: 'filter,willChange'
     });
   } else if (description) {
     gsap.fromTo(description,
@@ -1692,6 +1693,7 @@ function settleMobileCampaignEntrance() {
     'body.page-campaigns .campaign-hero',
     '.campaign-hero-content', '.campaign-hero-tag', '.campaign-hero-headline',
     '.campaign-hero-headline *', '.campaign-hero-line', '.campaign-hero-sub', '.campaign-hero-pillars',
+    '.campaign-hero-pillars .campaign-pillar',
     '.campaign-search-section', '.campaign-featured-label', '.campaign-movie-card'
   ].join(', '));
   gsap.killTweensOf(targets);

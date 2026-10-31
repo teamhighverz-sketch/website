@@ -2963,6 +2963,7 @@ body.page-campaigns {
   html.theme-switching body.page-campaigns .campaign-hero-line,
   html.theme-switching body.page-campaigns .campaign-hero-sub,
   html.theme-switching body.page-campaigns .campaign-hero-pillars,
+  html.theme-switching body.page-campaigns .campaign-hero-pillars .campaign-pillar,
   html.theme-switching body.page-campaigns .campaign-search-section,
   html.theme-switching body.page-campaigns .campaign-grid-section,
   html.theme-switching body.page-campaigns .campaign-movie-card {
@@ -3076,6 +3077,27 @@ body.page-campaigns {
 
   .campaign-pillar-divider {
     display: none;
+  }
+
+  /* Touch devices keep :hover active after tapping. Remove the hover lift from
+     the hero chips so a theme repaint cannot make the row bob or reflow. */
+  @media (hover: none) and (pointer: coarse) {
+    .campaign-hero-tag,
+    .campaign-hero-pillars,
+    .campaign-hero-pillars .campaign-pillar,
+    .campaign-hero-pillars .campaign-pillar:hover,
+    .campaign-hero-pillars .campaign-pillar:active {
+      transform: none !important;
+    }
+
+    .campaign-hero-tag::before {
+      animation: none !important;
+    }
+
+    .campaign-hero-pillars .campaign-pillar {
+      flex-shrink: 0;
+      transition-property: color, background-color, border-color, box-shadow, text-shadow !important;
+    }
   }
 
   .campaign-grid {

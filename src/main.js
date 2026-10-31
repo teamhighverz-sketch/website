@@ -1632,18 +1632,15 @@ window.addEventListener('hv:themechange', (event) => {
 
 
 
-  // Keep the subtitle transition smooth without filtering each inline line
-  // separately. Mobile Safari can leave thin coloured compositor seams around
-  // those filtered spans, and inline-block changes the paragraph geometry.
+  // Fade the subtitle as a whole, without a CSS filter. Safari can draw a
+  // coloured seam along filtered text-layer edges during the theme swap. The
+  // headline keeps its word-by-word blur reveal; this avoids a second filtered
+  // layer directly beneath it and preserves the subtitle's natural line box.
   if (descSpans.length) {
     gsap.set(descSpans, { clearProps: 'filter,opacity,display,willChange,transform' });
-    gsap.set(description, {
-      opacity: 0,
-      filter: isMobile ? 'blur(4px)' : 'blur(6px)'
-    });
+    gsap.set(description, { opacity: 0, filter: 'none' });
     gsap.to(description, {
       opacity: 1,
-      filter: 'blur(0px)',
       duration: 0.65,
       delay: 0.24,
       ease: 'power3.out',

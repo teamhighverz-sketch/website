@@ -20225,6 +20225,10 @@ body::after {
   top: 50%;
   bottom: auto;
   opacity: 1;
+  /* Safari can leave a coloured rectangular fringe around this large filtered
+     layer after a theme/page transition. Keep the mark crisp and let the
+     scatter canvas provide its subtle glow instead of filtering the wrapper. */
+  filter: none !important;
 }
 
 [data-theme="light"] .footer-watermark-logo {

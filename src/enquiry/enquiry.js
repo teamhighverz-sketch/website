@@ -68,6 +68,42 @@ export function initEnquirySystem() {
   injectAdminLeadsModal();
   bindTriggerElements();
   bindKeyboardShortcuts();
+  bindEnquiryModalPageLifecycle();
+}
+
+// Browsers can restore a page from the back/forward cache with its DOM state
+// intact. Never let an open enquiry overlay reappear just because that page
+// was restored; opening it must always require a fresh user click.
+let isEnquiryModalLifecycleBound = false;
+let resumeEnquiryScrollOnPageShow = false;
+function bindEnquiryModalPageLifecycle() {
+  if (isEnquiryModalLifecycleBound) return;
+  isEnquiryModalLifecycleBound = true;
+
+  window.addEventListener('pagehide', () => {
+    const backdrop = document.getElementById('enquiry-modal-backdrop');
+    resumeEnquiryScrollOnPageShow = Boolean(
+      backdrop?.classList.contains('is-active') || document.body.classList.contains('enquiry-modal-open')
+    );
+    if (resumeEnquiryScrollOnPageShow) dismissEnquiryModal(false);
+  });
+
+  window.addEventListener('pageshow', () => {
+    if (!resumeEnquiryScrollOnPageShow) return;
+    dismissEnquiryModal(false);
+    if (window.lenis) window.lenis.start();
+    resumeEnquiryScrollOnPageShow = false;
+  });
+}
+
+function dismissEnquiryModal(resumeScroll = true) {
+  const backdrop = document.getElementById('enquiry-modal-backdrop');
+  if (!backdrop) return;
+
+  backdrop.classList.remove('is-active');
+  backdrop.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('enquiry-modal-open');
+  if (resumeScroll && window.lenis) window.lenis.start();
 }
 
 /**
@@ -461,10 +497,7 @@ function bindModalEvents() {
 
   // Close modal and restore native cursor
   const closeModal = () => {
-    backdrop.classList.remove('is-active');
-    backdrop.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('enquiry-modal-open');
-    if (window.lenis) window.lenis.start();
+    dismissEnquiryModal(true);
   };
 
   closeBtn.addEventListener('click', closeModal);

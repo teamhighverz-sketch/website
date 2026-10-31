@@ -2949,10 +2949,10 @@ body.page-campaigns {
    RESPONSIVE — Mobile
    ========================================================================== */
 @media (max-width: 768px) {
-  /* Theme changes only repaint campaign surfaces and type. Prevent mobile
-     Safari's scroll anchoring and any active transform transition from
-     nudging the campaign page while those colors are changing. */
-  html.theme-switching body.page-campaigns {
+  /* Keep Safari from re-anchoring the long campaign grid when the theme
+     changes its card surfaces. This must stay enabled outside the transition
+     too; toggling overflow-anchor itself can cause a one-frame scroll jump. */
+  body.page-campaigns {
     overflow-anchor: none;
   }
 
@@ -3318,6 +3318,20 @@ body.page-campaigns {
   .modal-content-philosophy {
     flex-direction: column;
     gap: 0.25rem;
+  }
+}
+
+/* Touch browsers can retain :hover after a tap. The light cards have a lift
+   treatment on hover, which otherwise animates again during a theme repaint
+   and makes the campaign grid look like it is shaking. */
+@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
+  [data-theme="light"] body.page-campaigns .campaign-card:hover,
+  [data-theme="light"] body.page-campaigns .campaign-movie-card:hover {
+    transform: none !important;
+  }
+
+  [data-theme="light"] body.page-campaigns .campaign-movie-card:hover .campaign-card-image {
+    transform: none !important;
   }
 }
 

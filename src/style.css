@@ -23366,6 +23366,50 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
   }
 }
 
+/* Give both founders' point of view a clear focal treatment in both themes. */
+body.page-team .founder-accord-card .founder-quote {
+  position: relative;
+  padding: clamp(1rem, 2vw, 1.45rem) clamp(1.1rem, 2.4vw, 1.7rem);
+  border: 1px solid rgba(37, 198, 216, 0.42) !important;
+  border-left: 4px solid #20bfd2 !important;
+  border-radius: 14px !important;
+  background: rgba(9, 35, 43, 0.78) !important;
+  color: rgba(234, 246, 248, 0.82) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  font-size: clamp(1rem, 1.2vw, 1.12rem);
+  line-height: 1.65;
+}
+
+body.page-team .founder-accord-card .founder-quote strong {
+  display: block;
+  margin-top: 0.35em;
+  color: #f7feff;
+  font-style: normal;
+  font-weight: 750;
+}
+
+[data-theme="light"] body.page-team .founder-accord-card .founder-quote {
+  border-color: rgba(0, 126, 157, 0.34) !important;
+  border-left-color: #0789ad !important;
+  background: rgba(255, 255, 255, 0.56) !important;
+  color: #334155 !important;
+  -webkit-backdrop-filter: blur(18px) saturate(145%) !important;
+  backdrop-filter: blur(18px) saturate(145%) !important;
+  box-shadow: 0 12px 28px rgba(21, 54, 72, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+[data-theme="light"] body.page-team .founder-accord-card .founder-quote strong {
+  color: #075a73;
+}
+
+@media (max-width: 768px) {
+  body.page-team .founder-accord-card .founder-quote {
+    padding: 1rem 1.05rem;
+    font-size: 0.98rem;
+    line-height: 1.58;
+  }
+}
+
 /* The light-theme movie showcase uses portrait posters. Keep the full
    artwork visible on phones instead of inheriting the creator-photo 16:10 crop. */
 @media (max-width: 600px) {
@@ -23821,6 +23865,41 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
   }
 }
 
+/* Fit the campaign dashboard artwork to the same compact phone-card ratio;
+   its chart, stat tiles, and caption all remain visible without overlap. */
+@media (max-width: 640px) {
+  body.page-work .capability-card--campaign .capability-visual--campaign {
+    aspect-ratio: 16 / 10;
+    max-height: none;
+    padding: 7% 6%;
+  }
+
+  body.page-work .capability-card--campaign .cap-dashboard {
+    padding: 0.55rem;
+  }
+
+  body.page-work .capability-card--campaign .cap-dashboard-chart {
+    height: 42%;
+    margin-top: 0.38rem;
+  }
+
+  body.page-work .capability-card--campaign .cap-dashboard-stats {
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+  }
+
+  body.page-work .capability-card--campaign .cap-dashboard-stats span {
+    padding: 0.25rem 0.38rem;
+  }
+
+  body.page-work .capability-card--campaign .capability-desc {
+    display: block;
+    overflow: visible;
+    font-size: 0.74rem;
+    line-height: 1.42;
+  }
+}
+
 /* The Highverz Standard cards have roomy desktop padding; compact their
    vertical rhythm on phones so each principle reads as one focused card. */
 @media (max-width: 640px) {
@@ -23853,5 +23932,27 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
   body.page-work .standard-desc {
     font-size: 0.78rem;
     line-height: 1.45;
+  }
+}
+
+/* Make the Highverz side of the mobile Why Us comparison read as the clear
+   recommended choice in light mode, matching the stronger desktop contrast. */
+@media (max-width: 768px) {
+  [data-theme="light"] body.page-why-us .comp-mobile-values > .is-highverz {
+    border-color: rgba(20, 100, 119, 0.42);
+    background: rgba(222, 244, 250, 0.76);
+    box-shadow:
+      0 5px 14px rgba(28, 70, 88, 0.11),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  [data-theme="light"] body.page-why-us .comp-mobile-values .is-highverz > span {
+    color: #135a72;
+    font-weight: 800;
+  }
+
+  [data-theme="light"] body.page-why-us .comp-mobile-values .is-highverz > p {
+    color: #101c2c;
+    font-weight: 700;
   }
 }

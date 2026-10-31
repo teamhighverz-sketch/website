@@ -233,7 +233,7 @@ body.page-campaigns {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition: all 0.3s var(--ease-expo);
+  transition: color 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .campaign-pillar:hover {
@@ -803,6 +803,7 @@ body.page-campaigns {
 
 [data-theme="light"] .campaign-hero::after {
   background: radial-gradient(ellipse at center, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+  filter: none !important;
 }
 
 [data-theme="light"] .campaign-hero-tag {
@@ -826,7 +827,7 @@ body.page-campaigns {
     inset 0 1px 1px #fff,
     inset 0 -1px 1px rgba(0, 229, 255, 0.15) !important;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 [data-theme="light"] .campaign-pillar:hover {
@@ -3045,7 +3046,8 @@ body.page-campaigns {
   }
 
   [data-theme="light"] .campaign-hero-sub {
-    color: rgba(71, 85, 105, 0.70) !important;
+    color: #475569 !important;
+    -webkit-font-smoothing: antialiased !important;
   }
 
   .campaign-hero-pillars {
@@ -3053,7 +3055,7 @@ body.page-campaigns {
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.35rem;
     padding: 0.25rem 0 0.5rem;
     width: 100%;
     max-width: 100%;
@@ -3068,41 +3070,37 @@ body.page-campaigns {
   }
 
   .campaign-pillar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 1 auto;
-    min-width: 0;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
     font-size: clamp(0.5rem, 2.25vw, 0.58rem);
     padding: 0.34rem clamp(0.35rem, 1.5vw, 0.52rem);
     letter-spacing: 0.07em;
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    transform: none !important;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
   }
 
   .campaign-pillar-divider {
     display: none;
   }
 
-  /* Touch devices keep :hover active after tapping. Remove the hover lift from
-     the hero chips so a theme repaint cannot make the row bob or reflow. */
-  @media (hover: none) and (pointer: coarse) {
-    .campaign-hero-tag,
-    .campaign-hero-pillars,
-    .campaign-hero-pillars .campaign-pillar,
-    .campaign-hero-pillars .campaign-pillar:hover,
-    .campaign-hero-pillars .campaign-pillar:active {
-      transform: none !important;
-    }
+  /* Unconditionally prevent hover and tap lifts from shaking the hero row on mobile */
+  .campaign-hero-tag,
+  .campaign-hero-tag:hover,
+  .campaign-hero-tag:active,
+  .campaign-hero-pillars,
+  .campaign-hero-pillars .campaign-pillar,
+  .campaign-hero-pillars .campaign-pillar:hover,
+  .campaign-hero-pillars .campaign-pillar:active {
+    transform: none !important;
+  }
 
-    .campaign-hero-tag::before {
-      animation: none !important;
-    }
-
-    .campaign-hero-pillars .campaign-pillar {
-      flex-shrink: 0;
-      transition-property: color, background-color, border-color, box-shadow, text-shadow !important;
-    }
+  .campaign-hero-tag::before {
+    animation: none !important;
   }
 
   .campaign-grid {
@@ -3987,11 +3985,29 @@ body.page-campaigns {
    Prevent compositor tile re-rasterization and layer-destruction shake across
    all campaign components on mobile devices in both dark and light modes. */
 @media (max-width: 768px) {
+  /* Hero typography and chips: Keep backface-visibility visible so WebKit
+     does NOT force separate GPU texture rasterization layers that cause
+     shaking, wobbling, or blurry text between adjacent elements. */
   body.page-campaigns :is(
+    .campaign-hero,
+    .campaign-hero-content,
     .campaign-hero-tag,
+    .campaign-hero-headline,
+    .campaign-hero-line,
     .campaign-hero-sub,
     .campaign-hero-pillars,
-    .campaign-pillar,
+    .campaign-pillar
+  ) {
+    will-change: auto !important;
+    -webkit-backface-visibility: visible !important;
+    backface-visibility: visible !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    transform: none !important;
+  }
+
+  /* Structural cards */
+  body.page-campaigns :is(
     .campaign-search-section,
     .campaign-glass-console,
     .campaign-grid-section,
@@ -4003,8 +4019,6 @@ body.page-campaigns {
     .campaign-page-btn
   ) {
     will-change: auto !important;
-    -webkit-backface-visibility: hidden !important;
-    backface-visibility: hidden !important;
   }
 
   body.page-campaigns :is(
@@ -4045,31 +4059,50 @@ body.page-campaigns {
   }
 
   /* The 4 small pillar chips sit directly over the WebGL fluid canvas.
-     backdrop-filter on these tiny elements causes constant re-rasterization
-     jitter on Mobile Safari. Remove it entirely on mobile and use solid backgrounds. */
+     backdrop-filter on these tiny elements causes continuous subpixel re-rasterization
+     jitter on Mobile Safari. Use crisp solid surfaces with zero backdrop-filter. */
   [data-theme="light"] body.page-campaigns .campaign-pillar,
   [data-theme="light"] body.page-campaigns .campaign-pillar:not(.active) {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    background: rgba(255, 255, 255, 0.92) !important;
+    background: rgba(255, 255, 255, 0.94) !important;
     border: 1px solid rgba(220, 232, 240, 0.9) !important;
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 1px #fff !important;
-    transition-property: color, background-color, border-color, box-shadow !important;
+    text-shadow: none !important;
+    color: #1e293b !important;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
   }
 
   [data-theme="light"] body.page-campaigns .campaign-pillar.active,
   [data-theme="light"] body.page-campaigns .campaign-pillar[aria-selected="true"] {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    background: rgba(224, 248, 252, 0.95) !important;
-    border: 1px solid rgba(14, 165, 233, 0.45) !important;
+    background: rgba(224, 248, 252, 0.96) !important;
+    border: 1px solid rgba(14, 165, 233, 0.5) !important;
     box-shadow: 0 2px 10px rgba(0, 229, 255, 0.18), inset 0 1px 1px #fff !important;
+    color: #0284C7 !important;
+    text-shadow: none !important;
   }
 
-  /* Keep blur constant on mobile Safari to avoid heavy re-rasterization */
+  [data-theme="light"] body.page-campaigns .campaign-hero-tag {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(240, 248, 252, 0.94) !important;
+    border: 1px solid rgba(14, 165, 233, 0.35) !important;
+    box-shadow: 0 2px 10px rgba(14, 165, 233, 0.08) !important;
+    color: #00798a !important;
+    text-shadow: none !important;
+    transform: none !important;
+  }
+
+  [data-theme="light"] body.page-campaigns .campaign-hero-tag:hover,
+  [data-theme="light"] body.page-campaigns .campaign-hero-tag:active {
+    transform: none !important;
+  }
+
+  /* Keep blur constant on mobile Safari for structural cards only */
   @supports (-webkit-touch-callout: none) {
     [data-theme="light"] body.page-campaigns :is(
-      .campaign-hero-tag,
       .campaign-glass-console,
       .campaign-movie-card,
       .campaign-card,

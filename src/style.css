@@ -1344,6 +1344,22 @@ body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
     width: 4px;
     height: 4px;
   }
+
+  [data-theme="light"] .theme-capsule-switcher {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(205, 220, 236, 0.85) !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 1px #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .theme-capsule-switcher,
+  .theme-capsule-switcher:hover,
+  .theme-capsule-switcher:active,
+  .theme-capsule-btn,
+  .theme-capsule-btn:active {
+    transform: none !important;
+  }
 }
 
 .mobile-toggle {
@@ -4838,6 +4854,10 @@ html.js .floating-badge-item {
 
   [data-theme="light"] .global-fluid-canvas {
     opacity: 0.65;
+  }
+
+  [data-theme="light"] body {
+    background-attachment: scroll !important;
   }
 }
 

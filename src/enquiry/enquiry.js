@@ -98,12 +98,17 @@ function bindEnquiryModalPageLifecycle() {
 
 function dismissEnquiryModal(resumeScroll = true) {
   const backdrop = document.getElementById('enquiry-modal-backdrop');
-  if (!backdrop) return;
+  if (!backdrop || !backdrop.classList.contains('is-active')) return;
 
   backdrop.classList.remove('is-active');
   backdrop.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('enquiry-modal-open');
   if (resumeScroll && window.lenis) window.lenis.start();
+}
+
+// The router also uses this when navigating without a page reload.
+export function closeEnquiryModal() {
+  dismissEnquiryModal(true);
 }
 
 /**

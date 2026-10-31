@@ -273,8 +273,88 @@ export function initHeroFluidBackground() {
   let targetThemeValue = currentThemeValue;
   let themeTransitionStart = null;
   let themeTransitionFrom = currentThemeValue;
+  let themeSnapshot = null;
+  let themeSnapshotFrame = null;
+  let themeSnapshotTimer = null;
   const themeTransitionDuration = 560;
   material.uniforms.uTheme.value = currentThemeValue;
+
+  const clearThemeSnapshot = () => {
+    if (themeSnapshotFrame !== null) cancelAnimationFrame(themeSnapshotFrame);
+    if (themeSnapshotTimer !== null) clearTimeout(themeSnapshotTimer);
+    themeSnapshotFrame = null;
+    themeSnapshotTimer = null;
+    themeSnapshot?.remove();
+    themeSnapshot = null;
+  };
+
+  // Mobile fluid is otherwise static. Crossfade its last frame into the new
+  // one instead of rerunning the shader under every glass surface each frame.
+  const crossfadeMobileTheme = () => {
+    if (!isVisible || document.hidden || !canvas.isConnected) return false;
+    try {
+      material.uniforms.uPointer.value.set(0.5, 0.5);
+      material.uniforms.uTime.value = 0.5;
+      material.uniforms.uTheme.value = currentThemeValue;
+      renderer.render(scene, camera);
+
+      const snapshot = document.createElement('canvas');
+      snapshot.width = canvas.width;
+      snapshot.height = canvas.height;
+      const context = snapshot.getContext('2d');
+      if (!context) return false;
+      const canvasOpacity = Number.parseFloat(getComputedStyle(canvas).opacity) || 1;
+      context.globalAlpha = canvasOpacity;
+      if (currentThemeValue < 0.5) {
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, snapshot.width, snapshot.height);
+      }
+      context.drawImage(canvas, 0, 0);
+      if (themeSnapshot?.isConnected) {
+        const previousOpacity = Number.parseFloat(getComputedStyle(themeSnapshot).opacity) || 0;
+        context.globalAlpha = previousOpacity;
+        context.fillStyle = themeSnapshot.dataset.sourceTheme === 'dark' ? '#020406' : '#f6f9fc';
+        context.fillRect(0, 0, snapshot.width, snapshot.height);
+        context.drawImage(themeSnapshot, 0, 0, snapshot.width, snapshot.height);
+      }
+      context.globalAlpha = 1;
+
+      clearThemeSnapshot();
+      snapshot.className = 'global-fluid-theme-snapshot';
+      snapshot.setAttribute('aria-hidden', 'true');
+      snapshot.dataset.sourceTheme = currentThemeValue < 0.5 ? 'dark' : 'light';
+      Object.assign(snapshot.style, {
+        position: 'fixed', inset: '-2px', width: 'calc(100% + 4px)',
+        height: 'calc(100% + 4px)', zIndex: '0', pointerEvents: 'none',
+        background: currentThemeValue < 0.5
+          ? '#020406'
+          : 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14,165,233,.12), transparent 70%), radial-gradient(circle at 10% 25%, rgba(56,189,248,.08), transparent 45%), radial-gradient(circle at 90% 40%, rgba(56,189,248,.06), transparent 50%), #f6f9fc',
+        opacity: '1',
+        transition: `opacity ${themeTransitionDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      });
+      canvas.insertAdjacentElement('afterend', snapshot);
+      themeSnapshot = snapshot;
+
+      cancelAnimationFrame(frameId);
+      frameId = null;
+      currentThemeValue = targetThemeValue;
+      themeTransitionStart = null;
+      material.uniforms.uTheme.value = targetThemeValue;
+      renderer.render(scene, camera);
+
+      // Commit the initial opacity before starting the CSS crossfade.
+      snapshot.getBoundingClientRect();
+      themeSnapshotFrame = requestAnimationFrame(() => {
+        themeSnapshotFrame = null;
+        if (themeSnapshot === snapshot) snapshot.style.opacity = '0';
+      });
+      themeSnapshotTimer = setTimeout(clearThemeSnapshot, themeTransitionDuration + 120);
+      return true;
+    } catch (_) {
+      clearThemeSnapshot();
+      return false;
+    }
+  };
 
   const updateThemeMix = (now) => {
     if (themeTransitionStart !== null) {
@@ -293,14 +373,21 @@ export function initHeroFluidBackground() {
   };
 
   const updateThemeUniform = () => {
-    targetThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
+    const nextThemeValue = document.documentElement.getAttribute('data-theme') === 'light' ? 1.0 : 0.0;
+    // Both the theme event and the attribute observer report the same swap.
+    // Do not restart the canvas blend for the observer's duplicate update.
+    if (nextThemeValue === targetThemeValue) return;
+    targetThemeValue = nextThemeValue;
     if (reducedMotion) {
+      clearThemeSnapshot();
       currentThemeValue = targetThemeValue;
       themeTransitionStart = null;
       material.uniforms.uTheme.value = targetThemeValue;
       render(performance.now());
       return;
     }
+
+    if (isMobile() && crossfadeMobileTheme()) return;
 
     themeTransitionFrom = currentThemeValue;
     themeTransitionStart = performance.now();
@@ -334,6 +421,7 @@ export function initHeroFluidBackground() {
       if (isDestroyed) return;
       isDestroyed = true;
       cancelAnimationFrame(frameId);
+      clearThemeSnapshot();
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       visibilityObserver.disconnect();

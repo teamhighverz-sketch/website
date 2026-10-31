@@ -3335,6 +3335,18 @@ body.page-campaigns {
   }
 }
 
+/* A moving fluid canvas behind many large glass filters can make the light
+   campaign page stutter on phones. Keep the surfaces translucent while
+   reducing the amount of backdrop filtering the browser must repaint. */
+@media (max-width: 768px) {
+  [data-theme="light"] body.page-campaigns :is(
+    .campaign-pillar, .campaign-glass-console, .campaign-movie-card, .campaign-tag-pill
+  ) {
+    -webkit-backdrop-filter: blur(10px) saturate(135%) !important;
+    backdrop-filter: blur(10px) saturate(135%) !important;
+  }
+}
+
 @media (max-width: 480px) {
   .campaign-grid {
     grid-template-columns: 1fr 1fr;

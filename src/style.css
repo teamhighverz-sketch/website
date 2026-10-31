@@ -2028,13 +2028,26 @@ body.mobile-menu-active .work-creator-card {
   z-index: 1;
   transform: scaleX(0);
   transform-origin: left center;
-  transition: transform 0.3s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease, visibility 0s linear 0.3s;
   will-change: transform;
 }
 
-.hero-word-roller:hover::after,
 .hero-word-roller:focus-visible::after {
   transform: scaleX(1);
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-word-roller:hover::after {
+    transform: scaleX(1);
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+  }
 }
 
 .hero-word-roller .roller-item {
@@ -4729,11 +4742,17 @@ html.js .floating-badge-item {
   background-image:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.12), transparent 70%),
     radial-gradient(circle at 10% 25%, rgba(56, 189, 248, 0.08), transparent 45%),
-    radial-gradient(circle at 90% 40%, rgba(99, 102, 241, 0.06), transparent 50%),
+    radial-gradient(circle at 90% 40%, var(--hv-atmosphere-accent, rgba(99, 102, 241, 0.06)), transparent 50%),
     radial-gradient(circle at 20% 75%, rgba(14, 165, 233, 0.07), transparent 55%),
     radial-gradient(circle at 85% 90%, rgba(56, 189, 248, 0.08), transparent 50%) !important;
   background-attachment: fixed !important;
   color: #0A0D12 !important;
+}
+
+/* The Home headline sits over this atmosphere. Keep its accent in the
+   existing blue palette rather than introducing violet behind the text. */
+[data-theme="light"] body:has(#hero) {
+  --hv-atmosphere-accent: rgba(56, 189, 248, 0.06);
 }
 
 [data-theme="dark"] body {
@@ -21376,6 +21395,34 @@ html.theme-switching:has(#hero) .viewport-bottom-reveal > div:last-child {
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
 }
 
+/* Keep the same continuous mask on phones before, during and after the swap.
+   Reinstating eight filtered strips halfway through the staggered headline
+   reveal can show seams and overload mobile backdrop compositing. */
+@media (max-width: 768px) {
+  html:has(#hero) .viewport-bottom-reveal > div,
+  body.page-campaigns .viewport-bottom-reveal > div {
+    display: none !important;
+  }
+
+  html:has(#hero) .viewport-bottom-reveal > div:last-child,
+  body.page-campaigns .viewport-bottom-reveal > div:last-child {
+    display: block !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    mask-image: linear-gradient(to bottom, transparent, #000) !important;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
+  }
+}
+
+/* Keep decorative underlines out of the compositor during the theme swap.
+   A zero-width transformed line can otherwise leave a colored edge in Safari. */
+html.theme-switching #hero .hero-word-roller::after,
+html.theme-switching #hero .hero-global-sensation::after {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  box-shadow: none !important;
+}
+
 /* Freeze the decorative light-mode platform marks for the duration of the
    theme handoff. Their ambient float animation uses translateY; allowing it
    to continue while the copy is replaced can make the whole headline read as
@@ -23952,8 +23999,8 @@ body.page-team .founder-accord-card .founder-quote strong {
   }
 }
 
-/* Make the Highverz side of the mobile Why Us comparison read as the clear
-   recommended choice in light mode, matching the stronger desktop contrast. */
+/* Give the Highverz side of the mobile Why Us comparison stronger contrast
+   in both themes, matching the desktop emphasis. */
 @media (max-width: 768px) {
   [data-theme="light"] body.page-why-us .comp-mobile-values > .is-highverz {
     border-color: rgba(20, 100, 119, 0.42);
@@ -23970,6 +24017,24 @@ body.page-team .founder-accord-card .founder-quote strong {
 
   [data-theme="light"] body.page-why-us .comp-mobile-values .is-highverz > p {
     color: #101c2c;
+    font-weight: 700;
+  }
+
+  [data-theme="dark"] body.page-why-us .comp-mobile-values > .is-highverz {
+    border-color: rgba(35, 199, 216, 0.48);
+    background: rgba(14, 75, 86, 0.46);
+    box-shadow:
+      0 5px 14px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(145, 239, 248, 0.12);
+  }
+
+  [data-theme="dark"] body.page-why-us .comp-mobile-values .is-highverz > span {
+    color: #5eeaf5;
+    font-weight: 800;
+  }
+
+  [data-theme="dark"] body.page-why-us .comp-mobile-values .is-highverz > p {
+    color: #f1fcfd;
     font-weight: 700;
   }
 }

@@ -46,6 +46,8 @@ if ('onpagereveal' in window) {
 // ==========================================================================
 let lenis;
 let activeWorkMetricTweens = [];
+let heroIntroTimeline = null;
+let heroIntroGeneration = 0;
 
 function initVercelTelemetry() {
   // These helpers are the framework-agnostic APIs for this Vite site. The
@@ -1539,6 +1541,18 @@ window.addEventListener('hv:themechange', (event) => {
   if (!event.detail?.animate) return;
   const headline = document.getElementById('hero-headline');
   if (!headline) return;
+  heroIntroGeneration += 1;
+  if (heroIntroTimeline || window.__hvLightHeroFluidGate === 'pending') {
+    heroIntroTimeline?.kill();
+    heroIntroTimeline = null;
+    const support = document.querySelectorAll([
+      '#hero-platform-icons', '#hero-desc', '#hero-actions', '.hero-trust-badge-wrap',
+      '.carousel-viewport', '.hero-tag-bar', '.section-trusted', '#navbar'
+    ].join(', '));
+    gsap.killTweensOf(support);
+    gsap.set(support, { opacity: 1, y: 0, filter: 'none', clearProps: 'opacity,transform,filter,willChange' });
+    document.body.classList.add('hero-revealed');
+  }
   applyThemeHeroCopy();
 
   // Commit reel identities in the same task as the headline; decoded frames
@@ -1586,6 +1600,7 @@ window.addEventListener('hv:themechange', (event) => {
   // Keep the blur deliberately shallow. Large filters on every word and
   // subtitle span force repeated rasterization during the theme swap, which
   // reads as a flash or a dropped frame on mid-range devices.
+  const initialBlur = isMobile ? 'blur(5px)' : 'blur(7px)';
   const wordStagger = isMobile ? 0.036 : 0.045;
   const wordDuration = isMobile ? 0.44 : 0.52;
 
@@ -1593,19 +1608,21 @@ window.addEventListener('hv:themechange', (event) => {
   // layout coordinates untouched is important here: a translate-based reveal
   // makes the headline and the reel rail appear to jump when the theme swaps
   // between two copy variants with different line lengths.
-  // Blur the headline as one surface. Separate filtered layers for every
-  // word can leave colored seams while the background switches themes.
-  gsap.killTweensOf(headline);
-  gsap.fromTo(headline, { filter: 'blur(3px)' }, {
-    filter: 'blur(0px)', duration: 0.42, ease: 'power2.out', clearProps: 'filter'
+  gsap.set(revealItems, {
+    opacity: 0,
+    filter: initialBlur,
+    // Promoting every blurred word to a separate mobile GPU layer can leave
+    // colored seams behind the headline while the fluid canvas is changing.
+    willChange: isMobile ? 'auto' : 'opacity, filter'
   });
-  gsap.set(revealItems, { opacity: 0, clearProps: 'filter,willChange' });
 
   gsap.to(revealItems, {
     opacity: 1,
+    filter: 'blur(0px)',
     duration: wordDuration,
     stagger: wordStagger,
     ease: 'power3.out',
+    clearProps: 'filter,willChange',
     onComplete: () => {
       if (document.documentElement.dataset.theme === 'dark') {
         initHeroWordRoller();
@@ -1968,6 +1985,7 @@ export function initAdscaleTextEffects(root = document) {
 
 function initHeroIntro(immediate = false) {
   const isLightTheme = document.documentElement.dataset.theme === 'light';
+  const generation = heroIntroGeneration;
 
   // Do not let the Light hero reveal outrun its ambient fluid background.
   // The promise is shared with the boot-time loader, so this adds no second
@@ -1977,10 +1995,10 @@ function initHeroIntro(immediate = false) {
     window.__hvLightHeroFluidGate = 'pending';
     Promise.resolve(loadFluidBackground()).then(() => {
       window.__hvLightHeroFluidGate = 'ready';
-      initHeroIntro(immediate);
+      if (generation === heroIntroGeneration) initHeroIntro(immediate);
     }).catch(() => {
       window.__hvLightHeroFluidGate = 'ready';
-      initHeroIntro(immediate);
+      if (generation === heroIntroGeneration) initHeroIntro(immediate);
     });
     return;
   }
@@ -2055,9 +2073,11 @@ function initHeroIntro(immediate = false) {
     gsap.set(navbar, { opacity: 1, y: 0, filter: 'none', clearProps: 'opacity,transform,filter' });
   }
 
+  heroIntroTimeline?.kill();
   const tl = gsap.timeline({
     defaults: { ease: 'power3.out' },
     onComplete: () => {
+      if (heroIntroTimeline === tl) heroIntroTimeline = null;
       document.body.classList.add('hero-revealed');
       gsap.set(allWords, { clearProps: 'filter,willChange,opacity,transform' });
       gsap.set('.platform-chip', { opacity: 1, clearProps: 'filter,willChange' });
@@ -2066,6 +2086,7 @@ function initHeroIntro(immediate = false) {
       initHeroWordRoller();
     }
   });
+  heroIntroTimeline = tl;
 
   // 0. Navbar slides down from blur into sharp focus (initial cold load only)
   if (navbar && !isTransitioning) {

@@ -6,6 +6,7 @@
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { closeEnquiryModal } from './enquiry/enquiry.js';
 import './route-transition.css';
 
 /**
@@ -203,6 +204,10 @@ const ROUTE_TRANSITION = Object.freeze({
  */
 export async function navigateWithTransition(targetHref, isPopState = false) {
   if (isTransitioning) return;
+
+  // The enquiry modal lives outside the swapped <main>, so it must be
+  // dismissed explicitly when navigating between pages without a reload.
+  closeEnquiryModal();
 
   const currentPath = window.location.pathname;
   let targetUrl;
@@ -699,6 +704,7 @@ export function initPageTransitions() {
 
   // Handle browser back and forward
   window.addEventListener('popstate', () => {
+    closeEnquiryModal();
     const currentPath = window.location.pathname;
     if (isHomeRoute(currentPath)) {
       // Navigating back/forward to Home: reload natively

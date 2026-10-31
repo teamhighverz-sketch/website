@@ -162,6 +162,8 @@ export async function saveLead(leadData) {
           timestamp: newLead.formattedDate,
           type: newLead.type || 'General Inquiry',
           name: newLead.name || '',
+          email: newLead.email || '',
+          phone: newLead.phone || '',
           contact: newLead.contact || '',
           handle: newLead.handle || '',
           message: newLead.message || '',
@@ -229,30 +231,37 @@ function injectEnquiryModal() {
               <input type="text" id="enquiry-name" name="name" class="enquiry-input" placeholder="e.g. Alex Gonzalez" required />
             </div>
 
-            <div class="enquiry-field enquiry-contact-field">
-              <label class="enquiry-label" for="enquiry-contact">Phone / WhatsApp or Email <span class="req">*</span></label>
-              <div class="enquiry-phone-wrap" id="enquiry-phone-wrap">
-                <button type="button" class="enquiry-flag-btn" id="enquiry-flag-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select Country Code">
-                  <span class="enquiry-flag-symbol" id="enquiry-selected-flag">🇮🇳</span>
-                  <span class="enquiry-flag-arrow" aria-hidden="true">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
-                </button>
-                <input type="text" id="enquiry-contact" name="contact" class="enquiry-input enquiry-phone-input" placeholder="081234 56789 or you@domain.com" required autocomplete="tel" />
-                <input type="hidden" id="enquiry-country-code" name="countryCode" value="+91" />
-                <input type="hidden" id="enquiry-country-name" name="countryName" value="India" />
+            <div class="enquiry-grid-2">
+              <div class="enquiry-field">
+                <label class="enquiry-label" for="enquiry-email">Email Address <span class="req">*</span></label>
+                <input type="email" id="enquiry-email" name="email" class="enquiry-input" placeholder="you@company.com" required autocomplete="email" />
+              </div>
 
-                <!-- Flag Country Selector Dropdown -->
-                <div class="enquiry-flag-dropdown" id="enquiry-flag-dropdown" role="listbox" aria-label="Select Country" style="display: none;">
-                  <div class="enquiry-flag-search-box">
-                    <svg class="enquiry-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" class="enquiry-flag-search-input" id="enquiry-flag-search" placeholder="Search country or code..." autocomplete="off" />
+              <div class="enquiry-field enquiry-contact-field enquiry-phone-field">
+                <label class="enquiry-label" for="enquiry-phone">Phone / WhatsApp <span class="req">*</span></label>
+                <div class="enquiry-phone-wrap" id="enquiry-phone-wrap">
+                  <button type="button" class="enquiry-flag-btn" id="enquiry-flag-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select Country Code">
+                    <span class="enquiry-flag-symbol" id="enquiry-selected-flag">🇮🇳</span>
+                    <span class="enquiry-flag-arrow" aria-hidden="true">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </span>
+                  </button>
+                  <input type="tel" id="enquiry-phone" name="phone" class="enquiry-input enquiry-phone-input" placeholder="081234 56789" required autocomplete="tel" />
+                  <input type="hidden" id="enquiry-country-code" name="countryCode" value="+91" />
+                  <input type="hidden" id="enquiry-country-name" name="countryName" value="India" />
+
+                  <!-- Flag Country Selector Dropdown -->
+                  <div class="enquiry-flag-dropdown" id="enquiry-flag-dropdown" role="listbox" aria-label="Select Country" style="display: none;">
+                    <div class="enquiry-flag-search-box">
+                      <svg class="enquiry-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <input type="text" class="enquiry-flag-search-input" id="enquiry-flag-search" placeholder="Search country or code..." autocomplete="off" />
+                    </div>
+                    <ul class="enquiry-flag-list" id="enquiry-flag-list" tabindex="-1">
+                      <!-- Populated dynamically via JS -->
+                    </ul>
                   </div>
-                  <ul class="enquiry-flag-list" id="enquiry-flag-list" tabindex="-1">
-                    <!-- Populated dynamically via JS -->
-                  </ul>
                 </div>
               </div>
             </div>
@@ -370,7 +379,8 @@ function injectAdminLeadsModal() {
                 <th>Ref ID</th>
                 <th>Date &amp; Time</th>
                 <th>Name</th>
-                <th>Email / WhatsApp</th>
+                <th>Email</th>
+                <th>Phone</th>
                 <th>Position</th>
                 <th>Social / Website</th>
                 <th>Message</th>
@@ -541,18 +551,20 @@ function bindModalEvents() {
 
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData.entries());
-    let contactVal = String(rawData.contact || '').trim();
+    const emailVal = String(rawData.email || '').trim();
+    let phoneVal = String(rawData.phone || '').trim();
     const countryCode = String(rawData.countryCode || '+91').trim();
-    const isEmail = contactVal.includes('@');
 
     // Prepend dial code if user entered a phone number without +
-    if (!isEmail && contactVal && !contactVal.startsWith('+')) {
-      contactVal = `${countryCode} ${contactVal}`;
+    if (phoneVal && !phoneVal.startsWith('+')) {
+      phoneVal = `${countryCode} ${phoneVal}`;
     }
 
     const data = {
       ...rawData,
-      contact: contactVal,
+      email: emailVal,
+      phone: phoneVal,
+      contact: phoneVal ? `${phoneVal} (${emailVal})` : emailVal,
       type: enquiryType === 'editor' ? 'Join Us Application' : 'Brand Enquiry'
     };
 
@@ -597,7 +609,7 @@ function initCountrySelector(form) {
   const selectedFlag = form.querySelector('#enquiry-selected-flag');
   const countryCodeInput = form.querySelector('#enquiry-country-code');
   const countryNameInput = form.querySelector('#enquiry-country-name');
-  const contactInput = form.querySelector('#enquiry-contact');
+  const phoneInput = form.querySelector('#enquiry-phone') || form.querySelector('#enquiry-contact');
 
   if (!phoneWrap || !flagBtn || !flagDropdown || !flagList) return () => {};
 
@@ -616,7 +628,7 @@ function initCountrySelector(form) {
     countryNameInput.value = name;
 
     closeDropdown();
-    contactInput.focus();
+    if (phoneInput) phoneInput.focus();
   };
 
   const renderCountries = (filter = '') => {
@@ -650,7 +662,7 @@ function initCountrySelector(form) {
     flagDropdown.style.display = 'flex';
     flagBtn.setAttribute('aria-expanded', 'true');
     phoneWrap.classList.add('is-dropdown-open');
-    phoneWrap.closest('.enquiry-contact-field')?.classList.add('has-dropdown-open');
+    phoneWrap.closest('.enquiry-phone-field, .enquiry-contact-field')?.classList.add('has-dropdown-open');
     flagSearch.value = '';
     renderCountries();
     window.setTimeout(() => flagSearch.focus(), 60);
@@ -660,7 +672,7 @@ function initCountrySelector(form) {
     flagDropdown.style.display = 'none';
     flagBtn.setAttribute('aria-expanded', 'false');
     phoneWrap.classList.remove('is-dropdown-open');
-    phoneWrap.closest('.enquiry-contact-field')?.classList.remove('has-dropdown-open');
+    phoneWrap.closest('.enquiry-phone-field, .enquiry-contact-field')?.classList.remove('has-dropdown-open');
   };
 
   flagBtn.addEventListener('click', (e) => {
@@ -682,7 +694,7 @@ function initCountrySelector(form) {
     if (e.key === 'Escape') {
       e.preventDefault();
       closeDropdown();
-      contactInput.focus();
+      if (phoneInput) phoneInput.focus();
     } else if (e.key === 'Enter') {
       e.preventDefault(); // Never submit the enquiry modal form on search enter!
       e.stopPropagation();
@@ -742,17 +754,19 @@ function initCountrySelector(form) {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       closeDropdown();
-      contactInput.focus();
+      if (phoneInput) phoneInput.focus();
     }
   });
 
-  // Highlight wrap on contact input focus
-  contactInput.addEventListener('focus', () => {
-    phoneWrap.classList.add('is-focused');
-  });
-  contactInput.addEventListener('blur', () => {
-    phoneWrap.classList.remove('is-focused');
-  });
+  // Highlight wrap on phone input focus
+  if (phoneInput) {
+    phoneInput.addEventListener('focus', () => {
+      phoneWrap.classList.add('is-focused');
+    });
+    phoneInput.addEventListener('blur', () => {
+      phoneWrap.classList.remove('is-focused');
+    });
+  }
 
   // Close when clicking outside phone wrap
   document.addEventListener('click', (e) => {
@@ -923,13 +937,18 @@ export function renderAdminLeads() {
 
   emptyBox.style.display = 'none';
   tbody.innerHTML = leads.map((lead) => {
+    const emailDisplay = lead.email || (lead.contact && lead.contact.includes('@') ? lead.contact : '—');
+    const phoneDisplay = lead.phone || (lead.contact && !lead.contact.includes('@') ? lead.contact : '—');
     return `
       <tr>
         <td style="font-family: monospace; font-weight: 700; color: #38bdf8;">${lead.id}</td>
         <td style="font-size: 0.78rem; color: #94a3b8;">${lead.formattedDate || ''}</td>
         <td style="font-weight: 700; color: #ffffff;">${escapeHtml(lead.name || '')}</td>
         <td>
-          <div style="font-size: 0.82rem; color: #38bdf8;">${escapeHtml(lead.contact || '')}</div>
+          <div style="font-size: 0.82rem; color: #38bdf8;">${escapeHtml(emailDisplay)}</div>
+        </td>
+        <td>
+          <div style="font-size: 0.82rem; color: #a5f3fc; white-space: nowrap;">${escapeHtml(phoneDisplay)}</div>
         </td>
         <td style="font-size: 0.8rem; color: #cbd5e1;">${escapeHtml(lead.position === 'Other' ? lead.otherPosition || 'Other' : lead.position || '—')}</td>
         <td><span style="color: #00e5ff;">${escapeHtml(lead.handle || '')}</span></td>
@@ -950,7 +969,7 @@ export function renderAdminLeads() {
       const lead = leads.find((l) => l.id === id);
       if (lead) {
         const role = lead.position === 'Other' ? lead.otherPosition || 'Other' : lead.position || '—';
-        const text = `Highverz Lead [${lead.id}]\nName: ${lead.name}\nContact: ${lead.contact}\nPosition: ${role}\nLink: ${lead.handle}\nMessage: ${lead.message || 'None'}`;
+        const text = `Highverz Lead [${lead.id}]\nName: ${lead.name}\nEmail: ${lead.email || '—'}\nPhone: ${lead.phone || '—'}\nPosition: ${role}\nLink: ${lead.handle}\nMessage: ${lead.message || 'None'}`;
         navigator.clipboard.writeText(text).then(() => {
           btn.textContent = 'Copied!';
           setTimeout(() => btn.textContent = 'Copy', 1500);
@@ -998,7 +1017,7 @@ function exportLeadsToCSV() {
     return;
   }
 
-  const headers = ['Lead ID', 'Date Submitted', 'Type', 'Position', 'Other Position', 'Client Name', 'Email or WhatsApp', 'Social or Website Link', 'Message', 'Source Page'];
+  const headers = ['Lead ID', 'Date Submitted', 'Type', 'Position', 'Other Position', 'Client Name', 'Email', 'Phone', 'Social or Website Link', 'Message', 'Source Page'];
 
   const rows = leads.map((l) => [
     `"${l.id}"`,
@@ -1007,7 +1026,8 @@ function exportLeadsToCSV() {
     `"${(l.position || '').replace(/"/g, '""')}"`,
     `"${(l.otherPosition || '').replace(/"/g, '""')}"`,
     `"${(l.name || '').replace(/"/g, '""')}"`,
-    `"${(l.contact || '').replace(/"/g, '""')}"`,
+    `"${(l.email || (l.contact && l.contact.includes('@') ? l.contact : '')).replace(/"/g, '""')}"`,
+    `"${(l.phone || (!l.contact?.includes('@') ? l.contact : '')).replace(/"/g, '""')}"`,
     `"${(l.handle || '').replace(/"/g, '""')}"`,
     `"${(l.message || '').replace(/"/g, '""')}"`,
     `"${(l.sourceUrl || '').replace(/"/g, '""')}"`

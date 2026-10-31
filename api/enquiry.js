@@ -17,8 +17,15 @@ export default async function handler(req, res) {
   }
 
   const incomingPayload = req.body || {};
+  const email = String(incomingPayload.email || '').trim();
+  const phone = String(incomingPayload.phone || '').trim();
+  const contact = String(incomingPayload.contact || phone || email || '').trim();
+
   const payload = {
     ...incomingPayload,
+    email,
+    phone,
+    contact,
     position: String(incomingPayload.position || '').trim(),
     otherPosition: String(incomingPayload.otherPosition || '').trim()
   };
@@ -32,7 +39,7 @@ export default async function handler(req, res) {
   }
   const googleSheetsUrl = (payload.googleSheetsUrl && payload.googleSheetsUrl.trim()) ||
     process.env.GOOGLE_SHEETS_URL ||
-    'https://script.google.com/macros/s/AKfycbzJnIoBHmIqo8JnNz9TYHjFszW1d9mdCNIXuCsYV3g-SFLMxOs19-cijUJfaQwPK1Pvsw/exec';
+    'https://script.google.com/macros/s/AKfycbwRD7SSH0Bcw8QSwdz-7beV0p3Go4EPjyRP2Jqo5rCEjRQoeR1EnR37ovDRD9WbCBoVjg/exec';
 
   try {
     const response = await fetch(googleSheetsUrl, {

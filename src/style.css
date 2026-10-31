@@ -254,9 +254,10 @@ html {
 .work-creator-card,
 .ig-reel-card {
   transition:
-    background-color 500ms var(--ease-theme),
-    border-color 600ms var(--ease-theme),
-    box-shadow 800ms var(--ease-theme),
+    background-color 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 360ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.35s var(--ease-expo);
 }
 
@@ -3194,7 +3195,7 @@ html.js .floating-badge-item {
   position: relative;
   overflow: hidden;
   box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.5), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.2), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.4s var(--ease-smooth), transform 0.4s var(--ease-expo), box-shadow 0.4s var(--ease-smooth), background 0.4s var(--ease-smooth);
+  transition: border-color 0.36s cubic-bezier(0.22, 1, 0.36, 1), transform 0.35s var(--ease-expo), box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1), background 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Keep creator and film variants on the same structural baseline so the
@@ -7920,14 +7921,11 @@ html.js .floating-badge-item {
     inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
 }
 
-[data-theme="light"] .cta-left-content::before {
-  color: #0EA5E9 !important;
-}
-
+[data-theme="light"] .cta-left-content::before,
 [data-theme="light"] .section-tag {
   color: #0284c7 !important;
   background: rgba(14, 165, 233, 0.08) !important;
-  border-color: rgba(14, 165, 233, 0.25) !important;
+  border: 1px solid rgba(14, 165, 233, 0.25) !important;
   box-shadow: 0 2px 10px rgba(14, 165, 233, 0.08), inset 0 1px 0 #ffffff !important;
 }
 
@@ -19516,12 +19514,31 @@ body::after {
 
 .cta-left-content::before {
   content: 'HIGHVERZ // CREATIVE PARTNERS';
-  display: inline-block;
-  margin-bottom: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: fit-content;
+  font-family: var(--font-tag, 'Space Grotesk', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: var(--accent-cyan);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 0.34rem 0.88rem;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(0, 229, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-bottom: 1.25rem;
+  transition: all 0.3s var(--ease-expo);
+}
+
+.cta-left-content:hover::before {
+  background: rgba(0, 229, 255, 0.09);
+  border-color: rgba(0, 229, 255, 0.38);
 }
 
 .cta-main-title {

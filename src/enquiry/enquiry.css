@@ -401,12 +401,14 @@ body.enquiry-modal-open .admin-leads-close {
 /* ================================================================
    PHONE WRAP & COUNTRY FLAG SELECTOR (MATCHING REFERENCE DESIGN)
    ================================================================ */
-.enquiry-contact-field {
+.enquiry-contact-field,
+.enquiry-phone-field {
   position: relative;
   z-index: 20;
 }
 
 .enquiry-contact-field.has-dropdown-open,
+.enquiry-phone-field.has-dropdown-open,
 .enquiry-phone-wrap.is-dropdown-open {
   z-index: 100 !important;
 }

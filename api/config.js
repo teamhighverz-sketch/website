@@ -8,7 +8,7 @@ export default function handler(req, res) {
     return res.status(200).end();
   }
 
-  const googleSheetsUrl = process.env.GOOGLE_SHEETS_URL || 'https://script.google.com/macros/s/AKfycbzJnIoBHmIqo8JnNz9TYHjFszW1d9mdCNIXuCsYV3g-SFLMxOs19-cijUJfaQwPK1Pvsw/exec';
+  const googleSheetsUrl = process.env.GOOGLE_SHEETS_URL || 'https://script.google.com/macros/s/AKfycbwRD7SSH0Bcw8QSwdz-7beV0p3Go4EPjyRP2Jqo5rCEjRQoeR1EnR37ovDRD9WbCBoVjg/exec';
   res.status(200).json({ googleSheetsUrl });
 }
 

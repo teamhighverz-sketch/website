@@ -3436,7 +3436,7 @@ body.page-campaigns {
     inset 0 1.8px 2px 0 #FFFFFF,
     inset 0 -1.5px 2px 0 rgba(148, 163, 184, 0.15),
     inset 0 0 0 1px rgba(255, 255, 255, 0.75) !important;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease, background 0.3s ease, border-color 0.3s ease !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1), background 0.36s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.36s cubic-bezier(0.22, 1, 0.36, 1), color 0.36s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 [data-theme="light"] .campaign-card::before,

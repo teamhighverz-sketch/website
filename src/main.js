@@ -143,7 +143,6 @@ window.loadFluidBackground = loadFluidBackground;
 // Progressive below-the-fold feature hydrator:
 // Keeps initial main-thread work under 300ms so hero LCP paints on frame 1 without delay.
 let belowFoldInitialized = false;
-let homeCreatorsDarkMarkup = null;
 function initBelowFoldFeatures() {
   // These sections exist only on Home. Running their timelines after an early
   // interaction on a dedicated route can attach duplicate observers/tweens to
@@ -154,6 +153,7 @@ function initBelowFoldFeatures() {
   // in-place route transition. Both paths may reuse the static creator-card
   // markup, so re-apply the active theme before the below-fold guard exits.
   // This keeps Light mode's movie showcase authoritative on every re-entry.
+  preloadThemeCardImages();
   applyThemeCreatorsCopy();
 
   if (belowFoldInitialized) return;
@@ -1365,171 +1365,322 @@ function applyThemeHeroCopy() {
   }
 }
 
-// The Home case-study rail has two deliberate identities: creator growth in
-// Dark mode and film distribution in Light mode. Keep the existing creator
-// markup as the source of truth, then swap only the copy/assets at the theme
-// boundary so both variants share the same layout and animation hooks.
+let themeCardImagesPreloaded = false;
+function preloadThemeCardImages() {
+  if (themeCardImagesPreloaded) return;
+  themeCardImagesPreloaded = true;
+  const images = [
+    '/assets/creators/image_new/image.png',
+    '/assets/creators/image_new/image%20copy.png',
+    '/assets/movie/runner.png',
+    '/assets/movie/kingofkings.png'
+  ];
+  images.forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
+}
+
+const HOME_CASE_STUDIES_DARK = {
+  header: `
+    <span class="section-tag">CASE STUDIES</span>
+    <h2 class="creators-title">Creators We've<br/><span class="highlight-cyan">Scaled.</span></h2>
+    <p class="creators-intro">Two creator journeys. One repeatable clipping system built to turn long-form content into short-form reach at scale.</p>
+  `,
+  more: `
+    <a href="/work.html#work" class="creators-more-link" data-cursor="ALL CREATORS ↗">
+      <span class="creators-more-text">and many more</span>
+      <svg class="creators-more-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M7 17L17 7M17 7H7M17 7V17" />
+      </svg>
+    </a>
+  `,
+  card1: `
+    <div class="creator-image-col">
+      <a href="https://www.instagram.com/niv0ne/" target="_blank" rel="noopener noreferrer" class="creator-image-wrap" data-cursor="INSTAGRAM ↗" aria-label="Niv0ne Instagram Profile">
+        <img src="/assets/creators/image_new/image.png" alt="Niv0ne — Creator growth case study" class="creator-img" />
+        <div class="creator-image-gradient"></div>
+        <div class="creator-badge-overlay">
+          <span class="badge-growth">↗ 4,900% Growth</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="creator-info-col">
+      <div class="creator-name-row">
+        <h3 class="creator-name">Niv0ne</h3>
+        <a href="https://www.instagram.com/niv0ne/" target="_blank" rel="noopener noreferrer" class="creator-platform" data-cursor="INSTAGRAM ↗" aria-label="Visit Niv0ne on Instagram">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          <span>@niv0ne</span>
+          <svg class="creator-ext-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+
+      <p class="creator-description">Scaled his audience from 2,000 to 100,000 followers through strategic clipping and consistent short-form distribution.</p>
+
+      <div class="creator-stats-grid">
+        <div class="creator-stat-item" data-stat-target="2000" data-stat-prefix="" data-stat-suffix="">
+          <span class="stat-before-label">BEFORE</span>
+          <span class="stat-number" data-count="2000">2,000</span>
+          <span class="stat-label">Followers</span>
+        </div>
+        <div class="stat-arrow-divider">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+        <div class="creator-stat-item highlight" data-stat-target="100000" data-stat-prefix="" data-stat-suffix="">
+          <span class="stat-after-label">AFTER</span>
+          <span class="stat-number" data-count="100000">100,000</span>
+          <span class="stat-label">Followers</span>
+        </div>
+      </div>
+
+      <div class="creator-meta-row">
+        <div class="meta-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span><strong class="stat-dyn-num" data-count="60">60</strong> Days</span>
+        </div>
+        <div class="meta-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>+<strong class="stat-dyn-num" data-count="98">98</strong>K Followers</span>
+        </div>
+        <div class="meta-chip accent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Organic Growth</span>
+        </div>
+        <a href="/creator-niv0ne.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+          <span>View case studies</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </div>
+  `,
+  card2: `
+    <div class="creator-image-col">
+      <a href="https://www.instagram.com/umarpnj/" target="_blank" rel="noopener noreferrer" class="creator-image-wrap" data-cursor="INSTAGRAM ↗" aria-label="Umarpnj Instagram Profile">
+        <img src="/assets/creators/image_new/image%20copy.png" alt="Umarpnj — Creator growth case study" class="creator-img" />
+        <div class="creator-image-gradient"></div>
+        <div class="creator-badge-overlay">
+          <span class="badge-growth">↗ From Zero</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="creator-info-col">
+      <div class="creator-name-row">
+        <h3 class="creator-name">Umarpnj</h3>
+        <a href="https://www.instagram.com/umarpnj/" target="_blank" rel="noopener noreferrer" class="creator-platform" data-cursor="INSTAGRAM ↗" aria-label="Visit Umarpnj on Instagram">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          <span>@umarpnj</span>
+          <svg class="creator-ext-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+
+      <p class="creator-description">Built a clipping network that scaled Umar Punjabi's audience to 400K+ followers in just five months through consistent short-form distribution.</p>
+
+      <div class="creator-stats-grid">
+        <div class="creator-stat-item" data-stat-target="0" data-stat-prefix="" data-stat-suffix="">
+          <span class="stat-before-label">BEFORE</span>
+          <span class="stat-number" data-count="0">0</span>
+          <span class="stat-label">Followers</span>
+        </div>
+        <div class="stat-arrow-divider">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+        <div class="creator-stat-item highlight" data-stat-target="400000" data-stat-prefix="" data-stat-suffix="">
+          <span class="stat-after-label">AFTER</span>
+          <span class="stat-number" data-count="400000">400,000</span>
+          <span class="stat-label">Followers</span>
+        </div>
+      </div>
+
+      <div class="creator-meta-row">
+        <div class="meta-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span><strong class="stat-dyn-num" data-count="5">5</strong> Months</span>
+        </div>
+        <div class="meta-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>+<strong class="stat-dyn-num" data-count="400">400</strong>K Followers</span>
+        </div>
+        <div class="meta-chip accent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Strategic Clipping</span>
+        </div>
+        <a href="/creator-umarpnj.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+          <span>View case studies</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </div>
+  `
+};
+
+const HOME_CASE_STUDIES_LIGHT = {
+  header: `
+    <span class="section-tag">CLIPPING CONCEPTS</span>
+    <h2 class="creators-title">Films Meet<br/><span class="highlight-cyan">Short-Form.</span></h2>
+    <p class="creators-intro">Turning the most engaging film moments into short-form clips built to capture attention, drive views, and reach new audiences across feeds.</p>
+  `,
+  more: `
+    <a href="/campaigns.html" class="creators-more-link" data-cursor="ALL FILMS ↗" aria-label="Explore more film campaign case studies">
+      <span class="creators-more-text">and more film concepts</span>
+      <svg class="creators-more-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M7 17L17 7M17 7H7M17 7V17" />
+      </svg>
+    </a>
+  `,
+  card1: `
+    <div class="creator-image-col">
+      <a href="/movie-runner.html" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="Runner film case study">
+        <img src="/assets/movie/runner.png" alt="Runner film poster" class="creator-img" loading="lazy" decoding="async" />
+        <div class="creator-image-gradient"></div>
+        <div class="creator-badge-overlay">
+          <span class="badge-growth">Film Concept 01</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="creator-info-col">
+      <div class="creator-name-row">
+        <h3 class="creator-name">Runner</h3>
+      </div>
+
+      <p class="creator-description">Turning cinematic scenes into high-retention short-form clips to drive massive organic reach across feeds.</p>
+
+      <div class="creator-stats-grid">
+        <div class="creator-stat-item">
+          <span class="stat-before-label">BEFORE</span>
+          <span class="stat-number" data-static-text="Big Screen">Big Screen</span>
+          <span class="stat-label">Cinema Release</span>
+        </div>
+        <div class="stat-arrow-divider">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+        <div class="creator-stat-item highlight">
+          <span class="stat-after-label">AFTER</span>
+          <span class="stat-number" data-static-text="Social Feed">Social Feed</span>
+          <span class="stat-label">18.3M+ Views</span>
+        </div>
+      </div>
+
+      <div class="creator-meta-row">
+        <div class="meta-chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          <span>Short-Form Clips</span>
+        </div>
+        <div class="meta-chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>Hook-Driven Editing</span>
+        </div>
+        <div class="meta-chip accent">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Multi-Platform</span>
+        </div>
+        <a href="/movie-runner.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+          <span>Explore Concept</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </div>
+  `,
+  card2: `
+    <div class="creator-image-col">
+      <a href="/movie-kingofkings.html" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="King of Kings film case study">
+        <img src="/assets/movie/kingofkings.png" alt="King of Kings film poster" class="creator-img" loading="lazy" decoding="async" />
+        <div class="creator-image-gradient"></div>
+        <div class="creator-badge-overlay">
+          <span class="badge-growth">Film Concept 02</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="creator-info-col">
+      <div class="creator-name-row">
+        <h3 class="creator-name">King of Kings</h3>
+      </div>
+
+      <p class="creator-description">Transforming epic movie scenes into scroll-stopping clips that grab attention and drive viral discovery.</p>
+
+      <div class="creator-stats-grid">
+        <div class="creator-stat-item">
+          <span class="stat-before-label">BEFORE</span>
+          <span class="stat-number" data-static-text="Big Screen">Big Screen</span>
+          <span class="stat-label">Cinema Release</span>
+        </div>
+        <div class="stat-arrow-divider">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </div>
+        <div class="creator-stat-item highlight">
+          <span class="stat-after-label">AFTER</span>
+          <span class="stat-number" data-static-text="Social Feed">Social Feed</span>
+          <span class="stat-label">38.5M+ Views</span>
+        </div>
+      </div>
+
+      <div class="creator-meta-row">
+        <div class="meta-chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          <span>Short-Form Clips</span>
+        </div>
+        <div class="meta-chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <span>Scene Selection</span>
+        </div>
+        <div class="meta-chip accent">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>Multi-Platform</span>
+        </div>
+        <a href="/movie-kingofkings.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+          <span>Explore Concept</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </div>
+  `
+};
+
+function transitionThemeCreatorsCards() {
+  preloadThemeCardImages();
+  applyThemeCreatorsCopy();
+}
+
 function applyThemeCreatorsCopy() {
   const section = document.querySelector('.section-creators');
-  const cards = Array.from(section?.querySelectorAll('.creator-card') || []);
-  if (!section || cards.length < 2) return;
-
-  // Clear any stale dimensions left by an earlier hot-reload version of the
-  // theme lock before calculating the current card layout.
-  section.querySelectorAll('[data-theme-layout-height]').forEach((element) => {
-    element.style.removeProperty('height');
-    delete element.dataset.themeLayoutHeight;
-  });
-
-  if (!homeCreatorsDarkMarkup) {
-    homeCreatorsDarkMarkup = {
-      header: section.querySelector('.creators-header')?.innerHTML || '',
-      cards: cards.map((card) => card.outerHTML),
-      more: section.querySelector('.creators-more-note')?.innerHTML || '',
-    };
-  }
+  if (!section) return;
+  const card1 = section.querySelector('#creator-niv0ne');
+  const card2 = section.querySelector('#creator-umarpnj');
+  const header = section.querySelector('.creators-header');
+  const moreNote = section.querySelector('.creators-more-note');
+  if (!card1 || !card2) return;
 
   const isLight = document.documentElement.dataset.theme === 'light';
-  if (!isLight) {
-    if (section.dataset.creatorsThemeCopy === 'dark') return;
-    const currentCards = Array.from(section.querySelectorAll('.creator-card'));
-    const header = section.querySelector('.creators-header');
-    if (header) header.innerHTML = homeCreatorsDarkMarkup.header;
-    const moreNote = section.querySelector('.creators-more-note');
-    if (moreNote) moreNote.innerHTML = homeCreatorsDarkMarkup.more;
-    currentCards.forEach((card, index) => {
-      const original = homeCreatorsDarkMarkup.cards[index];
-      if (original) card.outerHTML = original;
-    });
+  const targetTheme = isLight ? 'light' : 'dark';
+  if (section.dataset.creatorsThemeCopy === targetTheme) return;
+
+  const data = isLight ? HOME_CASE_STUDIES_LIGHT : HOME_CASE_STUDIES_DARK;
+  if (header) header.innerHTML = data.header;
+  if (moreNote) moreNote.innerHTML = data.more;
+  card1.innerHTML = data.card1;
+  card2.innerHTML = data.card2;
+
+  if (isLight) {
+    section.classList.add('is-movie-showcase');
+  } else {
     section.classList.remove('is-movie-showcase');
-    section.dataset.creatorsThemeCopy = 'dark';
-    return;
-  }
-
-  const currentBadge = cards[0]?.querySelector('.badge-growth')?.textContent;
-  const hasPlatform = Boolean(cards[0]?.querySelector('.creator-platform'));
-  if (section.dataset.creatorsThemeCopy === 'light' && currentBadge === 'Film Concept 01' && !hasPlatform) return;
-
-  const header = section.querySelector('.creators-header');
-  if (header) {
-    header.innerHTML = `
-      <span class="section-tag">CLIPPING CONCEPTS</span>
-      <h2 class="creators-title">Films Meet<br/><span class="highlight-cyan">Short-Form.</span></h2>
-      <p class="creators-intro">Turning the most engaging film moments into short-form clips built to capture attention, drive views, and reach new audiences across feeds.</p>
-    `;
-  }
-
-  const movieCards = [
-    {
-      image: '/assets/movie/runner.png',
-      alt: 'Runner film poster',
-      title: 'Runner',
-      description: 'Turning cinematic scenes into high-retention short-form clips to drive massive organic reach across feeds.',
-      badge: 'Film Concept 01',
-      before: ['BEFORE', 'Big Screen', 'Cinema Release'],
-      after: ['AFTER', 'Social Feed', '18.3M+ Views'],
-      meta: [
-        'Short-Form Clips',
-        'Hook-Driven Editing',
-        'Multi-Platform',
-        'Explore Concept',
-      ],
-    },
-    {
-      image: '/assets/movie/kingofkings.png',
-      alt: 'King of Kings film poster',
-      title: 'King of Kings',
-      description: 'Transforming epic movie scenes into scroll-stopping clips that grab attention and drive viral discovery.',
-      badge: 'Film Concept 02',
-      before: ['BEFORE', 'Big Screen', 'Cinema Release'],
-      after: ['AFTER', 'Social Feed', '38.5M+ Views'],
-      meta: [
-        'Short-Form Clips',
-        'Scene Selection',
-        'Multi-Platform',
-        'Explore Concept',
-      ],
-    },
-  ];
-
-  const chipIcons = [
-    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>',
-    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
-    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
-  ];
-
-  cards.forEach((card, index) => {
-    const movie = movieCards[index];
-    if (!movie) return;
-    const imageWrap = card.querySelector('.creator-image-wrap');
-    const image = card.querySelector('.creator-img');
-    const name = card.querySelector('.creator-name');
-    const platform = card.querySelector('.creator-platform');
-    const description = card.querySelector('.creator-description');
-    const badge = card.querySelector('.badge-growth');
-    const movieHref = movie.title === 'Runner' ? '/movie-runner.html' : '/movie-kingofkings.html';
-
-    if (imageWrap) {
-      imageWrap.href = movieHref;
-      imageWrap.removeAttribute('target');
-      imageWrap.removeAttribute('rel');
-      imageWrap.dataset.cursor = 'FILM CASE STUDY ↗';
-      imageWrap.setAttribute('aria-label', `${movie.title} film case study`);
-    }
-    if (image) {
-      image.src = movie.image;
-      image.alt = movie.alt;
-      image.loading = 'lazy';
-      image.decoding = 'async';
-    }
-    if (name) name.textContent = movie.title;
-    if (platform) {
-      platform.remove();
-    }
-    if (description) description.textContent = movie.description;
-    if (badge) badge.textContent = movie.badge;
-
-    const statItems = card.querySelectorAll('.creator-stat-item');
-    [movie.before, movie.after].forEach((stat, statIndex) => {
-      const item = statItems[statIndex];
-      if (!item) return;
-      const overline = item.querySelector('.stat-before-label, .stat-after-label');
-      const number = item.querySelector('.stat-number');
-      const label = item.querySelector('.stat-label');
-      if (overline) overline.textContent = stat[0];
-      if (number) {
-        number.removeAttribute('data-count');
-        number.dataset.staticText = stat[1];
-        number.textContent = stat[1];
-      }
-      if (label) label.textContent = stat[2];
-      item.removeAttribute('data-stat-target');
-    });
-
-    const meta = card.querySelectorAll('.creator-meta-row .meta-chip');
-    meta.forEach((chip, chipIndex) => {
-      if (chipIndex === 3) {
-        chip.href = movieHref;
-        chip.dataset.cursor = 'CASE STUDY ↗';
-        chip.innerHTML = `<span>${movie.meta[chipIndex]}</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>`;
-      } else {
-        chip.innerHTML = `${chipIcons[chipIndex] || ''}<span>${movie.meta[chipIndex]}</span>`;
+    section.querySelectorAll('.stat-number').forEach((el) => {
+      const target = parseInt(el.getAttribute('data-count'), 10);
+      if (!isNaN(target) && target > 0) {
+        el.textContent = Math.round(target).toLocaleString('en-US');
       }
     });
-  });
-
-  const moreNote = section.querySelector('.creators-more-note');
-  const moreLink = moreNote?.querySelector('.creators-more-link');
-  const moreText = moreNote?.querySelector('.creators-more-text');
-  if (moreLink) {
-    moreLink.href = '/campaigns.html';
-    moreLink.dataset.cursor = 'ALL FILMS ↗';
-    moreLink.setAttribute('aria-label', 'Explore more film campaign case studies');
+    section.querySelectorAll('.stat-dyn-num').forEach((el) => {
+      const target = parseInt(el.getAttribute('data-count'), 10);
+      if (!isNaN(target)) {
+        el.textContent = target;
+      }
+    });
   }
-  if (moreText) moreText.textContent = 'and more film concepts';
-
-  section.classList.add('is-movie-showcase');
-  section.dataset.creatorsThemeCopy = 'light';
+  section.dataset.creatorsThemeCopy = targetTheme;
 }
 
 // Theme changes happen without a page reload. Refresh the Home copy in place
@@ -1663,19 +1814,8 @@ window.addEventListener('hv:themechange', (event) => {
   }
 
   if (isHomeRoute(window.location.pathname)) {
-    // Rebuilding below-the-fold scroll triggers in the same frame as the
-    // theme swap causes avoidable main-thread contention. Let the hero settle
-    // first, then refresh the section once the handoff is idle.
     window.clearTimeout(window.__hvThemeCreatorsRefreshTimer);
-    window.__hvThemeCreatorsRefreshTimer = window.setTimeout(() => {
-      if (!document.hidden && isHomeRoute(window.location.pathname)) {
-        // This replacement touches an entire below-the-fold card section.
-        // Keep that DOM work out of the hero's animation frames.
-        applyThemeCreatorsCopy();
-        initAdscaleTextEffects();
-        initCreatorsSection();
-      }
-    }, 1100);
+    transitionThemeCreatorsCards();
   }
 });
 
@@ -2566,8 +2706,7 @@ function initGrowthWidgets() {
   const counts = Array.from(section.querySelectorAll('.widget-count'));
   const chartLine = section.querySelector('.widget-chart-line');
   const chartFill = section.querySelector('.widget-chart-fill');
-  const chartDot = section.querySelector('.widget-chart-dot');
-  const marker = section.querySelector('.widget-chart-marker');
+  const chartArrow = section.querySelector('.widget-chart-arrow');
   const progress = section.querySelector('.cadence-progress span');
   const activityDots = section.querySelectorAll('.cadence-days b');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2578,6 +2717,38 @@ function initGrowthWidgets() {
     return `${Math.round(value)}${suffix}`;
   };
 
+  const updateArrowPosition = (progressRatio) => {
+    if (!chartLine || !chartArrow) return;
+    try {
+      const totalLen = chartLength || chartLine.getTotalLength() || 400;
+      const len = Math.max(0.001, Math.min(totalLen, progressRatio * totalLen));
+      const pt = chartLine.getPointAtLength(len);
+      const prevLen = Math.max(0, len - 2);
+      const prevPt = chartLine.getPointAtLength(prevLen);
+      const angle = Math.atan2(pt.y - prevPt.y, pt.x - prevPt.x) * (180 / Math.PI);
+      chartArrow.setAttribute('transform', `translate(${pt.x.toFixed(2)}, ${pt.y.toFixed(2)}) rotate(${angle.toFixed(2)})`);
+    } catch (_) { }
+  };
+
+  let idleTween = null;
+  const startIdleLoop = () => {
+    if (reduceMotion || !chartLine || !chartArrow) return;
+    if (idleTween) idleTween.kill();
+    const idleProg = { value: 1 };
+    idleTween = gsap.to(idleProg, {
+      value: 0.84,
+      duration: 1.85,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+      onUpdate: () => {
+        const currentLen = idleProg.value * chartLength;
+        chartLine.style.strokeDashoffset = chartLength - currentLen;
+        updateArrowPosition(idleProg.value);
+      }
+    });
+  };
+
   const setFinalValues = () => {
     counts.forEach((el) => {
       const target = Number(el.dataset.target || 0);
@@ -2585,7 +2756,10 @@ function initGrowthWidgets() {
     });
     if (chartLine) gsap.set(chartLine, { strokeDashoffset: 0 });
     if (chartFill) gsap.set(chartFill, { opacity: 1 });
-    if (marker) gsap.set(marker, { opacity: 1, scale: 1 });
+    if (chartArrow) {
+      gsap.set(chartArrow, { opacity: 1, scale: 1 });
+      updateArrowPosition(1);
+    }
     if (progress) gsap.set(progress, { width: '32%' });
     activityDots.forEach((dot, index) => {
       dot.classList.toggle('is-complete', index < 3);
@@ -2593,11 +2767,6 @@ function initGrowthWidgets() {
     gsap.set(widgets, { opacity: 1, y: 0 });
     section.classList.add('is-settled');
   };
-
-  if (reduceMotion) {
-    setFinalValues();
-    return;
-  }
 
   // Pre-calculate chart path length safely
   let chartLength = 400;
@@ -2608,10 +2777,18 @@ function initGrowthWidgets() {
     } catch (_) { }
   }
 
+  if (reduceMotion) {
+    setFinalValues();
+    return;
+  }
+
   // Initialize initial animation states
   gsap.set(widgets, { opacity: 0, y: 24 });
   gsap.set(chartFill, { opacity: 0 });
-  if (marker) gsap.set(marker, { opacity: 0, scale: 0.35, transformOrigin: '50% calc(100% - 5.5px)' });
+  if (chartArrow) {
+    updateArrowPosition(0.01);
+    gsap.set(chartArrow, { opacity: 0, scale: 0.2 });
+  }
   if (progress) gsap.set(progress, { width: '0%' });
   activityDots.forEach((dot) => dot.classList.remove('is-complete', 'is-active'));
 
@@ -2624,6 +2801,7 @@ function initGrowthWidgets() {
       defaults: { ease: 'power3.out' },
       onComplete: () => {
         setFinalValues();
+        startIdleLoop();
       }
     });
 
@@ -2653,32 +2831,36 @@ function initGrowthWidgets() {
       }, 0.15 + (index * 0.08));
     });
 
-    // 3. Line chart draws across smoothly
+    // 3. Line chart & arrow grow up smoothly across the points
     if (chartLine) {
-      tl.to(chartLine, {
-        strokeDashoffset: 0,
-        duration: 1.35,
-        ease: 'power2.inOut'
+      const chartProg = { value: 0 };
+      if (chartArrow) {
+        tl.to(chartArrow, {
+          opacity: 1,
+          scale: 1,
+          duration: 0.22,
+          ease: 'power2.out'
+        }, 0.2);
+      }
+
+      tl.to(chartProg, {
+        value: 1,
+        duration: 1.4,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          const currentLen = chartProg.value * chartLength;
+          chartLine.style.strokeDashoffset = chartLength - currentLen;
+          updateArrowPosition(chartProg.value);
+        }
       }, 0.2);
     }
 
     if (chartFill) {
       tl.to(chartFill, {
         opacity: 1,
-        duration: 0.7,
+        duration: 0.75,
         ease: 'power2.out'
-      }, 0.55);
-    }
-
-    // Marker springs into place precisely as line hits the September peak vertex
-    if (marker) {
-      tl.to(marker, {
-        opacity: 1,
-        scale: 1,
-        duration: 0.5,
-        ease: 'back.out(2.2)',
-        clearProps: 'scale'
-      }, 1.12);
+      }, 0.6);
     }
 
     // 4. Cadence progress & activity dots
@@ -2723,6 +2905,7 @@ function initGrowthWidgets() {
 
   window.__hvGrowthWidgetsCleanup = () => {
     observer.disconnect();
+    if (idleTween) idleTween.kill();
   };
 }
 
@@ -2958,6 +3141,7 @@ function initHomePageScripts(isFromTransition = false) {
   // active theme before measuring or animating the hero so returning to Home
   // in Light mode cannot briefly restore the creator (dark-theme) headline.
   applyThemeHeroCopy();
+  preloadThemeCardImages();
   applyThemeCreatorsCopy();
   restoreHomeStableState(isFromTransition);
   initHeroReelCarousel();
@@ -6201,7 +6385,7 @@ export function initFooterScatterGrid() {
   window.__hvFooterScatterCleanup = initScatterGrid(watermark, {
     dotSize: 4,
     dotGap: 2,
-    radius: 220,
+    radius: 240,
     strength: 2.2,
     stiffness: 0.035,
     damping: 0.86,

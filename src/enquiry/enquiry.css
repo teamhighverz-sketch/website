@@ -38,9 +38,9 @@ body.enquiry-modal-open .admin-leads-close {
   inset: 0;
   cursor: pointer;
   /* Clicking outside indicates closing */
-  background: var(--bg-primary, rgba(3, 7, 11, 0.85));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(4, 8, 14, 0.65) !important;
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
   z-index: 100001;
   display: flex;
   align-items: center;
@@ -73,12 +73,16 @@ body.enquiry-modal-open .admin-leads-close {
   scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  background: var(--bg-card, linear-gradient(145deg, rgba(14, 20, 27, 0.98) 0%, rgba(7, 10, 15, 0.98) 100%));
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--border-subtle, rgba(0, 229, 255, 0.3));
+  background: linear-gradient(145deg, rgba(14, 21, 33, 0.72) 0%, rgba(6, 10, 17, 0.78) 100%) !important;
+  backdrop-filter: blur(40px) saturate(200%) brightness(105%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(105%);
+  border: 1px solid rgba(0, 229, 255, 0.32) !important;
   border-radius: 24px;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 50px rgba(0, 229, 255, 0.12);
+  box-shadow: 
+    0 30px 90px -10px rgba(0, 0, 0, 0.8), 
+    0 0 50px rgba(0, 229, 255, 0.12),
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.14),
+    inset 0 -1px 1px rgba(0, 229, 255, 0.18) !important;
   padding: 2.5rem;
   position: relative;
   transform: translateY(20px) scale(0.98);
@@ -135,8 +139,10 @@ body.enquiry-modal-open .admin-leads-close {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--bg-elevated, rgba(255, 255, 255, 0.05));
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text-secondary, #94a3b8);
   display: flex;
   align-items: center;
@@ -149,9 +155,10 @@ body.enquiry-modal-open .admin-leads-close {
 
 .enquiry-modal-close:hover {
   color: #ffffff;
-  background: rgba(0, 229, 255, 0.15);
+  background: rgba(0, 229, 255, 0.18);
   border-color: rgba(0, 229, 255, 0.5);
-  transform: rotate(90deg);
+  transform: rotate(90deg) scale(1.08);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
 }
 
 /* Header & Titles */
@@ -210,8 +217,10 @@ body.enquiry-modal-open .admin-leads-close {
   width: 100%;
   padding: 0.3rem;
   margin-bottom: 1.5rem;
-  background: rgba(4, 8, 13, 0.72);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  background: rgba(5, 10, 16, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
 }
 
@@ -350,8 +359,10 @@ body.enquiry-modal-open .admin-leads-close {
 .enquiry-textarea {
   width: 100%;
   padding: 0.85rem 1.1rem;
-  background: var(--bg-card, rgba(6, 10, 15, 0.7));
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  background: rgba(8, 14, 22, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   color: var(--text-primary, #ffffff);
   font-family: var(--font-body, 'Inter', sans-serif);
@@ -364,8 +375,8 @@ body.enquiry-modal-open .admin-leads-close {
 .enquiry-select:focus,
 .enquiry-textarea:focus {
   border-color: var(--accent-cyan, #00e5ff);
-  box-shadow: 0 0 15px rgba(0, 229, 255, 0.25);
-  background: var(--bg-elevated, rgba(10, 16, 24, 0.85));
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+  background: rgba(12, 20, 32, 0.75);
 }
 
 .enquiry-input::placeholder,
@@ -418,8 +429,10 @@ body.enquiry-modal-open .admin-leads-close {
   display: flex;
   align-items: center;
   width: 100%;
-  background: var(--bg-card, rgba(6, 10, 15, 0.7));
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  background: rgba(8, 14, 22, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   transition: all 0.25s ease;
 }
@@ -428,8 +441,8 @@ body.enquiry-modal-open .admin-leads-close {
 .enquiry-phone-wrap.is-dropdown-open,
 .enquiry-phone-wrap:focus-within {
   border-color: var(--accent-cyan, #00e5ff);
-  box-shadow: 0 0 15px rgba(0, 229, 255, 0.25);
-  background: var(--bg-elevated, rgba(10, 16, 24, 0.85));
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+  background: rgba(12, 20, 32, 0.75);
 }
 
 .enquiry-flag-btn {
@@ -1156,23 +1169,24 @@ body.enquiry-modal-open .admin-leads-close {
    LIGHT THEME OVERRIDES FOR ENQUIRY & LEADS SYSTEM
    ========================================================================== */
 [data-theme="light"] .enquiry-modal-backdrop {
-  background: rgba(10, 14, 20, 0.55);
+  background: rgba(220, 230, 242, 0.45) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
 
 [data-theme="light"] .enquiry-modal-window {
   background: 
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(246, 250, 252, 0.88) 100%) padding-box,
-    linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(0, 229, 255, 0.35) 45%, rgba(14, 165, 233, 0.15) 100%) border-box !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(240, 246, 252, 0.65) 100%) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(0, 229, 255, 0.45) 50%, rgba(14, 165, 233, 0.22) 100%) border-box !important;
   border: 1px solid transparent !important;
-  backdrop-filter: blur(36px) saturate(190%) contrast(104%);
-  -webkit-backdrop-filter: blur(36px) saturate(190%) contrast(104%);
+  backdrop-filter: blur(40px) saturate(210%) contrast(102%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(210%) contrast(102%) !important;
   box-shadow: 
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 4px 10px rgba(15, 23, 42, 0.04),
-    0 16px 36px rgba(15, 23, 42, 0.08),
-    0 32px 72px rgba(15, 23, 42, 0.08),
-    inset 0 1.5px 2px rgba(255, 255, 255, 1),
-    inset 0 -1px 1px rgba(0, 229, 255, 0.15) !important;
+    0 30px 90px -10px rgba(15, 23, 42, 0.18),
+    0 0 40px rgba(0, 229, 255, 0.10),
+    0 4px 14px rgba(15, 23, 42, 0.05),
+    inset 0 2px 2px rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px rgba(0, 180, 240, 0.15) !important;
   color: #0A0D12;
 }
 
@@ -1422,7 +1436,9 @@ body.enquiry-modal-open .admin-leads-close {
 }
 
 [data-theme="light"] .enquiry-flag-dropdown {
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(0, 229, 255, 0.45) !important;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18), 0 0 25px rgba(0, 229, 255, 0.15) !important;
 }

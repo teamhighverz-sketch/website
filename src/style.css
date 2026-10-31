@@ -4742,7 +4742,7 @@ html.js .floating-badge-item {
   background-image:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.12), transparent 70%),
     radial-gradient(circle at 10% 25%, rgba(56, 189, 248, 0.08), transparent 45%),
-    radial-gradient(circle at 90% 40%, var(--hv-atmosphere-accent, rgba(99, 102, 241, 0.06)), transparent 50%),
+    radial-gradient(circle at 90% 40%, var(--hv-atmosphere-accent, rgba(56, 189, 248, 0.06)), transparent 50%),
     radial-gradient(circle at 20% 75%, rgba(14, 165, 233, 0.07), transparent 55%),
     radial-gradient(circle at 85% 90%, rgba(56, 189, 248, 0.08), transparent 50%) !important;
   background-attachment: fixed !important;
@@ -21427,6 +21427,28 @@ html.theme-switching #hero .hero-global-sensation::after {
   will-change: auto !important;
 }
 
+/* Keep the Home hero's containing block still while its copy is replaced.
+   The text reveal continues to use opacity and blur; only the parent-level
+   compositor translation and decorative underline are suppressed. */
+@media (max-width: 768px) {
+  /* Touch browsers can retain :active/:hover after a theme tap. Remove the
+     decorative headline strokes on phones so no colored edge is left behind
+     the blurred text while the new copy is being painted. */
+  #hero .hero-word-roller::after,
+  #hero .hero-global-sensation::after {
+    display: none !important;
+  }
+
+  html.theme-switching:has(#hero) #hero .hero-content {
+    transform: none !important;
+  }
+
+  html.theme-switching:has(#hero) #hero .hero-word-roller::after,
+  html.theme-switching:has(#hero) #hero .hero-global-sensation::after {
+    display: none !important;
+  }
+}
+
 @keyframes theme-optical-veil {
   0% {
     opacity: 0;
@@ -21594,8 +21616,8 @@ html.theme-switching #hero .hero-global-sensation::after {
 
   #hero .hero-headline-connector,
   [data-theme="light"] #hero .hero-platform-snippet {
-    height: 2.85rem;
-    min-height: 2.85rem;
+    height: 2.85rem !important;
+    min-height: 2.85rem !important;
   }
 }
 
@@ -21611,6 +21633,16 @@ html.theme-switching #hero .hero-global-sensation::after {
   height: clamp(3.6rem, 4vw, 4.1rem) !important;
   min-height: clamp(3.6rem, 4vw, 4.1rem) !important;
   margin: 0.02em auto !important;
+}
+
+/* Keep the platform strip on the same mobile line-box as the dark ampersand.
+   This rule follows the desktop logo sizing so the later light styles cannot
+   enlarge the hero while the theme is being replaced. */
+@media (max-width: 640px) {
+  [data-theme="light"] #hero .hero-platform-snippet {
+    height: 2.85rem !important;
+    min-height: 2.85rem !important;
+  }
 }
 
 [data-theme="light"] #hero .hero-platform-snippet .platform-chip {

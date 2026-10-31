@@ -1689,8 +1689,9 @@ function settleMobileCampaignEntrance() {
   if (!hero || !window.matchMedia('(max-width: 768px)').matches) return;
   hero.dataset.entrySettledByTheme = 'true';
   const targets = document.querySelectorAll([
-    '.campaign-hero-headline .adscale-reveal-word',
-    '.campaign-hero-tag', '.campaign-hero-sub', '.campaign-hero-pillars',
+    'body.page-campaigns .campaign-hero',
+    '.campaign-hero-content', '.campaign-hero-tag', '.campaign-hero-headline',
+    '.campaign-hero-headline *', '.campaign-hero-line', '.campaign-hero-sub', '.campaign-hero-pillars',
     '.campaign-search-section', '.campaign-featured-label', '.campaign-movie-card'
   ].join(', '));
   gsap.killTweensOf(targets);
@@ -2185,17 +2186,21 @@ function initHeroIntro(immediate = false) {
     0.85
   );
 
-  // Hero parallax on scroll (maintain full opacity so content stays crisp and never looks blank/washed out)
-  gsap.to('.hero-content', {
-    y: -40,
-    ease: 'none',
-    scrollTrigger: {
-      trigger: '.hero-section',
-      start: 'top top',
-      end: 'bottom top',
-      scrub: 1.2,
-    }
-  });
+  // Mobile visual-viewport changes (browser chrome opening/closing) can race
+  // this scrubbed parallax and make the headline bob after its reveal. Keep
+  // the decorative scroll motion on desktop; mobile retains blur/opacity.
+  if (window.matchMedia('(min-width: 769px)').matches) {
+    gsap.to('.hero-content', {
+      y: -40,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.hero-section',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 1.2,
+      }
+    });
+  }
 }
 
 // Expose globally for replay / testing

@@ -2967,7 +2967,6 @@ body.page-campaigns {
   html.theme-switching body.page-campaigns .campaign-grid-section,
   html.theme-switching body.page-campaigns .campaign-movie-card {
     transition-property: color, background-color, border-color, box-shadow, opacity, filter !important;
-    animation-play-state: paused !important;
   }
 
   .campaign-hero {

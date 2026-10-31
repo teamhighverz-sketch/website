@@ -21418,17 +21418,13 @@ html.theme-switching:has(#hero) .viewport-bottom-reveal > div:last-child {
    A zero-width transformed line can otherwise leave a colored edge in Safari. */
 html.theme-switching #hero .hero-word-roller::after,
 html.theme-switching #hero .hero-global-sensation::after {
+  display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   box-shadow: none !important;
-}
-
-/* Freeze the decorative light-mode platform marks for the duration of the
-   theme handoff. Their ambient float animation uses translateY; allowing it
-   to continue while the copy is replaced can make the whole headline read as
-   if it moved. Resume it naturally once the optical veil has cleared. */
-html.theme-switching #hero .hero-platform-snippet .platform-chip {
-  animation-play-state: paused !important;
+  filter: none !important;
+  transform: none !important;
+  will-change: auto !important;
 }
 
 @keyframes theme-optical-veil {
@@ -21507,6 +21503,14 @@ html.theme-switching #hero .hero-platform-snippet .platform-chip {
     box-sizing: border-box;
     padding-top: 4.65rem;
     margin: 0;
+  }
+
+  /* Keep the audience switcher anchored while the navbar hides on scroll.
+     The shared desktop offset animation made it bob on mobile after entry. */
+  .home-theme-capsule-wrap,
+  body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
+    transform: none !important;
+    transition: opacity 0.35s ease !important;
   }
 
   #hero.hero-section {

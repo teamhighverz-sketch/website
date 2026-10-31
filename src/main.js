@@ -3237,8 +3237,11 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(allTargetWords);
       gsap.set(allTargetWords, {
         opacity: 0,
-        y: isCampaigns && isMobile ? 0 : (isMobile ? 18 : 28),
-        scale: isCampaigns && isMobile ? 1 : (isMobile ? 0.97 : 0.94),
+        // Mobile Safari can re-rasterize the hero while its fluid backdrop is
+        // moving. Keep the word reveal optical (opacity/blur) on phones so the
+        // headline does not appear to bob as each word settles.
+        y: isMobile ? 0 : 28,
+        scale: isMobile ? 1 : 0.94,
         filter: (index, word) => word.classList.contains('highlight-cyan')
           ? `blur(${isCase ? 12 : 8}px) ${glowFilter}`
           : (isCase ? 'blur(12px)' : 'none'),

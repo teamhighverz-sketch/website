@@ -21362,10 +21362,18 @@ html.theme-switching.theme-target-dark::before {
   background: rgba(3, 8, 12, 0.15);
 }
 
-/* Keep the hero anchors stationary while only opacity and blur change. */
-html.theme-switching #hero .hero-content--centered,
-html.theme-switching #hero .carousel-viewport {
-  transform: none !important;
+/* Use one continuous blur mask while the Home backdrop changes. Stacking
+   eight filtered strips during a color swap can expose colored seams. */
+html.theme-switching:has(#hero) .viewport-bottom-reveal > div {
+  display: none !important;
+}
+
+html.theme-switching:has(#hero) .viewport-bottom-reveal > div:last-child {
+  display: block !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  mask-image: linear-gradient(to bottom, transparent, #000) !important;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
 }
 
 /* Freeze the decorative light-mode platform marks for the duration of the

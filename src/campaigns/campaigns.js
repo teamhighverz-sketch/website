@@ -808,15 +808,19 @@ function renderMovieCards(container, movies) {
   // Animate cards in with subtle, stable reveal
   const cards = container.querySelectorAll('.campaign-movie-card');
   gsap.killTweensOf(cards);
-  gsap.from(cards, {
-    opacity: 0,
-    y: 12,
-    duration: 0.45,
-    stagger: 0.03,
-    ease: 'power2.out',
-    clearProps: 'transform,opacity',
-    overwrite: 'auto',
-  });
+  const themeSettledEntrance = window.matchMedia('(max-width: 768px)').matches &&
+    document.querySelector('.campaign-hero')?.dataset.entrySettledByTheme === 'true';
+  if (!themeSettledEntrance) {
+    gsap.from(cards, {
+      opacity: 0,
+      y: window.matchMedia('(max-width: 768px)').matches ? 0 : 12,
+      duration: 0.45,
+      stagger: 0.03,
+      ease: 'power2.out',
+      clearProps: 'transform,opacity',
+      overwrite: 'auto',
+    });
+  }
 
   // Attach click handlers
   cards.forEach(card => {

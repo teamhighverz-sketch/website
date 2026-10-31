@@ -302,7 +302,7 @@ function boot() {
 
     if (isHomeRoute(window.location.pathname)) {
       prepareHeroInitialState();
-      initHeroIntro(true);
+      initHeroIntro(false);
       initBelowFoldFeatures();
     } else {
       initPageScripts(window.location.pathname);
@@ -1533,7 +1533,10 @@ function applyThemeCreatorsCopy() {
 // Theme changes happen without a page reload. Refresh the Home copy in place
 // so the cinema message appears as soon as Light mode is selected (and the
 // creator message returns when switching back to Dark mode).
-window.addEventListener('hv:themechange', () => {
+window.addEventListener('hv:themechange', (event) => {
+  // Initial theme synchronization is followed by the normal page entrance.
+  // Running a second reveal at boot makes the two animations fight.
+  if (!event.detail?.animate) return;
   const headline = document.getElementById('hero-headline');
   if (!headline) return;
   applyThemeHeroCopy();
@@ -1583,7 +1586,6 @@ window.addEventListener('hv:themechange', () => {
   // Keep the blur deliberately shallow. Large filters on every word and
   // subtitle span force repeated rasterization during the theme swap, which
   // reads as a flash or a dropped frame on mid-range devices.
-  const initialBlur = isMobile ? 'blur(5px)' : 'blur(7px)';
   const wordStagger = isMobile ? 0.036 : 0.045;
   const wordDuration = isMobile ? 0.44 : 0.52;
 
@@ -1591,19 +1593,19 @@ window.addEventListener('hv:themechange', () => {
   // layout coordinates untouched is important here: a translate-based reveal
   // makes the headline and the reel rail appear to jump when the theme swaps
   // between two copy variants with different line lengths.
-  gsap.set(revealItems, {
-    opacity: 0,
-    filter: initialBlur,
-    willChange: 'opacity, filter'
+  // Blur the headline as one surface. Separate filtered layers for every
+  // word can leave colored seams while the background switches themes.
+  gsap.killTweensOf(headline);
+  gsap.fromTo(headline, { filter: 'blur(3px)' }, {
+    filter: 'blur(0px)', duration: 0.42, ease: 'power2.out', clearProps: 'filter'
   });
+  gsap.set(revealItems, { opacity: 0, clearProps: 'filter,willChange' });
 
   gsap.to(revealItems, {
     opacity: 1,
-    filter: 'blur(0px)',
     duration: wordDuration,
     stagger: wordStagger,
     ease: 'power3.out',
-    clearProps: 'filter,willChange',
     onComplete: () => {
       if (document.documentElement.dataset.theme === 'dark') {
         initHeroWordRoller();
@@ -1662,6 +1664,27 @@ window.addEventListener('hv:themechange', () => {
   }
 });
 
+// A theme switch can happen while the campaign entrance or its movie cards
+// are still moving. Those movements are GSAP tweens, so CSS animation rules
+// cannot stop them from shifting the page during the switch.
+function settleMobileCampaignEntrance() {
+  const hero = document.querySelector('body.page-campaigns .campaign-hero');
+  if (!hero || !window.matchMedia('(max-width: 768px)').matches) return;
+  hero.dataset.entrySettledByTheme = 'true';
+  const targets = document.querySelectorAll([
+    '.campaign-hero-headline .adscale-reveal-word',
+    '.campaign-hero-tag', '.campaign-hero-sub', '.campaign-hero-pillars',
+    '.campaign-search-section', '.campaign-featured-label', '.campaign-movie-card'
+  ].join(', '));
+  gsap.killTweensOf(targets);
+  gsap.set(targets, { clearProps: 'opacity,transform,filter,willChange' });
+  finishPageEntry();
+}
+
+window.addEventListener('hv:themechange', (event) => {
+  if (event.detail?.animate) settleMobileCampaignEntrance();
+});
+
 export function prepareHeroInitialState() {
   document.body.classList.remove('hero-revealed');
   applyThemeHeroCopy();
@@ -1669,15 +1692,6 @@ export function prepareHeroInitialState() {
   if (!heroHeadline) return;
 
   prepareHeroWordRoller();
-
-  const isMobile = window.innerWidth < 768;
-  const isLightTheme = document.documentElement.dataset.theme === 'light';
-  if (isMobile && !isLightTheme) {
-    // Keep headline text visible and sharp on mobile for instant LCP and 0 GPU blur overhead
-    const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
-    headlineLines.forEach((line) => { line.style.overflow = 'visible'; });
-    return;
-  }
 
   const platformChips = heroHeadline.querySelectorAll('.hl-platform-chips .platform-chip');
   const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
@@ -1983,8 +1997,7 @@ function initHeroIntro(immediate = false) {
   const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
   const navbar = document.getElementById('navbar');
 
-  const isMobile = window.innerWidth < 768;
-  if (immediate || (isMobile && !isLightTheme) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.body.classList.add('hero-revealed');
     gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller, #hero-platform-icons, .platform-chip, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', {
       opacity: 1, y: 0, x: 0, scale: 1, filter: 'none', clearProps: 'all'
@@ -3164,6 +3177,13 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   const activeVt = window.__hvActiveTransition;
 
   const executeEntrance = () => {
+    // The theme switch may have settled a delayed entrance before its
+    // scheduled callback ran. Do not restart the movement afterwards.
+    if (isCampaigns && heroRoot.dataset.entrySettledByTheme === 'true') {
+      settleMobileCampaignEntrance();
+      window.__hvSetTransitionState?.('IDLE');
+      return;
+    }
     // Release the pre-paint suppression so GSAP has full unhindered control
     finishPageEntry();
 
@@ -3196,8 +3216,8 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(allTargetWords);
       gsap.set(allTargetWords, {
         opacity: 0,
-        y: isMobile ? 18 : 28,
-        scale: isMobile ? 0.97 : 0.94,
+        y: isCampaigns && isMobile ? 0 : (isMobile ? 18 : 28),
+        scale: isCampaigns && isMobile ? 1 : (isMobile ? 0.97 : 0.94),
         filter: (index, word) => word.classList.contains('highlight-cyan')
           ? `blur(${isCase ? 12 : 8}px) ${glowFilter}`
           : (isCase ? 'blur(12px)' : 'none'),
@@ -3233,7 +3253,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(heroLineElements);
       gsap.set(heroLineElements, {
         opacity: entryOpacity,
-        y: (_, element) => isStableGlass(element) ? 0 : (isMobile ? 14 : 20),
+        y: (_, element) => isStableGlass(element) || (isCampaigns && isMobile) ? 0 : (isMobile ? 14 : 20),
         filter: 'none',
         willChange: entryWillChange,
       });
@@ -3263,7 +3283,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(nextSectionElements);
       gsap.set(nextSectionElements, {
         opacity: entryOpacity,
-        y: (_, element) => isStableGlass(element) ? 0 : (isMobile ? 20 : 28),
+        y: (_, element) => isStableGlass(element) || (isCampaigns && isMobile) ? 0 : (isMobile ? 20 : 28),
         filter: 'none',
         willChange: entryWillChange,
       });

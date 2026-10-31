@@ -41,7 +41,7 @@ function applyTheme(theme, animate = false) {
   updateLogos(theme);
   updateCapsuleSwitchers(theme);
   try {
-    window.dispatchEvent(new CustomEvent('hv:themechange', { detail: { theme } }));
+    window.dispatchEvent(new CustomEvent('hv:themechange', { detail: { theme, animate } }));
   } catch (_) {}
 }
 

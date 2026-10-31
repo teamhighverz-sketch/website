@@ -3985,6 +3985,19 @@ body.page-campaigns {
   @supports (-webkit-touch-callout: none) {
     [data-theme="light"] body.page-campaigns :is(
       .campaign-hero-tag,
+      .campaign-hero-sub,
+      .campaign-hero-pillars,
+      .campaign-pillar
+    ) {
+      will-change: auto !important;
+    }
+
+    [data-theme="light"] body.page-campaigns .campaign-pillar {
+      transition-property: color, background-color, border-color, box-shadow, text-shadow !important;
+    }
+
+    [data-theme="light"] body.page-campaigns :is(
+      .campaign-hero-tag,
       .campaign-pillar,
       .campaign-glass-console,
       .campaign-movie-card,
@@ -3998,7 +4011,7 @@ body.page-campaigns {
       backdrop-filter: blur(8px) saturate(135%) !important;
     }
 
-    html.theme-switching body.page-campaigns :is(
+    html.theme-switching[data-theme="light"] body.page-campaigns :is(
       .campaign-hero,
       .campaign-hero-content,
       .campaign-hero-tag,

@@ -1699,11 +1699,9 @@ function settleMobileCampaignEntrance() {
 }
 
 window.addEventListener('hv:themechange', () => {
-  // A theme swap can land while mobile Safari is still painting the campaign
-  // entrance even when the theme control has no animated detail flag. Settle
-  // those entrance transforms on every theme change so they cannot keep
-  // moving the hero/cards under the light-theme glass repaint.
-  settleMobileCampaignEntrance();
+  // Light glass surfaces are more sensitive to an unfinished entrance on
+  // mobile Safari. Let the dark campaign entrance keep its usual animation.
+  if (document.documentElement.dataset.theme === 'light') settleMobileCampaignEntrance();
 });
 
 export function prepareHeroInitialState() {
@@ -3236,6 +3234,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     }
 
     const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
+    const campaignLightMobile = isCampaigns && isMobile && lightEntry;
     const glowFilter = 'drop-shadow(0 0 16px rgba(0, 229, 255, 0.48))';
     const glowWords = allTargetWords.filter((word) => word.classList.contains('highlight-cyan'));
 
@@ -3285,14 +3284,16 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(heroLineElements);
       gsap.set(heroLineElements, {
         opacity: entryOpacity,
-        y: (_, element) => isStableGlass(element) || (isCampaigns && isMobile) ? 0 : (isMobile ? 14 : 20),
+        ...(campaignLightMobile ? {} : {
+          y: (_, element) => isStableGlass(element) || (isCampaigns && isMobile) ? 0 : (isMobile ? 14 : 20),
+        }),
         filter: 'none',
-        willChange: entryWillChange,
+        willChange: campaignLightMobile ? (_, element) => isStableGlass(element) ? 'auto' : 'opacity' : entryWillChange,
       });
       beginEntry();
       gsap.to(heroLineElements, {
         opacity: 1,
-        y: 0,
+        ...(campaignLightMobile ? {} : { y: 0 }),
         filter: 'none',
         duration: isMobile ? 0.36 : 0.52,
         stagger: isMobile ? 0.035 : 0.055,

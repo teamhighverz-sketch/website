@@ -21344,6 +21344,15 @@ html.theme-switching::before {
   transform: translateZ(0);
 }
 
+/* Mobile Safari can round a fixed, composited veil to the nearest device
+   pixel and expose a thin dark seam at the viewport edge during the fade. */
+@media (max-width: 768px) {
+  html.theme-switching::before {
+    inset: -4px;
+    transform: none;
+  }
+}
+
 html.theme-switching.theme-target-light::before {
   background: rgba(255, 255, 255, 0.14);
   animation: theme-optical-veil-light 560ms cubic-bezier(0.22, 1, 0.36, 1) both;

@@ -1699,9 +1699,10 @@ function settleMobileCampaignEntrance() {
 }
 
 window.addEventListener('hv:themechange', () => {
-  // Light glass surfaces are more sensitive to an unfinished entrance on
-  // mobile Safari. Let the dark campaign entrance keep its usual animation.
-  if (document.documentElement.dataset.theme === 'light') settleMobileCampaignEntrance();
+  // A theme swap can land while mobile Safari is still painting the campaign
+  // entrance. Settle entrance transforms across both themes so cards and hero
+  // cannot keep moving during the theme repaint.
+  settleMobileCampaignEntrance();
 });
 
 export function prepareHeroInitialState() {
@@ -3234,7 +3235,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     }
 
     const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
-    const campaignLightMobile = isCampaigns && isMobile && lightEntry;
+    const campaignMobile = isCampaigns && isMobile;
     const glowFilter = 'drop-shadow(0 0 16px rgba(0, 229, 255, 0.48))';
     const glowWords = allTargetWords.filter((word) => word.classList.contains('highlight-cyan'));
 
@@ -3284,16 +3285,16 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(heroLineElements);
       gsap.set(heroLineElements, {
         opacity: entryOpacity,
-        ...(campaignLightMobile ? {} : {
-          y: (_, element) => isStableGlass(element) || (isCampaigns && isMobile) ? 0 : (isMobile ? 14 : 20),
+        ...(campaignMobile ? {} : {
+          y: (_, element) => isStableGlass(element) ? 0 : (isMobile ? 14 : 20),
         }),
         filter: 'none',
-        willChange: campaignLightMobile ? (_, element) => isStableGlass(element) ? 'auto' : 'opacity' : entryWillChange,
+        willChange: campaignMobile ? (_, element) => isStableGlass(element) ? 'auto' : 'opacity' : entryWillChange,
       });
       beginEntry();
       gsap.to(heroLineElements, {
         opacity: 1,
-        ...(campaignLightMobile ? {} : { y: 0 }),
+        ...(campaignMobile ? {} : { y: 0 }),
         filter: 'none',
         duration: isMobile ? 0.36 : 0.52,
         stagger: isMobile ? 0.035 : 0.055,
@@ -3316,14 +3317,16 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.killTweensOf(nextSectionElements);
       gsap.set(nextSectionElements, {
         opacity: entryOpacity,
-        y: (_, element) => isStableGlass(element) || (isCampaigns && isMobile) ? 0 : (isMobile ? 20 : 28),
+        ...(campaignMobile ? {} : {
+          y: (_, element) => isStableGlass(element) ? 0 : (isMobile ? 20 : 28),
+        }),
         filter: 'none',
-        willChange: entryWillChange,
+        willChange: campaignMobile ? 'auto' : entryWillChange,
       });
       beginEntry();
       gsap.to(nextSectionElements, {
         opacity: 1,
-        y: 0,
+        ...(campaignMobile ? {} : { y: 0 }),
         filter: 'none',
         duration: isMobile ? 0.40 : 0.55,
         stagger: isMobile ? 0.045 : 0.08, // Sequential cascade!

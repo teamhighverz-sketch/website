@@ -3342,16 +3342,21 @@ body.page-campaigns {
   }
 }
 
-/* Touch browsers can retain :hover after a tap. The light cards have a lift
+/* Touch browsers can retain :hover after a tap. The cards have a lift
    treatment on hover, which otherwise animates again during a theme repaint
-   and makes the campaign grid look like it is shaking. */
-@media (max-width: 768px) and (hover: none) and (pointer: coarse) {
-  [data-theme="light"] body.page-campaigns .campaign-card:hover,
-  [data-theme="light"] body.page-campaigns .campaign-movie-card:hover {
+   or touch scroll and makes the campaign grid look like it is shaking. */
+@media (max-width: 768px) {
+  body.page-campaigns .campaign-card:hover,
+  body.page-campaigns .campaign-movie-card:hover,
+  body.page-campaigns .campaign-card:active,
+  body.page-campaigns .campaign-movie-card:active {
     transform: none !important;
   }
 
-  [data-theme="light"] body.page-campaigns .campaign-movie-card:hover .campaign-card-image {
+  body.page-campaigns .campaign-movie-card:hover .campaign-card-image,
+  body.page-campaigns .campaign-card:hover .campaign-card-image,
+  body.page-campaigns .campaign-movie-card:active .campaign-card-image,
+  body.page-campaigns .campaign-card:active .campaign-card-image {
     transform: none !important;
   }
 }
@@ -3976,26 +3981,69 @@ body.page-campaigns {
   }
 }
 
-/* iOS Safari can re-composite backdrop-filter surfaces when the campaign
-   light-theme glass values change. That re-rasterization presents as a brief
-   vertical shake on phones. Keep the campaign's light glass blur constant and
-   let the global theme veil handle the visual transition; never animate
-   layout/transform properties on this page during the swap. */
+/* Mobile Safari / WebKit stabilization:
+   Prevent compositor tile re-rasterization and layer-destruction shake across
+   all campaign components on mobile devices in both dark and light modes. */
 @media (max-width: 768px) {
+  body.page-campaigns :is(
+    .campaign-hero-tag,
+    .campaign-hero-sub,
+    .campaign-hero-pillars,
+    .campaign-pillar,
+    .campaign-search-section,
+    .campaign-glass-console,
+    .campaign-grid-section,
+    .campaign-movie-card,
+    .campaign-card,
+    .campaign-tag-pill,
+    .glass-dropdown-trigger,
+    .campaign-filter-tab,
+    .campaign-page-btn
+  ) {
+    will-change: auto !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+
+  body.page-campaigns :is(
+    .campaign-pillar,
+    .campaign-glass-console,
+    .campaign-movie-card,
+    .campaign-card,
+    .campaign-tag-pill,
+    .glass-dropdown-trigger,
+    .campaign-filter-tab,
+    .campaign-page-btn
+  ) {
+    transition-property: color, background-color, border-color, box-shadow, text-shadow, opacity !important;
+  }
+
+  /* Never animate transform on mobile where touch scrolling triggers hover bobs */
+  body.page-campaigns :is(
+    .campaign-pillar,
+    .campaign-pillar:hover,
+    .campaign-pillar:active,
+    .campaign-movie-card,
+    .campaign-movie-card:hover,
+    .campaign-movie-card:active,
+    .campaign-card,
+    .campaign-card:hover,
+    .campaign-card:active
+  ) {
+    transform: none !important;
+  }
+
+  body.page-campaigns :is(
+    .campaign-movie-card:hover .campaign-card-image,
+    .campaign-movie-card:active .campaign-card-image,
+    .campaign-card:hover .campaign-card-image,
+    .campaign-card:active .campaign-card-image
+  ) {
+    transform: none !important;
+  }
+
+  /* Keep blur constant on mobile Safari to avoid heavy re-rasterization */
   @supports (-webkit-touch-callout: none) {
-    [data-theme="light"] body.page-campaigns :is(
-      .campaign-hero-tag,
-      .campaign-hero-sub,
-      .campaign-hero-pillars,
-      .campaign-pillar
-    ) {
-      will-change: auto !important;
-    }
-
-    [data-theme="light"] body.page-campaigns .campaign-pillar {
-      transition-property: color, background-color, border-color, box-shadow, text-shadow !important;
-    }
-
     [data-theme="light"] body.page-campaigns :is(
       .campaign-hero-tag,
       .campaign-pillar,
@@ -4010,33 +4058,26 @@ body.page-campaigns {
       -webkit-backdrop-filter: blur(8px) saturate(135%) !important;
       backdrop-filter: blur(8px) saturate(135%) !important;
     }
+  }
 
-    html.theme-switching[data-theme="light"] body.page-campaigns :is(
-      .campaign-hero,
-      .campaign-hero-content,
-      .campaign-hero-tag,
-      .campaign-hero-headline,
-      .campaign-hero-line,
-      .campaign-hero-sub,
-      .campaign-hero-pillars,
-      .campaign-pillar,
-      .campaign-search-section,
-      .campaign-grid-section,
-      .campaign-movie-card,
-      .campaign-card-image
-    ) {
-      transition-property: color, background-color, border-color, box-shadow, opacity !important;
-      transform: none !important;
-    }
-
-    [data-theme="light"] body.page-campaigns .campaign-pillar,
-    [data-theme="light"] body.page-campaigns .campaign-pillar:hover,
-    [data-theme="light"] body.page-campaigns .campaign-pillar:active,
-    [data-theme="light"] body.page-campaigns .campaign-movie-card:hover,
-    [data-theme="light"] body.page-campaigns .campaign-card:hover,
-    [data-theme="light"] body.page-campaigns .campaign-movie-card:hover .campaign-card-image,
-    [data-theme="light"] body.page-campaigns .campaign-card:hover .campaign-card-image {
-      transform: none !important;
-    }
+  /* Theme-switching stabilization: apply to BOTH light and dark theme swaps */
+  html.theme-switching body.page-campaigns :is(
+    .campaign-hero,
+    .campaign-hero-content,
+    .campaign-hero-tag,
+    .campaign-hero-headline,
+    .campaign-hero-line,
+    .campaign-hero-sub,
+    .campaign-hero-pillars,
+    .campaign-pillar,
+    .campaign-search-section,
+    .campaign-glass-console,
+    .campaign-grid-section,
+    .campaign-movie-card,
+    .campaign-card,
+    .campaign-card-image
+  ) {
+    transition-property: color, background-color, border-color, box-shadow, opacity !important;
+    transform: none !important;
   }
 }

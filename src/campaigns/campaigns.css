@@ -3975,3 +3975,55 @@ body.page-campaigns {
     word-break: keep-all !important;
   }
 }
+
+/* iOS Safari can re-composite backdrop-filter surfaces when the campaign
+   light-theme glass values change. That re-rasterization presents as a brief
+   vertical shake on phones. Keep the campaign's light glass blur constant and
+   let the global theme veil handle the visual transition; never animate
+   layout/transform properties on this page during the swap. */
+@media (max-width: 768px) {
+  @supports (-webkit-touch-callout: none) {
+    [data-theme="light"] body.page-campaigns :is(
+      .campaign-hero-tag,
+      .campaign-pillar,
+      .campaign-glass-console,
+      .campaign-movie-card,
+      .campaign-card,
+      .campaign-tag-pill,
+      .glass-dropdown-trigger,
+      .campaign-filter-tab,
+      .campaign-page-btn
+    ) {
+      -webkit-backdrop-filter: blur(8px) saturate(135%) !important;
+      backdrop-filter: blur(8px) saturate(135%) !important;
+    }
+
+    html.theme-switching body.page-campaigns :is(
+      .campaign-hero,
+      .campaign-hero-content,
+      .campaign-hero-tag,
+      .campaign-hero-headline,
+      .campaign-hero-line,
+      .campaign-hero-sub,
+      .campaign-hero-pillars,
+      .campaign-pillar,
+      .campaign-search-section,
+      .campaign-grid-section,
+      .campaign-movie-card,
+      .campaign-card-image
+    ) {
+      transition-property: color, background-color, border-color, box-shadow, opacity !important;
+      transform: none !important;
+    }
+
+    [data-theme="light"] body.page-campaigns .campaign-pillar,
+    [data-theme="light"] body.page-campaigns .campaign-pillar:hover,
+    [data-theme="light"] body.page-campaigns .campaign-pillar:active,
+    [data-theme="light"] body.page-campaigns .campaign-movie-card:hover,
+    [data-theme="light"] body.page-campaigns .campaign-card:hover,
+    [data-theme="light"] body.page-campaigns .campaign-movie-card:hover .campaign-card-image,
+    [data-theme="light"] body.page-campaigns .campaign-card:hover .campaign-card-image {
+      transform: none !important;
+    }
+  }
+}

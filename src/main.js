@@ -1698,8 +1698,12 @@ function settleMobileCampaignEntrance() {
   finishPageEntry();
 }
 
-window.addEventListener('hv:themechange', (event) => {
-  if (event.detail?.animate) settleMobileCampaignEntrance();
+window.addEventListener('hv:themechange', () => {
+  // A theme swap can land while mobile Safari is still painting the campaign
+  // entrance even when the theme control has no animated detail flag. Settle
+  // those entrance transforms on every theme change so they cannot keep
+  // moving the hero/cards under the light-theme glass repaint.
+  settleMobileCampaignEntrance();
 });
 
 export function prepareHeroInitialState() {

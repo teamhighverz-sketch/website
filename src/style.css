@@ -16401,9 +16401,19 @@ main+footer {
   }
 
   .widget-visual {
-    height: 260px;
-    min-height: 260px;
-    padding: 1rem;
+    height: auto;
+    min-height: 275px;
+    padding: 1.15rem 1rem;
+  }
+
+  .widget-visual--chart,
+  .widget-visual--orbit {
+    height: 275px;
+  }
+
+  .widget-visual--cadence {
+    height: auto;
+    min-height: 275px;
   }
 
   .orbit-stack {
@@ -23239,15 +23249,24 @@ html.theme-switching #hero .hero-global-sensation::after {
   }
 
   #growth-system .growth-widget {
-    padding: 0.85rem;
-    border-radius: 17px;
+    padding: 0.95rem;
+    border-radius: 18px;
   }
 
   #growth-system .widget-visual {
-    height: 260px;
-    min-height: 260px;
-    padding: 1rem 1rem 1.15rem;
+    height: auto;
+    min-height: 275px;
+    padding: 1.15rem 1.1rem 1.25rem;
     border-radius: 14px;
+    box-sizing: border-box;
+  }
+
+  #growth-system .widget-visual--chart {
+    height: 275px;
+  }
+
+  #growth-system .widget-visual--orbit {
+    height: 275px;
   }
 
   #growth-system .widget-chart {
@@ -23256,7 +23275,10 @@ html.theme-switching #hero .hero-global-sensation::after {
   }
 
   #growth-system .growth-widget > .widget-kicker {
-    margin-top: 1rem;
+    margin-top: 1.35rem;
+    position: relative;
+    z-index: 2;
+    clear: both;
   }
 
   #growth-system .growth-widget h3 {
@@ -23274,28 +23296,31 @@ html.theme-switching #hero .hero-global-sensation::after {
   }
 
   #growth-system .widget-visual--cadence {
+    height: auto;
+    min-height: 275px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding: 1.2rem 1.1rem 1.25rem;
   }
 
   #growth-system .cadence-title {
-    margin-top: 0.15rem;
-    font-size: 1.55rem;
+    margin: 0;
+    font-size: 1.5rem;
     line-height: 1.15;
   }
 
   #growth-system .cadence-rule {
-    margin: 0.75rem 0;
+    margin: 0.65rem 0;
   }
 
   #growth-system .cadence-days {
-    margin-top: 0.45rem;
+    margin-top: 0.35rem;
   }
 
   #growth-system .cadence-footer {
-    margin-top: auto;
-    padding-top: 0.65rem;
+    margin-top: 1.25rem;
+    padding-top: 0;
   }
 
   #growth-system .cadence-progress {

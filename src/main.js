@@ -1372,9 +1372,6 @@ function applyThemeHeroCopy() {
     } else if (chips.length) {
       gsap.set(chips, { opacity: 1, filter: 'none', clearProps: 'filter' });
     }
-  } else {
-    prepareHeroWordRoller();
-    initHeroWordRoller();
   }
 }
 
@@ -1866,6 +1863,15 @@ export function prepareHeroInitialState() {
 
   prepareHeroWordRoller();
 
+  const isMobile = window.innerWidth < 768;
+  const isLightTheme = document.documentElement.dataset.theme === 'light';
+  if (isMobile && !isLightTheme) {
+    // Keep headline text visible and sharp on mobile for instant LCP and 0 GPU blur overhead
+    const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
+    headlineLines.forEach((line) => { line.style.overflow = 'visible'; });
+    return;
+  }
+
   const platformChips = heroHeadline.querySelectorAll('.hl-platform-chips .platform-chip');
   const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
   const navbar = document.getElementById('navbar');
@@ -2171,7 +2177,8 @@ function initHeroIntro(immediate = false) {
   const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
   const navbar = document.getElementById('navbar');
 
-  if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const isMobile = window.innerWidth < 768;
+  if ((immediate && !isLightTheme) || (isMobile && !isLightTheme) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.body.classList.add('hero-revealed');
     gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller, #hero-platform-icons, .platform-chip, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', {
       opacity: 1, y: 0, x: 0, scale: 1, filter: 'none', clearProps: 'all'

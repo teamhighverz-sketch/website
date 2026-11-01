@@ -63,6 +63,8 @@ function initLenis() {
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches ||
     ('ontouchstart' in window && window.innerWidth <= 1024) ||
     window.innerWidth <= 768;
+  const isWindows = navigator.userAgentData?.platform === 'Windows' ||
+    /Windows/i.test(navigator.userAgent);
 
   // Touch screens have 120Hz/60Hz native hardware momentum scrolling.
   // Intercepting touch scrolling with JS creates input latency and sluggish response.
@@ -92,12 +94,39 @@ function initLenis() {
     touchMultiplier: 1.5,
     infinite: false,
     autoRaf: false,
+    // Keep Lenis smoothing for Windows touchpads, but let discrete physical
+    // mouse-wheel steps use native scrolling. Chromium may expose mouse
+    // wheels in pixel mode, so also recognize its standard legacy 120-unit
+    // wheel ticks (and the common 100-unit Windows tick).
+    ...(isWindows ? {
+      virtualScroll: ({ event, deltaX }) => {
+        if (event.type !== 'wheel') return true;
+        const wheelEvent = event;
+        const legacyDelta = Math.abs(Number(wheelEvent.wheelDeltaY) || 0);
+        const lineWheel = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_LINE;
+        const discretePixelWheel = deltaX === 0 && Math.abs(wheelEvent.deltaY) >= 50 && legacyDelta >= 80 &&
+          (legacyDelta % 120 === 0 || legacyDelta === 100);
+        const useNativeWheel = lineWheel || discretePixelWheel;
+        if (useNativeWheel && lenis?.isScrolling === 'smooth') {
+          // Hand off an in-progress touchpad/Lenis glide before the browser
+          // applies this native wheel tick, so the two scroll owners cannot
+          // compete for the scroll position.
+          lenis.reset();
+        }
+        return !useNativeWheel;
+      },
+    } : {}),
   });
 
   window.lenis = lenis;
 
   // Connect Lenis to GSAP ScrollTrigger
-  lenis.on('scroll', ScrollTrigger.update);
+  // Native wheel scrolls already reach ScrollTrigger's own scroll listener.
+  // Avoid a second update for those events; Lenis still drives updates for
+  // smoothed wheel, touchpad, and scripted scrolling.
+  lenis.on('scroll', (instance) => {
+    if (instance.isScrolling !== 'native') ScrollTrigger.update();
+  });
 
   gsap.ticker.add((time) => {
     if (lenis) lenis.raf(time * 1000);

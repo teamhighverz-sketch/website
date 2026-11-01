@@ -15975,6 +15975,13 @@ main+footer {
   filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.5));
 }
 
+.widget-chart-arrow-head {
+  fill: var(--accent-cyan, #00e5ff);
+  stroke: #cbfcff;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.85));
+}
+
 .widget-chart-dot {
   fill: var(--accent-cyan);
   stroke: rgba(221, 255, 255, 0.85);
@@ -16511,6 +16518,13 @@ main+footer {
 
 [data-theme="light"] .widget-chart-line {
   filter: drop-shadow(0 0 4px rgba(0, 181, 205, 0.32));
+}
+
+[data-theme="light"] .widget-chart-arrow-head {
+  fill: #0284c7;
+  stroke: #ffffff;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 4px rgba(2, 132, 199, 0.4));
 }
 
 [data-theme="light"] .cadence-rule {

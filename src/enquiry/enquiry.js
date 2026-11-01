@@ -529,6 +529,7 @@ function bindModalEvents() {
 
   // Reliable click-outside cancellation: any click outside .enquiry-modal-window closes it immediately
   backdrop.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.enquiry-flag-dropdown')) return;
     if (!e.target.closest('.enquiry-modal-window')) {
       closeModal();
     }
@@ -610,8 +611,15 @@ function initCountrySelector(form) {
   const countryCodeInput = form.querySelector('#enquiry-country-code');
   const countryNameInput = form.querySelector('#enquiry-country-name');
   const phoneInput = form.querySelector('#enquiry-phone') || form.querySelector('#enquiry-contact');
+  const modalBackdrop = document.getElementById('enquiry-modal-backdrop');
 
   if (!phoneWrap || !flagBtn || !flagDropdown || !flagList) return () => {};
+
+  // The form stage scrolls inside a clipped modal. Keep the country menu on
+  // the modal overlay layer so it is never cut off by that scrolling region.
+  if (modalBackdrop && flagDropdown.parentElement !== modalBackdrop) {
+    modalBackdrop.appendChild(flagDropdown);
+  }
 
   let currentCountry = 'IN';
 
@@ -658,6 +666,51 @@ function initCountrySelector(form) {
 
   renderCountries();
 
+  // This picker is portaled outside the modal window, so its wheel events do
+  // not reach the modal's scroll handler. Route mouse-wheel and touchpad input
+  // to the list and prevent the page behind the picker from moving.
+  flagDropdown.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const unit = event.deltaMode === 1
+      ? 16
+      : event.deltaMode === 2
+        ? flagList.clientHeight
+        : 1;
+    flagList.scrollTop += event.deltaY * unit;
+  }, { passive: false });
+
+  const positionDropdown = () => {
+    if (flagDropdown.style.display === 'none') return;
+
+    const anchor = phoneWrap.getBoundingClientRect();
+    const overlay = modalBackdrop?.getBoundingClientRect();
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const viewportTop = window.visualViewport?.offsetTop || 0;
+    const viewportBottom = viewportTop + viewportHeight;
+    const gap = 8;
+    const menuHeight = 310;
+    const below = viewportBottom - anchor.bottom - gap;
+    const above = anchor.top - viewportTop - gap;
+    const openAbove = below < Math.min(menuHeight, 220) && above > below;
+    const available = Math.max(96, Math.min(menuHeight, openAbove ? above : below));
+    const overlayLeft = overlay?.left || 0;
+    const overlayTop = overlay?.top || 0;
+    const maxWidth = Math.max(0, window.innerWidth - 24);
+    const width = Math.min(Math.max(anchor.width, 260), 360, maxWidth);
+    const left = Math.min(Math.max(12, anchor.left), window.innerWidth - width - 12);
+    const top = openAbove
+      ? Math.max(viewportTop + 8, anchor.top - available - gap)
+      : Math.min(anchor.bottom + gap, viewportBottom - available - 8);
+
+    flagDropdown.style.left = `${left - overlayLeft}px`;
+    flagDropdown.style.top = `${top - overlayTop}px`;
+    flagDropdown.style.width = `${width}px`;
+    flagDropdown.style.height = `${available}px`;
+    flagDropdown.style.maxHeight = `${available}px`;
+    flagDropdown.dataset.openDirection = openAbove ? 'up' : 'down';
+  };
+
   const openDropdown = () => {
     flagDropdown.style.display = 'flex';
     flagBtn.setAttribute('aria-expanded', 'true');
@@ -665,7 +718,7 @@ function initCountrySelector(form) {
     phoneWrap.closest('.enquiry-phone-field, .enquiry-contact-field')?.classList.add('has-dropdown-open');
     flagSearch.value = '';
     renderCountries();
-    window.setTimeout(() => flagSearch.focus(), 60);
+    positionDropdown();
   };
 
   const closeDropdown = () => {
@@ -685,6 +738,14 @@ function initCountrySelector(form) {
       openDropdown();
     }
   });
+
+  // Keep the menu anchored if the modal scrolls or the available viewport
+  // changes (for example when Safari's keyboard is opened by the search box).
+  const repositionOpenDropdown = () => positionDropdown();
+  form.closest('.enquiry-modal-window')?.addEventListener('scroll', repositionOpenDropdown, true);
+  window.addEventListener('resize', repositionOpenDropdown);
+  window.visualViewport?.addEventListener('resize', repositionOpenDropdown);
+  window.visualViewport?.addEventListener('scroll', repositionOpenDropdown);
 
   flagSearch.addEventListener('input', (e) => {
     renderCountries(e.target.value);
@@ -770,7 +831,7 @@ function initCountrySelector(form) {
 
   // Close when clicking outside phone wrap
   document.addEventListener('click', (e) => {
-    if (!phoneWrap.contains(e.target)) {
+    if (!phoneWrap.contains(e.target) && !flagDropdown.contains(e.target)) {
       closeDropdown();
     }
   });

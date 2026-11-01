@@ -1480,3 +1480,30 @@ body.enquiry-modal-open .admin-leads-close {
 [data-theme="light"] .enquiry-flag-item .dial-code {
   color: #008ba3 !important;
 }
+
+/* The country picker is portaled to the modal backdrop so the form's own
+   scroll container cannot clip it. Coordinates and available height are set
+   from the phone field in enquiry.js for both desktop and mobile viewports. */
+.enquiry-modal-backdrop > .enquiry-flag-dropdown {
+  position: absolute;
+  z-index: 100003;
+  box-sizing: border-box;
+  margin: 0;
+  max-width: calc(100vw - 24px);
+  transform-origin: top center;
+  overscroll-behavior: contain;
+}
+
+.enquiry-modal-backdrop > .enquiry-flag-dropdown[data-open-direction="up"] {
+  transform-origin: bottom center;
+}
+
+.enquiry-modal-backdrop > .enquiry-flag-dropdown .enquiry-flag-list {
+  min-height: 0;
+  height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}

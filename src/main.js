@@ -103,8 +103,10 @@ function initLenis() {
     if (lenis) lenis.raf(time * 1000);
   });
 
-  // Turn off GSAP lag smoothing to prevent time-dilation jumps when frame drops occur with Lenis
-  gsap.ticker.lagSmoothing(0);
+  // Cap long frame gaps before forwarding ticker time to Lenis. On Windows,
+  // video decode and compositing can briefly stall; with lag smoothing off,
+  // Lenis receives that full gap and applies it as a sudden scroll correction.
+  gsap.ticker.lagSmoothing(500, 33);
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination
@@ -3625,8 +3627,8 @@ export function initHeroReelCarousel() {
     const introIndexes = introCount > 4
       ? [introCount - 2, introCount - 1, 0, 1, 2]
       : introVideos.map((_, index) => index);
-    const mobileIntro = window.innerWidth <= 768;
-    introIndexes.forEach((index) => {
+    const initialIntroIndexes = new Set(introIndexes);
+    const prepareIntroVideo = (index, eager = false) => {
       const video = introVideos[index];
       if (!video || video.dataset.introPreloaded === 'true') return;
       const source = getThemeVideoSource(video);
@@ -3634,7 +3636,11 @@ export function initHeroReelCarousel() {
       video.defaultMuted = true;
       video.muted = true;
       video.playsInline = true;
-      video.preload = 'auto';
+      // Fully buffer the reels at the starting rail position. Warm metadata
+      // for the rest during loader idle time to avoid a burst of ten video
+      // downloads competing with the page's critical assets.
+      video.preload = eager ? 'auto' : 'metadata';
+      video.fetchPriority = eager ? 'high' : 'low';
       video.setAttribute('playsinline', '');
       video.setAttribute('muted', '');
       if (video.getAttribute('src') !== source) {
@@ -3644,11 +3650,43 @@ export function initHeroReelCarousel() {
       video.dataset.activeThemeSrc = source;
       video.dataset.introPreloaded = 'true';
       video.load();
-    });
+    };
+    introIndexes.forEach((index) => prepareIntroVideo(index, true));
+
+    // Prepare off-rail reels progressively while the branded loading screen
+    // is still present. If the intro ends first, normal carousel visibility
+    // loading takes over without delaying the reveal.
+    let introWarmupActive = true;
+    let introWarmupHandle = null;
+    const remainingIntroIndexes = introVideos
+      .map((_, index) => index)
+      .filter((index) => !initialIntroIndexes.has(index));
+    const warmNextIntroVideo = () => {
+      if (!introWarmupActive || !remainingIntroIndexes.length) return;
+      prepareIntroVideo(remainingIntroIndexes.shift(), false);
+      if (!remainingIntroIndexes.length) return;
+      if ('requestIdleCallback' in window) {
+        introWarmupHandle = window.requestIdleCallback(warmNextIntroVideo, { timeout: 120 });
+      } else {
+        introWarmupHandle = window.setTimeout(warmNextIntroVideo, 80);
+      }
+    };
+    if (remainingIntroIndexes.length) {
+      if ('requestIdleCallback' in window) {
+        introWarmupHandle = window.requestIdleCallback(warmNextIntroVideo, { timeout: 120 });
+      } else {
+        introWarmupHandle = window.setTimeout(warmNextIntroVideo, 80);
+      }
+    }
 
     const startAfterIntro = () => {
       window.removeEventListener('hv:intro-reveal', startAfterIntro);
       window.removeEventListener('hv:intro-complete', startAfterIntro);
+      introWarmupActive = false;
+      if (introWarmupHandle !== null) {
+        if ('cancelIdleCallback' in window) window.cancelIdleCallback(introWarmupHandle);
+        else window.clearTimeout(introWarmupHandle);
+      }
       viewport.style.display = '';
       initHeroReelCarousel();
     };

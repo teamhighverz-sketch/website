@@ -63,6 +63,8 @@ function initLenis() {
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches ||
     ('ontouchstart' in window && window.innerWidth <= 1024) ||
     window.innerWidth <= 768;
+  const isWindows = navigator.userAgentData?.platform === 'Windows' ||
+    /Windows/i.test(navigator.userAgent);
 
   // Touch screens have 120Hz/60Hz native hardware momentum scrolling.
   // Intercepting touch scrolling with JS creates input latency and sluggish response.
@@ -87,7 +89,11 @@ function initLenis() {
     lerp: 0.1,
     orientation: 'vertical',
     gestureOrientation: 'vertical',
-    smoothWheel: true,
+    // Discrete Windows mouse-wheel steps should stay native. Easing each
+    // event into Lenis' target queue can accumulate input during heavy reel
+    // frames, then release it as a noticeable scroll jump. Lenis remains
+    // active for anchors and scripted scrolls on Windows.
+    smoothWheel: !isWindows,
     wheelMultiplier: 0.85,
     touchMultiplier: 1.5,
     infinite: false,

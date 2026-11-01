@@ -3231,6 +3231,7 @@ function disposePageRuntime() {
     '__hvCreatorsCleanup',
     '__hvGrowthWidgetsCleanup',
     '__hvWorkflowCleanup',
+    '__hvProcessCleanup',
     '__hvCaseReelsCleanup',
     '__hvFaqCleanup',
     '__hvFooterScatterCleanup',
@@ -5524,18 +5525,25 @@ function initTestimonialsReveal() {
 // 10. PROCESS SINGLE-LINE CONNECTED SCROLL DRAW (ENHANCED)
 // ==========================================================================
 function initProcessScrollDraw() {
-  const lineActive = document.getElementById('process-line-active');
-  const lineHead = document.getElementById('process-line-head');
-  const nodes = document.querySelectorAll('.process-track-node');
-  const steps = document.querySelectorAll('.process-col');
+  // Route transitions can initialize the Home section again without replacing
+  // the JS module. Remove the previous listeners/triggers before measuring the
+  // incoming section, otherwise two scrub timelines can fight over the line.
+  window.__hvProcessCleanup?.();
+
   const processSection = document.querySelector('.section-process');
-  const trackContainer = document.getElementById('process-track-container');
+  const lineActive = processSection?.querySelector('#process-line-active');
+  const lineHead = processSection?.querySelector('#process-line-head');
+  const nodes = Array.from(processSection?.querySelectorAll('#process-track-nodes .process-track-node') || []);
+  const steps = Array.from(processSection?.querySelectorAll('#process-grid .process-col') || []);
+  const trackContainer = processSection?.querySelector('#process-track-container');
 
   if (!steps.length || !processSection || !trackContainer) return;
   const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
+  const entranceTweens = [];
+  let disposed = false;
 
   // Header & section entrance animation
-  gsap.fromTo('.process-header',
+  entranceTweens.push(gsap.fromTo(processSection.querySelector('.process-header'),
     { opacity: 0, y: 35 },
     {
       opacity: 1, y: 0,
@@ -5547,10 +5555,10 @@ function initProcessScrollDraw() {
         once: true,
       }
     }
-  );
+  ));
 
   // Stagger in the process cards on entrance
-  gsap.fromTo('.process-col',
+  entranceTweens.push(gsap.fromTo(steps,
     { opacity: 0, y: 30 },
     {
       opacity: 1, y: 0,
@@ -5563,13 +5571,18 @@ function initProcessScrollDraw() {
         once: true,
       }
     }
-  );
+  ));
 
-  // Compute exact horizontal centers of each step card
+  // Measure the visible track anchors relative to the line itself. offsetLeft
+  // is relative to each element's offsetParent, which can differ between the
+  // track and grid and caused progress/active states to drift apart.
   const getStepCenters = () => {
-    const trackWidth = trackContainer.offsetWidth || 1;
-    return Array.from(steps).map(step => {
-      const center = step.offsetLeft + step.offsetWidth / 2;
+    const trackRect = trackContainer.getBoundingClientRect();
+    const trackWidth = trackRect.width || 1;
+    return steps.map((step, index) => {
+      const anchor = nodes[index] || step;
+      const rect = anchor.getBoundingClientRect();
+      const center = rect.left + rect.width / 2 - trackRect.left;
       return Math.min(100, Math.max(0, (center / trackWidth) * 100));
     });
   };
@@ -5595,8 +5608,8 @@ function initProcessScrollDraw() {
     const centers = getStepCenters();
     steps.forEach((step, idx) => {
       const targetCenter = centers[idx] || ((idx * 2 + 1) * 10);
-      // Activate when line reaches within 5% of center or passes it
-      if (clamped >= targetCenter - 6) {
+      // Switch each card exactly when the line reaches its matching anchor.
+      if (clamped >= targetCenter) {
         if (!step.classList.contains('active')) {
           step.classList.add('active');
           const iconBox = step.querySelector('.process-icon-box');
@@ -5611,7 +5624,7 @@ function initProcessScrollDraw() {
 
     nodes.forEach((node, idx) => {
       const targetCenter = centers[idx] || ((idx * 2 + 1) * 10);
-      if (clamped >= targetCenter - 4) {
+      if (clamped >= targetCenter) {
         node.classList.add('active');
       } else {
         node.classList.remove('active');
@@ -5624,7 +5637,7 @@ function initProcessScrollDraw() {
   setProcessProgress(initialCenters[0] || 10, false);
 
   // Scroll scrub across the section
-  ScrollTrigger.create({
+  const progressTrigger = ScrollTrigger.create({
     trigger: processSection,
     start: 'top 70%',
     end: 'bottom 50%',
@@ -5634,30 +5647,49 @@ function initProcessScrollDraw() {
       const centers = getStepCenters();
       const firstCenter = centers[0] || 10;
       const lastCenter = centers[centers.length - 1] || 90;
-      // Interpolate smoothly from first step center to last step center
-      const currentWidth = firstCenter + progress * (lastCenter - firstCenter + 5);
+      // Stop exactly at the last anchor so the comet and active card state
+      // share the same destination.
+      const currentWidth = firstCenter + progress * (lastCenter - firstCenter);
       setProcessProgress(currentWidth, false);
     }
   });
 
   // Interactive click on any step to jump progress to it
-  steps.forEach((step, idx) => {
-    step.addEventListener('click', () => {
+  const stepClickHandlers = steps.map((step, idx) => {
+    const onClick = () => {
       const centers = getStepCenters();
       const targetPct = centers[idx] || ((idx * 2 + 1) * 10);
       setProcessProgress(targetPct, true);
-    });
+    };
+    step.addEventListener('click', onClick);
+    return onClick;
   });
 
   // Recalculate on window resize
-  window.addEventListener('resize', () => {
+  const onResize = () => {
+    if (disposed) return;
+    ScrollTrigger.refresh();
     const centers = getStepCenters();
-    const activeSteps = document.querySelectorAll('.process-col.active');
+    const activeSteps = steps.filter((step) => step.classList.contains('active'));
     const lastActiveIdx = activeSteps.length - 1;
     if (lastActiveIdx >= 0 && centers[lastActiveIdx]) {
       setProcessProgress(centers[lastActiveIdx], false);
     }
-  });
+  };
+  window.addEventListener('resize', onResize, { passive: true });
+
+  window.__hvProcessCleanup = () => {
+    disposed = true;
+    progressTrigger.kill();
+    entranceTweens.forEach((tween) => {
+      tween?.scrollTrigger?.kill();
+      tween?.kill();
+    });
+    gsap.killTweensOf([lineActive, lineHead].filter(Boolean));
+    steps.forEach((step, index) => step.removeEventListener('click', stepClickHandlers[index]));
+    window.removeEventListener('resize', onResize);
+    if (window.__hvProcessCleanup) window.__hvProcessCleanup = null;
+  };
 }
 
 // ==========================================================================

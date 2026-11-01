@@ -14,6 +14,8 @@ html.lenis body {
   height: auto;
 }
 
+html,
+body,
 .lenis.lenis-smooth {
   scroll-behavior: auto !important;
 }
@@ -317,7 +319,7 @@ html {
   font-size: 16px;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  scroll-behavior: smooth;
+  scroll-behavior: auto !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -15921,6 +15923,10 @@ main+footer {
   letter-spacing: 0.15em;
 }
 
+.growth-widget > .widget-kicker {
+  margin-top: 1.25rem;
+}
+
 .widget-metric {
   position: relative;
   z-index: 2;
@@ -16041,7 +16047,7 @@ main+footer {
 }
 
 .growth-widget h3 {
-  margin-top: 1.25rem;
+  margin-top: 0.55rem;
   min-height: 2.4em;
   font-size: clamp(1.3rem, 2vw, 1.65rem);
   letter-spacing: -0.045em;
@@ -23219,25 +23225,29 @@ html.theme-switching #hero .hero-global-sensation::after {
   }
 
   #growth-system .growth-widget {
-    padding: 0.8rem;
+    padding: 0.85rem;
     border-radius: 17px;
   }
 
   #growth-system .widget-visual {
-    height: 205px;
-    min-height: 205px;
-    padding: 0.85rem;
-    border-radius: 13px;
+    height: 260px;
+    min-height: 260px;
+    padding: 1rem 1rem 1.15rem;
+    border-radius: 14px;
   }
 
   #growth-system .widget-chart {
-    height: 100px;
-    bottom: 1.7rem;
+    height: 110px;
+    bottom: 2rem;
+  }
+
+  #growth-system .growth-widget > .widget-kicker {
+    margin-top: 1rem;
   }
 
   #growth-system .growth-widget h3 {
     min-height: 0;
-    margin-top: 0.8rem;
+    margin-top: 0.45rem;
     font-size: 1.12rem;
     line-height: 1.25;
   }
@@ -23247,6 +23257,36 @@ html.theme-switching #hero .hero-global-sensation::after {
     margin-top: 0.35rem;
     font-size: 0.8rem;
     line-height: 1.45;
+  }
+
+  #growth-system .widget-visual--cadence {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  #growth-system .cadence-title {
+    margin-top: 0.15rem;
+    font-size: 1.55rem;
+    line-height: 1.15;
+  }
+
+  #growth-system .cadence-rule {
+    margin: 0.75rem 0;
+  }
+
+  #growth-system .cadence-days {
+    margin-top: 0.45rem;
+  }
+
+  #growth-system .cadence-footer {
+    margin-top: auto;
+    padding-top: 0.65rem;
+  }
+
+  #growth-system .cadence-progress {
+    margin-top: 0.45rem;
+    height: 6px;
   }
 
   #process {

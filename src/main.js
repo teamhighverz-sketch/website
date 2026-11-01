@@ -73,15 +73,25 @@ function initLenis() {
     return;
   }
 
+  // Prevent browser scrollRestoration jumping on reload or DOM shifts
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+
+  // Prevent Windows middle-mouse autoscroll conflict with Lenis
+  window.addEventListener('mousedown', (e) => {
+    if (e.button === 1) e.preventDefault();
+  }, { passive: false });
+
   lenis = new Lenis({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    lerp: 0.1,
     orientation: 'vertical',
     gestureOrientation: 'vertical',
     smoothWheel: true,
-    wheelMultiplier: 0.9,
-    syncTouch: false,
+    wheelMultiplier: 0.85,
+    touchMultiplier: 1.5,
     infinite: false,
+    autoRaf: false,
   });
 
   window.lenis = lenis;
@@ -93,8 +103,8 @@ function initLenis() {
     if (lenis) lenis.raf(time * 1000);
   });
 
-  // Keep GSAP lag smoothing active so dropped frames recover smoothly instead of jittering
-  gsap.ticker.lagSmoothing(500, 33);
+  // Turn off GSAP lag smoothing to prevent time-dilation jumps when frame drops occur with Lenis
+  gsap.ticker.lagSmoothing(0);
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination

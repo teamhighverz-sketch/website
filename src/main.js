@@ -1362,6 +1362,9 @@ function applyThemeHeroCopy() {
     } else if (chips.length) {
       gsap.set(chips, { opacity: 1, filter: 'none', clearProps: 'filter' });
     }
+  } else {
+    prepareHeroWordRoller();
+    initHeroWordRoller();
   }
 }
 

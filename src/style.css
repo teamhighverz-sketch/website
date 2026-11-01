@@ -2075,16 +2075,16 @@ body.mobile-menu-active .work-creator-card {
   font-family: var(--font-display) !important;
   font-style: italic !important;
   font-weight: 700 !important;
-  color: #18C7D8 !important;
-  background: linear-gradient(110deg, #00D5FF 0%, #5EFBFF 25%, #FFFFFF 48%, #18C7D8 70%, #00D5FF 100%) !important;
-  background-size: 250% auto !important;
+  color: #00E5FF !important;
+  background: linear-gradient(110deg, #00D5FF 0%, #5EFBFF 50%, #00D5FF 100%) !important;
+  background-size: 100% auto !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   padding: 0.15em 0.22em 0.22em 0.06em !important;
   margin: -0.15em -0.22em -0.22em -0.06em !important;
   overflow: visible !important;
-  animation: adscaleShimmer 4.5s ease-in-out infinite !important;
+  animation: none !important;
   will-change: transform, opacity !important;
   pointer-events: none !important;
 }
@@ -2513,7 +2513,11 @@ html.js .floating-badge-item {
 .btn-primary-cyan-large::after,
 .btn-secondary-dark::after,
 .section-cta a::after,
-.cta-action-box a::after {
+.cta-action-box a::after,
+.btn-nav-talk::before,
+.btn-nav-talk::after,
+.page-why-us .comparison-cta .btn-nav-talk::before,
+.page-why-us .comparison-cta .btn-nav-talk::after {
   display: none !important;
   content: none !important;
 }
@@ -2522,7 +2526,11 @@ html.js .floating-badge-item {
 .btn-primary-cyan-large:hover::after,
 .btn-secondary-dark:hover::after,
 .section-cta a:hover::after,
-.cta-action-box a:hover::after {
+.cta-action-box a:hover::after,
+.btn-nav-talk:hover::before,
+.btn-nav-talk:hover::after,
+.page-why-us .comparison-cta .btn-nav-talk:hover::before,
+.page-why-us .comparison-cta .btn-nav-talk:hover::after {
   display: none !important;
   content: none !important;
   transform: none !important;
@@ -2532,7 +2540,9 @@ html.js .floating-badge-item {
 .btn-primary-cyan-large .btn-label,
 .btn-primary-cyan .btn-arrow,
 .btn-secondary-dark .btn-label,
-.btn-secondary-dark .btn-arrow {
+.btn-secondary-dark .btn-arrow,
+.btn-nav-talk .btn-label,
+.btn-nav-talk .btn-arrow-icon {
   position: relative;
   z-index: 2;
 }
@@ -2544,23 +2554,32 @@ html.js .floating-badge-item {
 }
 
 .btn-label {
-  display: inline-grid;
-  overflow: hidden;
-  line-height: 1.2;
+  display: inline-grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 1fr !important;
+  overflow: hidden !important;
+  line-height: 1.2 !important;
+  vertical-align: middle !important;
 }
 
-.btn-label>span {
-  grid-area: 1 / 1;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+.btn-label > span {
+  grid-area: 1 / 1 !important;
+  display: block !important;
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform;
 }
 
-.btn-label>span:last-child {
-  transform: translateY(125%);
+.btn-label > span:first-child {
+  transform: translateY(0) !important;
+}
+
+.btn-label > span:last-child {
+  transform: translateY(125%) !important;
 }
 
 .btn-primary-cyan:hover {
-  transform: none;
-  filter: none;
+  transform: translateY(-2px);
+  filter: brightness(1.05);
 }
 
 .btn-primary-cyan:hover::after {
@@ -2568,19 +2587,49 @@ html.js .floating-badge-item {
 }
 
 .btn-primary-cyan:hover .btn-arrow {
-  transform: none;
+  transform: translate(3px, -3px);
 }
 
-.btn-primary-cyan:hover .btn-label>span:first-child,
-.btn-primary-cyan-large:hover .btn-label>span:first-child,
-.btn-secondary-dark:hover .btn-label>span:first-child {
-  transform: translateY(-125%);
+.btn-primary-cyan:hover .btn-label > span:first-child,
+.btn-primary-cyan:focus-visible .btn-label > span:first-child,
+.btn-primary-cyan-large:hover .btn-label > span:first-child,
+.btn-primary-cyan-large:focus-visible .btn-label > span:first-child,
+.btn-secondary-dark:hover .btn-label > span:first-child,
+.btn-secondary-dark:focus-visible .btn-label > span:first-child,
+.btn-nav-talk:hover .btn-label > span:first-child,
+.btn-nav-talk:focus-visible .btn-label > span:first-child,
+.section-cta a:hover .btn-label > span:first-child,
+.section-cta a:focus-visible .btn-label > span:first-child,
+.cta-action-box a:hover .btn-label > span:first-child,
+.cta-action-box a:focus-visible .btn-label > span:first-child,
+[data-theme="light"] .btn-primary-cyan:hover .btn-label > span:first-child,
+[data-theme="light"] .btn-primary-cyan-large:hover .btn-label > span:first-child,
+[data-theme="light"] .btn-secondary-dark:hover .btn-label > span:first-child,
+[data-theme="light"] .btn-nav-talk:hover .btn-label > span:first-child,
+[data-theme="light"] .section-cta a:hover .btn-label > span:first-child,
+[data-theme="light"] .cta-action-box a:hover .btn-label > span:first-child {
+  transform: translateY(-125%) !important;
 }
 
-.btn-primary-cyan:hover .btn-label>span:last-child,
-.btn-primary-cyan-large:hover .btn-label>span:last-child,
-.btn-secondary-dark:hover .btn-label>span:last-child {
-  transform: translateY(0);
+.btn-primary-cyan:hover .btn-label > span:last-child,
+.btn-primary-cyan:focus-visible .btn-label > span:last-child,
+.btn-primary-cyan-large:hover .btn-label > span:last-child,
+.btn-primary-cyan-large:focus-visible .btn-label > span:last-child,
+.btn-secondary-dark:hover .btn-label > span:last-child,
+.btn-secondary-dark:focus-visible .btn-label > span:last-child,
+.btn-nav-talk:hover .btn-label > span:last-child,
+.btn-nav-talk:focus-visible .btn-label > span:last-child,
+.section-cta a:hover .btn-label > span:last-child,
+.section-cta a:focus-visible .btn-label > span:last-child,
+.cta-action-box a:hover .btn-label > span:last-child,
+.cta-action-box a:focus-visible .btn-label > span:last-child,
+[data-theme="light"] .btn-primary-cyan:hover .btn-label > span:last-child,
+[data-theme="light"] .btn-primary-cyan-large:hover .btn-label > span:last-child,
+[data-theme="light"] .btn-secondary-dark:hover .btn-label > span:last-child,
+[data-theme="light"] .btn-nav-talk:hover .btn-label > span:last-child,
+[data-theme="light"] .section-cta a:hover .btn-label > span:last-child,
+[data-theme="light"] .cta-action-box a:hover .btn-label > span:last-child {
+  transform: translateY(0) !important;
 }
 
 .btn-primary-cyan:active {
@@ -2640,8 +2689,9 @@ html.js .floating-badge-item {
 }
 
 .btn-secondary-dark:hover {
-  transform: none;
-  filter: none;
+  transform: translateY(-2px);
+  border-color: rgba(35, 199, 216, 0.5);
+  color: var(--accent-cyan);
 }
 
 .btn-secondary-dark:hover::after {
@@ -2649,7 +2699,7 @@ html.js .floating-badge-item {
 }
 
 .btn-secondary-dark:hover .btn-arrow {
-  transform: none;
+  transform: translate(3px, -3px);
 }
 
 .btn-secondary-dark:active {
@@ -6536,7 +6586,7 @@ html.js .floating-badge-item {
   z-index: 1;
 }
 
-.btn-primary-cyan-large span,
+.btn-primary-cyan-large .btn-label,
 .btn-primary-cyan-large .btn-arrow {
   position: relative;
   z-index: 2;
@@ -6553,8 +6603,8 @@ html.js .floating-badge-item {
 }
 
 .btn-primary-cyan-large:hover {
-  transform: none;
-  filter: none;
+  transform: translateY(-3px);
+  filter: brightness(1.05);
 }
 
 .btn-primary-cyan-large:hover::after {
@@ -6562,7 +6612,7 @@ html.js .floating-badge-item {
 }
 
 .btn-primary-cyan-large:hover .btn-arrow {
-  transform: none;
+  transform: translate(3px, -3px);
 }
 
 .btn-primary-cyan-large:active {
@@ -6847,7 +6897,11 @@ html.js .floating-badge-item {
 }
 
 [data-theme="light"] .btn-primary-cyan:hover {
-  transform: none !important;
+  transform: translateY(-2px) !important;
+}
+
+[data-theme="light"] .btn-primary-cyan:hover .btn-arrow {
+  transform: translate(3px, -3px) !important;
 }
 
 [data-theme="light"] .btn-primary-cyan:active {
@@ -6888,7 +6942,7 @@ html.js .floating-badge-item {
     linear-gradient(150deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 252, 255, 0.75) 50%, rgba(240, 248, 255, 0.86) 100%) padding-box,
     linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.9) 30%, rgba(14, 165, 233, 0.45) 75%, #FFFFFF 100%) border-box !important;
   color: #0284C7 !important;
-  transform: none !important;
+  transform: translateY(-2px) !important;
   box-shadow:
     0 2px 4px rgba(15, 23, 42, 0.02),
     0 8px 18px -2px rgba(15, 23, 42, 0.05),
@@ -6897,6 +6951,10 @@ html.js .floating-badge-item {
     inset 0 2px 2px 0 #FFFFFF,
     inset 0 -1px 1px 0 rgba(255, 255, 255, 0.6),
     inset 1px 1px 0 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme="light"] .btn-secondary-dark:hover .btn-arrow {
+  transform: translate(3px, -3px) !important;
 }
 
 [data-theme="light"] .btn-secondary-dark:active {
@@ -7963,14 +8021,17 @@ html.js .floating-badge-item {
     0 14px 34px -2px rgba(14, 165, 233, 0.45),
     0 32px 64px -6px rgba(14, 165, 233, 0.38),
     inset 0 2px 2px 0 #FFFFFF !important;
-  transform: none !important;
+  transform: translateY(-3px) !important;
 }
 
 [data-theme="light"] .btn-primary-cyan-large::after,
-[data-theme="light"] .btn-primary-cyan-large:hover::after,
-[data-theme="light"] .btn-primary-cyan-large:hover .btn-arrow {
+[data-theme="light"] .btn-primary-cyan-large:hover::after {
   display: none !important;
-  transform: none !important;
+  content: none !important;
+}
+
+[data-theme="light"] .btn-primary-cyan-large:hover .btn-arrow {
+  transform: translate(3px, -3px) !important;
 }
 
 [data-theme="light"] .btn-primary-cyan-large:active {

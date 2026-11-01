@@ -24246,3 +24246,15 @@ body.page-team .founder-accord-card .founder-quote strong {
     font-weight: 700;
   }
 }
+
+/* Tighten the desktop handoff from the Home reel rail into its creator cards.
+   The hero's bottom padding and creator section's top padding stack together. */
+@media (min-width: 769px) {
+  #hero.hero-section {
+    padding-bottom: clamp(1.5rem, 2.5vh, 2.25rem) !important;
+  }
+
+  #creators.section-creators {
+    padding-top: 2rem !important;
+  }
+}

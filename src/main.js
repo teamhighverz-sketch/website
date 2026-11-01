@@ -5109,6 +5109,7 @@ function initTestimonialsReveal() {
       card.dataset.glassInteractionBound = 'true';
 
       card.addEventListener('pointermove', (event) => {
+        if (card.parentElement?.classList.contains('is-dragging')) return;
         const rect = card.getBoundingClientRect();
         const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
         const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
@@ -5167,10 +5168,13 @@ function initTestimonialsReveal() {
   const previousButton = nav.querySelector('.testimonials-nav-prev');
   const nextButton = nav.querySelector('.testimonials-nav-next');
   const supportsPointerParallax = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const dragThreshold = 80;
+  const dragThreshold = 42;
   let dragStartX = 0;
   let dragStartY = 0;
   let dragOffsetX = 0;
+  let dragLastX = 0;
+  let dragLastTime = 0;
+  let dragVelocity = 0;
   let isDragging = false;
 
   const roleState = (role) => {
@@ -5202,7 +5206,7 @@ function initTestimonialsReveal() {
         // Use a highly fluid buttery easing with a soft elastic bounce
         gsap.to(card, {
           ...state,
-          duration: isMobileViewport ? 0.56 : 1.0,
+          duration: isMobileViewport ? 0.52 : 0.85,
           ease: isMobileViewport ? 'power3.out' : 'elastic.out(1, 0.85)',
           overwrite: 'auto'
         });
@@ -5216,10 +5220,8 @@ function initTestimonialsReveal() {
     if (reducedMotion || isPaused || document.hidden) return;
     clearTimeout(cycleTimer);
     cycleTimer = setTimeout(() => {
-      activeIndex = (activeIndex + 1) % cards.length;
-      renderStack(true);
-      scheduleCycle();
-    }, 4200);
+      moveActive(1);
+    }, 4500);
   };
 
   const setPaused = (paused) => {
@@ -5229,15 +5231,50 @@ function initTestimonialsReveal() {
   };
 
   const moveActive = (direction) => {
+    const outgoingIndex = activeIndex;
+    const outgoingCard = cards[outgoingIndex];
     activeIndex = (activeIndex + direction + cards.length) % cards.length;
-    renderStack(!reducedMotion);
+
+    if (outgoingCard && !reducedMotion) {
+      const flyX = direction > 0 ? -280 : 280;
+      const flyRot = direction > 0 ? -14 : 14;
+      gsap.to(outgoingCard, {
+        x: flyX,
+        rotate: flyRot,
+        rotateY: flyRot * 1.4,
+        opacity: 0,
+        duration: isMobileViewport ? 0.32 : 0.42,
+        ease: 'power2.out',
+        onComplete: () => {
+          renderStack(true);
+        }
+      });
+
+      cards.forEach((card, index) => {
+        if (index === outgoingIndex) return;
+        const role = (index - activeIndex + cards.length) % cards.length;
+        const state = roleState(role);
+        card.classList.toggle('is-testimonial-active', role === 0);
+        card.setAttribute('data-card-role', role === 0 ? 'active' : role === 1 ? 'next' : 'previous');
+        card.style.zIndex = String(state.zIndex);
+        gsap.to(card, {
+          ...state,
+          duration: isMobileViewport ? 0.45 : 0.65,
+          ease: isMobileViewport ? 'power3.out' : 'elastic.out(1, 0.85)',
+          overwrite: 'auto'
+        });
+      });
+    } else {
+      renderStack(!reducedMotion);
+    }
+
     scheduleCycle();
   };
 
   const settleStack = (immediate = false) => {
     const state = { x: 0, y: 0, rotate: 0, rotateY: 0, overwrite: 'auto' };
     if (immediate || reducedMotion) gsap.set(stack, state);
-    else gsap.to(stack, { ...state, duration: 1.1, ease: 'elastic.out(1, 0.75)' });
+    else gsap.to(stack, { ...state, duration: 0.65, ease: 'power3.out' });
   };
 
   const updateParallax = (event) => {
@@ -5246,9 +5283,9 @@ function initTestimonialsReveal() {
     const normalizedX = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.5) * 2));
     const normalizedY = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
     gsap.to(stack, {
-      x: normalizedX * 14,
-      y: normalizedY * 7,
-      rotate: normalizedX * 0.65,
+      x: normalizedX * 12,
+      y: normalizedY * 6,
+      rotate: normalizedX * 0.55,
       duration: 0.42,
       ease: 'power3.out',
       overwrite: 'auto',
@@ -5257,12 +5294,24 @@ function initTestimonialsReveal() {
 
   const onPointerDown = (event) => {
     if (event.button !== undefined && event.button !== 0) return;
+    if (event.target.closest('.testimonials-nav-button')) return;
+
+    // Prevent native browser text selection and ghost image dragging
+    event.preventDefault();
+    try { window.getSelection()?.removeAllRanges(); } catch (_) {}
+
     isDragging = true;
     dragStartX = event.clientX;
     dragStartY = event.clientY;
     dragOffsetX = 0;
+    dragLastX = event.clientX;
+    dragLastTime = performance.now();
+    dragVelocity = 0;
+
     stack.classList.add('is-dragging');
-    stack.setPointerCapture(event.pointerId);
+    if (stack.setPointerCapture) {
+      try { stack.setPointerCapture(event.pointerId); } catch (_) {}
+    }
     setPaused(true);
   };
 
@@ -5271,18 +5320,68 @@ function initTestimonialsReveal() {
       updateParallax(event);
       return;
     }
-    const rawX = event.clientX - dragStartX;
-    // Ultra smooth free movement with very light dampening at the edges
-    const absX = Math.abs(rawX);
-    dragOffsetX = Math.sign(rawX) * (absX < 150 ? absX : 150 + (absX - 150) * 0.45);
-    const dragOffsetY = (event.clientY - dragStartY) * 0.18;
 
-    // Add 3D rotation tilt dynamically based on the drag for a tactile coverflow feel
-    gsap.set(stack, {
+    const now = performance.now();
+    const dt = Math.max(1, now - dragLastTime);
+    dragVelocity = (event.clientX - dragLastX) / dt;
+    dragLastX = event.clientX;
+    dragLastTime = now;
+
+    const rawX = event.clientX - dragStartX;
+    dragOffsetX = rawX;
+    const dragOffsetY = (event.clientY - dragStartY) * 0.15;
+
+    const activeCard = cards[activeIndex];
+    const nextIndex = (activeIndex + 1) % cards.length;
+    const nextCard = cards[nextIndex];
+    const prevIndex = (activeIndex - 1 + cards.length) % cards.length;
+    const prevCard = cards[prevIndex];
+
+    // Tactile 3D card tilt and rotation:
+    const rotZ = Math.max(-16, Math.min(16, dragOffsetX * 0.055));
+    const rotY = Math.max(-24, Math.min(24, dragOffsetX * 0.085));
+
+    gsap.set(activeCard, {
       x: dragOffsetX,
       y: dragOffsetY,
-      rotate: dragOffsetX * 0.02,
-      rotateY: dragOffsetX * 0.08
+      rotate: rotZ,
+      rotateY: rotY,
+      scale: 1,
+      opacity: Math.max(0.75, 1 - Math.abs(dragOffsetX) / 600),
+      filter: 'blur(0px)',
+      zIndex: 10,
+      transformPerspective: 1200,
+      overwrite: 'auto'
+    });
+
+    const progress = Math.min(1, Math.abs(dragOffsetX) / 180);
+    const peekCard = dragOffsetX < 0 ? nextCard : prevCard;
+    const otherCard = dragOffsetX < 0 ? prevCard : nextCard;
+
+    gsap.set(peekCard, {
+      x: 0,
+      y: 28 - progress * 26,
+      scale: 0.92 + progress * 0.08,
+      opacity: 0.65 + progress * 0.35,
+      filter: `blur(${(3 * (1 - progress)).toFixed(1)}px)`,
+      rotate: 0,
+      rotateY: 0,
+      zIndex: 5,
+      transformPerspective: 1200,
+      overwrite: 'auto'
+    });
+
+    gsap.set(otherCard, {
+      x: 0,
+      y: 56,
+      scale: 0.84,
+      opacity: 0.35,
+      filter: 'blur(6px)',
+      rotate: 0,
+      rotateY: 0,
+      zIndex: 1,
+      transformPerspective: 1200,
+      overwrite: 'auto'
     });
   };
 
@@ -5290,11 +5389,32 @@ function initTestimonialsReveal() {
     if (!isDragging) return;
     isDragging = false;
     stack.classList.remove('is-dragging');
-    if (stack.hasPointerCapture?.(event.pointerId)) stack.releasePointerCapture(event.pointerId);
-    if (Math.abs(dragOffsetX) >= dragThreshold) moveActive(dragOffsetX < 0 ? 1 : -1);
+    if (stack.hasPointerCapture?.(event.pointerId)) {
+      try { stack.releasePointerCapture(event.pointerId); } catch (_) {}
+    }
+
+    const isFlick = Math.abs(dragVelocity) > 0.38 && Math.abs(dragOffsetX) > 20;
+    const isFar = Math.abs(dragOffsetX) >= dragThreshold;
+
+    if (isFlick || isFar) {
+      const direction = (dragOffsetX < 0 || dragVelocity < -0.38) ? 1 : -1;
+      moveActive(direction);
+    } else {
+      renderStack(true);
+    }
+
     settleStack();
     setPaused(false);
   };
+
+  stack.addEventListener('pointerdown', onPointerDown);
+  stack.addEventListener('pointermove', onPointerMove);
+  stack.addEventListener('pointerup', onPointerUp);
+  stack.addEventListener('pointercancel', onPointerUp);
+  stack.addEventListener('dragstart', (e) => e.preventDefault());
+  window.addEventListener('pointerup', (e) => {
+    if (isDragging) onPointerUp(e);
+  });
 
   stack.addEventListener('mouseenter', () => setPaused(true));
   stack.addEventListener('mouseleave', () => {
@@ -5303,13 +5423,7 @@ function initTestimonialsReveal() {
       setPaused(false);
     }
   });
-  stack.addEventListener('pointerdown', onPointerDown);
-  stack.addEventListener('pointerup', onPointerUp);
-  stack.addEventListener('pointercancel', onPointerUp);
-  section.addEventListener('pointermove', onPointerMove);
-  section.addEventListener('pointerleave', () => {
-    if (!isDragging) settleStack();
-  });
+
   previousButton.addEventListener('click', () => moveActive(-1));
   nextButton.addEventListener('click', () => moveActive(1));
   document.addEventListener('visibilitychange', () => setPaused(document.hidden));

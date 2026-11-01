@@ -5951,6 +5951,8 @@ html.js .floating-badge-item {
   perspective: 1200px;
   cursor: grab;
   touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .testimonials-cards-grid.testimonials-stack.is-dragging {
@@ -6028,7 +6030,25 @@ html.js .floating-badge-item {
   padding: 2.2rem 2rem 1.5rem;
   gap: 1.15rem;
   transform-origin: center bottom;
-  transition: background 0.45s var(--ease-smooth), border-color 0.45s var(--ease-smooth), box-shadow 0.45s var(--ease-smooth);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  cursor: grab;
+  transition: background 0.45s var(--ease-smooth), border-color 0.45s var(--ease-smooth), box-shadow 0.45s var(--ease-smooth) !important;
+}
+
+.testimonials-cards-grid.testimonials-stack.is-dragging .testi-card {
+  cursor: grabbing;
+}
+
+.testimonials-stack .testi-card * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
+.testimonials-stack .testi-card:hover {
+  transform: none !important;
 }
 
 .testimonials-stack .testi-card.is-testimonial-active {

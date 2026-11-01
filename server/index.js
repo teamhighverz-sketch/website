@@ -653,7 +653,9 @@ const server = app.listen(PORT, () => {
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.warn(`[Backend Server] Port ${PORT} already in use. Continuing gracefully.`);
+    console.warn(`[Backend Server] Port ${PORT} already in use (another instance is already active).`);
+    // Keep process alive gracefully so dev.js does not enter an exit-restart loop
+    setInterval(() => {}, 1000 * 60 * 60);
   } else {
     console.error('[Backend Server error]:', err);
   }

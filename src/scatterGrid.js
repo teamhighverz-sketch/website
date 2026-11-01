@@ -68,9 +68,9 @@ export function initScatterGrid(container, options = {}) {
     if (!boxW || boxW <= 10) {
       const parentRect = container.parentElement?.getBoundingClientRect();
       if (parentRect && parentRect.width > 20) {
-        boxW = Math.min(860, Math.round(parentRect.width * 0.55));
+        boxW = Math.min(1400, Math.round(parentRect.width * 0.8));
       } else {
-        boxW = Math.min(860, Math.round((window.innerWidth || 1200) * 0.52));
+        boxW = Math.min(1400, Math.round((window.innerWidth || 1200) * 0.78));
       }
     }
     boxW = Math.max(1, boxW);

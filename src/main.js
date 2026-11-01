@@ -6405,10 +6405,11 @@ export function initFooterScatterGrid() {
   window.__hvFooterScatterCleanup = initScatterGrid(watermark, {
     dotSize: 4,
     dotGap: 2,
-    radius: 240,
-    strength: 2.2,
+    radius: 270,
+    strength: 2.4,
     stiffness: 0.035,
     damping: 0.86,
+    bleed: 15,
     base: isLight ? [90, 160, 210] : [210, 230, 250],
     accent: isLight ? [14, 165, 233] : [0, 229, 255]
   });

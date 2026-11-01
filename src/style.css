@@ -19783,9 +19783,13 @@ body::after {
 .footer {
   position: relative;
   isolation: isolate;
-  overflow: visible;
-  /* Prevents the watermark logo and scatter canvas from cutting off */
-  padding: clamp(2.75rem, 4vw, 3.75rem) 0 clamp(2rem, 3vw, 2.75rem);
+  overflow: hidden;
+  /* Keep the scatter grid and logo contained strictly beneath the top boundary line */
+  min-height: clamp(450px, 48vh, 540px);
+  padding: clamp(3.5rem, 5vw, 5rem) 0 clamp(2.5rem, 3.5vw, 3.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   background: linear-gradient(180deg, rgba(10, 18, 26, 0.72) 0%, rgba(4, 7, 10, 0.92) 100%);
   backdrop-filter: blur(28px) saturate(180%);
@@ -19812,14 +19816,11 @@ body::after {
   position: absolute;
   right: 50%;
   top: 50%;
-  /* Center vertically in the footer */
   bottom: auto;
   z-index: 0;
-  width: min(650px, 40vw);
+  width: min(960px, 66vw);
   aspect-ratio: 2415 / 900;
-  /* Increased size to find the sweet spot */
   transform: translate(50%, -50%);
-  /* Center horizontally and vertically */
   pointer-events: none;
   user-select: none;
   opacity: 1;
@@ -19852,7 +19853,7 @@ body::after {
   width: 100%;
   max-width: none;
   box-sizing: border-box;
-  padding-inline: clamp(1.25rem, 7.5vw, 9rem);
+  padding-inline: clamp(1.25rem, 4.5vw, 4.5rem);
   background: transparent;
 }
 
@@ -19860,7 +19861,8 @@ body::after {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: start;
-  gap: clamp(2rem, 7vw, 7rem);
+  column-gap: clamp(1.5rem, 3.5vw, 3.2rem);
+  row-gap: 2rem;
   min-height: auto;
 }
 
@@ -19875,6 +19877,7 @@ body::after {
 
 .footer-left-info {
   gap: 1.1rem;
+  max-width: 330px;
 }
 
 .footer-logo-img {
@@ -19894,6 +19897,7 @@ body::after {
   color: rgba(218, 235, 237, 0.58);
   font-size: 0.84rem;
   line-height: 1.5;
+  max-width: 32ch;
 }
 
 /* Quick links styling */
@@ -20328,9 +20332,10 @@ body::after {
 /* Keep the footer watermark atmospheric without letting it wash over the
    footer copy and navigation. */
 .footer-watermark-logo {
-  width: min(650px, 40vw);
+  width: min(960px, 66vw);
   top: 50%;
   bottom: auto;
+  transform: translate(50%, -50%);
   opacity: 1;
   /* Safari can leave a coloured rectangular fringe around this large filtered
      layer after a theme/page transition. Keep the mark crisp and let the
@@ -20339,9 +20344,10 @@ body::after {
 }
 
 [data-theme="light"] .footer-watermark-logo {
-  width: min(650px, 40vw);
+  width: min(960px, 66vw);
   top: 50%;
   bottom: auto;
+  transform: translate(50%, -50%);
   opacity: 0.95;
   filter: none !important;
 }
@@ -20679,7 +20685,7 @@ body::-webkit-scrollbar {
 @media (min-width: 721px) {
   .footer {
     box-sizing: border-box;
-    min-height: calc(min(650px, 40vw) * 900 / 2415 + 100px);
+    min-height: calc(min(960px, 66vw) * 900 / 2415 + 140px);
     display: flex;
     align-items: center;
   }

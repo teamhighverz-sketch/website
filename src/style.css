@@ -24251,10 +24251,13 @@ body.page-team .founder-accord-card .founder-quote strong {
    The hero's bottom padding and creator section's top padding stack together. */
 @media (min-width: 769px) {
   #hero.hero-section {
-    padding-bottom: clamp(1.5rem, 2.5vh, 2.25rem) !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 0 !important;
   }
 
   #creators.section-creators {
-    padding-top: 2rem !important;
+    padding-top: 1rem !important;
+    border-top: 0 !important;
+    box-shadow: none !important;
   }
 }

@@ -5,7 +5,9 @@
       (function(){var t=localStorage.getItem('highverz-theme');if(!t){t=window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)})();
     </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#050b10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <title>Niv0ne — Creator Growth Case Study | HIGHVERZ Creative Agency</title>
     <meta name="description" content="How Highverz engineered 0 to 100K follower growth in 60 days for creator Niv0ne with viral hook architecture, cinematic pacing, and multi-platform distribution." />
     <meta name="keywords" content="Niv0ne case study, creator growth case study, viral short form content, TikTok growth agency, Instagram Reels strategy" />
@@ -14,11 +16,11 @@
     <meta property="og:title" content="Niv0ne — Creator Growth Case Study | Highverz" />
     <meta property="og:description" content="How Highverz built Niv0ne's creator growth system and reached 100K followers in 60 days." />
     <meta property="og:url" content="https://highverz.com/creator-niv0ne" />
-    <meta property="og:image" content="https://highverz.com/assets/creators/image_new/image.png" />
+    <meta property="og:image" content="https://highverz.com/assets/creators/opt/niv0ne.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Niv0ne — Creator Growth Case Study | Highverz" />
     <meta name="twitter:description" content="A creator growth case study by Highverz." />
-    <meta name="twitter:image" content="https://highverz.com/assets/creators/image_new/image.png" />
+    <meta name="twitter:image" content="https://highverz.com/assets/creators/opt/niv0ne.jpg" />
 
     <!-- Favicon & Brand Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -27,16 +29,21 @@
 
     <!-- Typography System: Satoshi (Display Headlines) & Inter (Precision Sans) matching Clutra reference -->
     <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300,901,701,501,401,301&display=swap"
-      rel="stylesheet"
+      rel="stylesheet" media="print" onload="this.media='all'"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
-      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Space+Grotesk:wght@600;700&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'"
     />
+    <noscript>
+      <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300,901,701,501,401,301&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+    </noscript>
 
     <!-- Preload Critical Intro Logo -->
     <link rel="preload" as="image" href="/assets/highverz-hv-logo.svg" type="image/svg+xml" />
@@ -248,7 +255,7 @@
           <!-- Left: Creator High-Res Portrait -->
           <div class="case-hero-media">
             <div class="case-portrait-frame">
-              <img src="/assets/creators/image_new/image.png" alt="Niv0ne — Creator Growth Case Study" class="case-portrait-img" />
+              <img src="/assets/creators/opt/niv0ne.jpg" alt="Niv0ne — Creator Growth Case Study" class="case-portrait-img" loading="eager" decoding="async" />
               <div class="case-portrait-gradient"></div>
               <div class="case-growth-pill-badge">
                 <span>↗ 4,900% Growth</span>
@@ -566,7 +573,7 @@
       <!-- Testimonial Quote Banner -->
       <div class="creator-testimonial-banner">
         <div class="creator-testimonial-avatar">
-          <img src="/assets/creators/image_new/image.png" alt="Niv0ne" />
+          <img src="/assets/avatars/avatar-niv0ne.jpg" alt="Niv0ne" width="60" height="60" loading="lazy" decoding="async" />
         </div>
         <div class="creator-testimonial-content">
           <p class="creator-quote-text">

@@ -91,7 +91,8 @@ export function initScatterGrid(container, options = {}) {
     width = boxW + bleed * 2;
     height = boxH + bleed * 2;
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const isMobileDevice = (typeof window !== 'undefined') && (window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches);
+    const dpr = isMobileDevice ? 1 : Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     canvas.style.width = width + "px";
@@ -129,9 +130,10 @@ export function initScatterGrid(container, options = {}) {
           return n;
         };
 
+        const maxDots = isMobileDevice ? 2000 : 8000;
         let count = countAt(step);
         let guard = 0;
-        while (count > 8000 && guard < 20) {
+        while (count > maxDots && guard < 20) {
           step *= 1.15;
           count = countAt(step);
           guard++;

@@ -71,7 +71,8 @@ body.enquiry-modal-open .admin-leads-close {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
@@ -101,7 +102,9 @@ body.enquiry-modal-open .admin-leads-close {
   min-height: 0;
   max-height: none;
   width: 100%;
+  max-width: 100%;
   overflow-y: auto;
+  overflow-x: hidden !important;
   overscroll-behavior: contain;
   padding-right: 0;
   margin-right: 0;
@@ -117,7 +120,7 @@ body.enquiry-modal-open .admin-leads-close {
 @media (max-width: 640px) {
   .enquiry-modal-backdrop {
     align-items: flex-start;
-    padding: 0.75rem;
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
   }
 
   .enquiry-modal-window {
@@ -501,21 +504,29 @@ body.enquiry-modal-open .admin-leads-close {
 
 /* Dropdown Menu */
 .enquiry-flag-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
+  position: fixed !important;
+  z-index: 100005 !important;
+  box-sizing: border-box;
+  margin: 0;
   width: 320px;
-  max-width: calc(100vw - 2.5rem);
-  max-height: 310px;
+  max-width: calc(100vw - 24px);
+  max-height: 280px;
   display: flex;
   flex-direction: column;
-  background: #090e15 !important;
+  background: rgba(9, 14, 21, 0.96) !important;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid rgba(0, 229, 255, 0.35);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 229, 255, 0.18);
-  z-index: 999;
   overflow: hidden;
+  overscroll-behavior: contain;
+  transform-origin: top center;
   animation: enquiryFlagDrop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.enquiry-flag-dropdown[data-open-direction="up"] {
+  transform-origin: bottom center;
 }
 
 @keyframes enquiryFlagDrop {
@@ -1481,12 +1492,12 @@ body.enquiry-modal-open .admin-leads-close {
   color: #008ba3 !important;
 }
 
-/* The country picker is portaled to the modal backdrop so the form's own
-   scroll container cannot clip it. Coordinates and available height are set
+/* The country picker is portaled so the form's own scroll container
+   cannot clip it. Coordinates and available height are set dynamically
    from the phone field in enquiry.js for both desktop and mobile viewports. */
-.enquiry-modal-backdrop > .enquiry-flag-dropdown {
-  position: absolute;
-  z-index: 100003;
+:is(.enquiry-modal-backdrop, body) > .enquiry-flag-dropdown {
+  position: fixed !important;
+  z-index: 100005 !important;
   box-sizing: border-box;
   margin: 0;
   max-width: calc(100vw - 24px);
@@ -1494,13 +1505,13 @@ body.enquiry-modal-open .admin-leads-close {
   overscroll-behavior: contain;
 }
 
-.enquiry-modal-backdrop > .enquiry-flag-dropdown[data-open-direction="up"] {
+:is(.enquiry-modal-backdrop, body) > .enquiry-flag-dropdown[data-open-direction="up"] {
   transform-origin: bottom center;
 }
 
-.enquiry-modal-backdrop > .enquiry-flag-dropdown .enquiry-flag-list {
+:is(.enquiry-modal-backdrop, body) > .enquiry-flag-dropdown .enquiry-flag-list {
   min-height: 0;
-  height: 0;
+  height: auto;
   flex: 1 1 auto;
   max-height: none;
   overflow-y: auto;

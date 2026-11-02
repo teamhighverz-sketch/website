@@ -3,6 +3,9 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
+    target: 'es2022',
+    cssMinify: true,
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
@@ -14,6 +17,19 @@ export default defineConfig({
         team: resolve(__dirname, 'team.html'),
         whyUs: resolve(__dirname, 'why-us.html'),
         campaigns: resolve(__dirname, 'campaigns.html'),
+      },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) {
+            return 'vendor-three';
+          }
+          if (id.includes('node_modules/gsap')) {
+            return 'vendor-gsap';
+          }
+          if (id.includes('node_modules/lenis')) {
+            return 'vendor-lenis';
+          }
+        },
       },
     },
   },

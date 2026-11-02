@@ -1,6 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap');
-@import './intro/intro.css';
-
 /* ==========================================================================
    HIGHVERZ — LUXURY CREATIVE AGENCY DESIGN SYSTEM
    Exact Match to Highverz Reference Art Direction & Official Brand Assets
@@ -20715,7 +20712,7 @@ body::-webkit-scrollbar {
   :is(.footer-home, .footer-compact-mobile) {
     display: flex;
     flex-direction: column;
-    padding: 2rem 0 1rem;
+    padding: 2rem 0 max(1.25rem, calc(env(safe-area-inset-bottom) + 1rem));
     overflow: hidden;
   }
 
@@ -20881,8 +20878,8 @@ body::-webkit-scrollbar {
 
   /* 2. Mobile Floating Navbar Pill: Clean, un-cramped, spacious layout */
   .navbar {
-    top: 0.65rem;
-    padding: 0 0.85rem;
+    top: max(0.65rem, env(safe-area-inset-top));
+    padding: 0 max(0.85rem, env(safe-area-inset-right)) 0 max(0.85rem, env(safe-area-inset-left));
   }
 
   .navbar .btn-nav-talk {
@@ -20908,9 +20905,9 @@ body::-webkit-scrollbar {
 
   .mobile-toggle,
   .theme-switcher {
-    width: 38px;
-    height: 38px;
-    min-height: 38px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -20935,7 +20932,7 @@ body::-webkit-scrollbar {
   }
 
   .mobile-nav-link {
-    min-height: 42px;
+    min-height: 48px;
     padding: 0.45rem 0;
   }
 
@@ -21537,13 +21534,11 @@ html.theme-switching:has(#hero) .viewport-bottom-reveal>div:last-child {
    reveal can show seams and overload mobile backdrop compositing. */
 @media (max-width: 768px) {
 
-  html:has(#hero) .viewport-bottom-reveal>div,
-  body.page-campaigns .viewport-bottom-reveal>div {
+  .viewport-bottom-reveal>div {
     display: none !important;
   }
 
-  html:has(#hero) .viewport-bottom-reveal>div:last-child,
-  body.page-campaigns .viewport-bottom-reveal>div:last-child {
+  .viewport-bottom-reveal>div:last-child {
     display: block !important;
     backdrop-filter: blur(5px) !important;
     -webkit-backdrop-filter: blur(5px) !important;

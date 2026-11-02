@@ -780,7 +780,7 @@ function renderMovieCards(container, movies) {
       <article class="campaign-movie-card" data-movie-id="${movie.id}" data-cursor="EXPLORE">
         <div class="campaign-card-image-wrap">
           ${poster
-            ? `<img src="${poster}" alt="${escapeHtml(movie.title)}" class="campaign-card-image" loading="lazy" />`
+            ? `<img src="${poster}" alt="${escapeHtml(movie.title)}" class="campaign-card-image" loading="lazy" decoding="async" />`
             : `<div class="campaign-card-image" style="background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem;">🎬</div>`
           }
           <div class="campaign-card-overlay"></div>

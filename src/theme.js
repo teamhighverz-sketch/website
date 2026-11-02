@@ -41,6 +41,12 @@ function applyTheme(theme, animate = false) {
   updateLogos(theme);
   updateCapsuleSwitchers(theme);
   try {
+    const themeColor = theme === 'light' ? '#ffffff' : '#050b10';
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', themeColor);
+    });
+  } catch (_) {}
+  try {
     window.dispatchEvent(new CustomEvent('hv:themechange', { detail: { theme, animate } }));
   } catch (_) {}
 }

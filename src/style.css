@@ -8,28 +8,10 @@
    Typography: Satoshi (Headlines) & Inter (Precision Sans)
    ========================================================================== */
 
-/* Lenis Smooth Scroll Base */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
+/* Native Scroll Base */
 html,
-body,
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-
-.lenis.lenis-stopped {
-  overflow: hidden;
-}
-
-.lenis.lenis-scrolling iframe {
-  pointer-events: none;
+body {
+  height: auto;
 }
 
 /* ==========================================================================
@@ -241,10 +223,16 @@ body,
     border-color 600ms var(--ease-theme);
 }
 
-/* Reserve the scrollbar track so locking scroll cannot reflow centered content. */
+/* Reserve the scrollbar track on desktop so locking scroll cannot reflow centered content. */
 html {
   scrollbar-gutter: stable;
   overflow-x: clip;
+}
+
+@media (pointer: coarse), (max-width: 900px) {
+  html {
+    scrollbar-gutter: auto;
+  }
 }
 
 .service-card-item,
@@ -322,7 +310,7 @@ html {
   scroll-behavior: auto !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
   width: 100%;
 }
@@ -333,7 +321,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   letter-spacing: -0.01em;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
   width: 100%;
   cursor: none;
@@ -1075,7 +1063,8 @@ body.intro-active .home-theme-capsule-wrap {
   pointer-events: none !important;
 }
 
-body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
+body:has(.navbar.nav-hidden) .home-theme-capsule-wrap,
+.home-theme-capsule-wrap.capsule-hidden {
   transform: translateY(calc(-100% - 3rem));
   pointer-events: none;
 }
@@ -20689,14 +20678,60 @@ body::after {
   }
 }
 
-html,
-body {
-  scrollbar-width: none;
+@media (pointer: fine) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 229, 255, 0.4) transparent;
+  }
+
+  [data-theme="light"] html {
+    scrollbar-color: rgba(14, 165, 233, 0.45) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cyan, #00e5ff);
+    background-clip: padding-box;
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cyan, #0ea5e9);
+    background-clip: padding-box;
+  }
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  display: none;
+@media (pointer: coarse) {
+  html,
+  body {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Phone and tablet controls, including short landscape viewports. */
@@ -21669,6 +21704,7 @@ html.theme-switching #hero .hero-global-sensation::after {
   /* Keep the audience switcher anchored while the navbar hides on scroll.
      The shared desktop offset animation made it bob on mobile after entry. */
   .home-theme-capsule-wrap,
+  .home-theme-capsule-wrap.capsule-hidden,
   body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
     transform: none !important;
     transition: opacity 0.35s ease !important;

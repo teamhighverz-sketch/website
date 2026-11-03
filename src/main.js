@@ -1,11 +1,10 @@
 /**
  * HIGHVERZ — Master Animation & Interaction Choreography
- * GSAP 3 + ScrollTrigger + Lenis Smooth Scroll
+ * GSAP 3 + ScrollTrigger + Native High-Performance Scroll
  */
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
 // hv3d.js (three.js, ~600 KB) is lazy-loaded inside init3DScene()
 import { initHighverzIntro, replayHighverzIntro } from './intro/HighverzIntro.js';
 import './style.css';
@@ -42,9 +41,8 @@ if ('onpagereveal' in window) {
 }
 
 // ==========================================================================
-// LENIS SMOOTH SCROLL SETUP
+// NATIVE HIGH-PERFORMANCE SCROLL SETUP
 // ==========================================================================
-let lenis;
 let activeWorkMetricTweens = [];
 let heroIntroTimeline = null;
 let heroIntroGeneration = 0;
@@ -59,83 +57,17 @@ function initVercelTelemetry() {
   };
 }
 
-function initLenis() {
-  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches ||
-    ('ontouchstart' in window && window.innerWidth <= 1024) ||
-    window.innerWidth <= 768;
-  const isWindows = navigator.userAgentData?.platform === 'Windows' ||
-    /Windows/i.test(navigator.userAgent);
-
-  // Touch screens have 120Hz/60Hz native hardware momentum scrolling.
-  // Intercepting touch scrolling with JS creates input latency and sluggish response.
-  if (isTouchDevice) {
-    window.lenis = null;
-    lenis = null;
-    gsap.ticker.lagSmoothing(500, 33);
-    return;
-  }
+function initNativeScroll() {
+  window.lenis = null;
 
   // Prevent browser scrollRestoration jumping on reload or DOM shifts
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
 
-  // Prevent Windows middle-mouse autoscroll conflict with Lenis
-  window.addEventListener('mousedown', (e) => {
-    if (e.button === 1) e.preventDefault();
-  }, { passive: false });
-
-  lenis = new Lenis({
-    lerp: 0.1,
-    orientation: 'vertical',
-    gestureOrientation: 'vertical',
-    smoothWheel: true,
-    wheelMultiplier: 0.85,
-    touchMultiplier: 1.5,
-    infinite: false,
-    autoRaf: false,
-    // Keep Lenis smoothing for Windows touchpads, but let discrete physical
-    // mouse-wheel steps use native scrolling. Chromium may expose mouse
-    // wheels in pixel mode, so also recognize its standard legacy 120-unit
-    // wheel ticks (and the common 100-unit Windows tick).
-    ...(isWindows ? {
-      virtualScroll: ({ event, deltaX }) => {
-        if (event.type !== 'wheel') return true;
-        const wheelEvent = event;
-        const legacyDelta = Math.abs(Number(wheelEvent.wheelDeltaY) || 0);
-        const lineWheel = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_LINE;
-        const discretePixelWheel = deltaX === 0 && Math.abs(wheelEvent.deltaY) >= 50 && legacyDelta >= 80 &&
-          (legacyDelta % 120 === 0 || legacyDelta === 100);
-        const useNativeWheel = lineWheel || discretePixelWheel;
-        if (useNativeWheel && lenis?.isScrolling === 'smooth') {
-          // Hand off an in-progress touchpad/Lenis glide before the browser
-          // applies this native wheel tick, so the two scroll owners cannot
-          // compete for the scroll position.
-          lenis.reset();
-        }
-        return !useNativeWheel;
-      },
-    } : {}),
-  });
-
-  window.lenis = lenis;
-
-  // Connect Lenis to GSAP ScrollTrigger
-  // Native wheel scrolls already reach ScrollTrigger's own scroll listener.
-  // Avoid a second update for those events; Lenis still drives updates for
-  // smoothed wheel, touchpad, and scripted scrolling.
-  lenis.on('scroll', (instance) => {
-    if (instance.isScrolling !== 'native') ScrollTrigger.update();
-  });
-
-  gsap.ticker.add((time) => {
-    if (lenis) lenis.raf(time * 1000);
-  });
-
-  // Cap long frame gaps before forwarding ticker time to Lenis. On Windows,
-  // video decode and compositing can briefly stall; with lag smoothing off,
-  // Lenis receives that full gap and applies it as a sudden scroll correction.
-  gsap.ticker.lagSmoothing(500, 33);
+  // Ensure ScrollTrigger uses native scroll with 0ms lag smoothing jitter
+  ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize' });
+  gsap.ticker.lagSmoothing(0);
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination
@@ -244,20 +176,22 @@ function boot() {
   // Phase 1: Critical above-the-fold experience (Theme, Header, Background, Hero)
   initThemeSystem();
   initNavbar();
-  initLenis();
+  initNativeScroll();
   initCustomCursor();
   loadFluidBackground();
   initPageTransitions();
 
-  // If user scrolls or taps before idle callback, immediately hydrate below-the-fold
+  // If user scrolls or taps before idle callback, hydrate below-the-fold on next frame
   const onEarlyInteraction = () => {
-    if (isHomeRoute(window.location.pathname)) {
-      initBelowFoldFeatures();
-    } else {
-      initFooterScatterGrid();
-    }
     window.removeEventListener('scroll', onEarlyInteraction);
     window.removeEventListener('pointerdown', onEarlyInteraction);
+    requestAnimationFrame(() => {
+      if (isHomeRoute(window.location.pathname)) {
+        initBelowFoldFeatures();
+      } else {
+        initFooterScatterGrid();
+      }
+    });
   };
   window.addEventListener('scroll', onEarlyInteraction, { passive: true, once: true });
   window.addEventListener('pointerdown', onEarlyInteraction, { passive: true, once: true });
@@ -338,10 +272,6 @@ function boot() {
     document.documentElement.classList.remove('intro-pending');
     document.documentElement.classList.add('skip-intro');
     document.body.classList.remove('intro-active');
-    if (lenis) {
-      lenis.start();
-      lenis.scrollTo(0, { immediate: true });
-    }
 
     if (isHomeRoute(window.location.pathname)) {
       prepareHeroInitialState();
@@ -358,11 +288,9 @@ function boot() {
     } else {
       initPageScripts(window.location.pathname);
     }
-    if (lenis) lenis.stop();
 
     initHighverzIntro({
       onStartReveal: () => {
-        if (lenis) lenis.start();
         if (isHomeRoute(window.location.pathname)) {
           initBelowFoldFeatures();
           window.__hvUnlockHeroVideos?.();
@@ -381,7 +309,6 @@ function boot() {
   // Shift + I triggers intro replay dynamically in-place without page reload
   window.addEventListener('keydown', (e) => {
     if (e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-      if (lenis) lenis.stop();
       replayHighverzIntro();
     }
   });
@@ -404,11 +331,7 @@ function boot() {
       const hashTarget = document.querySelector(window.location.hash);
       if (hashTarget) {
         setTimeout(() => {
-          if (window.lenis) {
-            window.lenis.scrollTo(hashTarget, { offset: -80, duration: 1.2 });
-          } else {
-            hashTarget.scrollIntoView({ behavior: 'smooth' });
-          }
+          hashTarget.scrollIntoView({ behavior: 'smooth' });
         }, 200);
       }
     }
@@ -864,6 +787,7 @@ function initNavbar() {
       // Only hide if scrolled well past hero (> 280px) AND user is scrolling down quickly
       if (scrollY > 280 && (scrollDownDistance > 140 || velocity > 1.2) && !isHidden) {
         navbar.classList.add('nav-hidden');
+        document.querySelector('.home-theme-capsule-wrap')?.classList.add('capsule-hidden');
         isHidden = true;
       }
     } else if (delta < -3) {
@@ -874,6 +798,7 @@ function initNavbar() {
       // Any intentional upward scroll reveals navbar smoothly
       if ((scrollUpDistance > 8 || scrollY <= 140) && isHidden) {
         navbar.classList.remove('nav-hidden');
+        document.querySelector('.home-theme-capsule-wrap')?.classList.remove('capsule-hidden');
         isHidden = false;
       }
     }
@@ -881,13 +806,9 @@ function initNavbar() {
     lastScrollY = scrollY;
   }
 
-  // Hook into Lenis smooth scroll and native scroll
-  if (window.lenis) {
-    window.lenis.on('scroll', (e) => onScrollUpdate(e.scroll));
-  }
+  // Listen to native scroll (ScrollTrigger listens independently)
   window.addEventListener('scroll', () => {
     onScrollUpdate(window.scrollY);
-    if (window.ScrollTrigger) window.ScrollTrigger.update();
   }, { passive: true });
 
   // Peek reveal: when cursor moves to top 50px of the viewport, bring navbar back
@@ -928,16 +849,8 @@ function initNavbar() {
           positionIndicator(link, false);
         }
 
-        if (window.lenis) {
-          window.lenis.scrollTo(targetEl, {
-            offset: -80,
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
-          });
-        } else {
-          const top = targetEl.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top, behavior: 'smooth' });
-        }
+        const top = targetEl.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: 'smooth' });
 
         setTimeout(() => {
           isProgrammaticScroll = false;
@@ -950,11 +863,7 @@ function initNavbar() {
           const normCurrent = (window.location.pathname || '/').replace(/\/+$/, '').replace(/\.html$/, '') || '/';
           if (normLink === normCurrent && !linkUrl.hash) {
             e.preventDefault();
-            if (window.lenis) {
-              window.lenis.scrollTo(0, { duration: 0.8 });
-            } else {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         } catch (_) { }
       }
@@ -1161,7 +1070,6 @@ function initMobileNav(navbar) {
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('mobile-menu-active');
-    if (window.lenis) window.lenis.stop();
     closeBtn?.focus({ preventScroll: true });
 
     // Staggered Entrance Animation
@@ -1194,7 +1102,6 @@ function initMobileNav(navbar) {
       toggleBtn.setAttribute('aria-expanded', 'false');
     }
     document.body.classList.remove('mobile-menu-active');
-    if (window.lenis) window.lenis.start();
 
     if (typeof gsap !== 'undefined') {
       gsap.to(overlay, {
@@ -1257,7 +1164,6 @@ function initMobileNav(navbar) {
       overlay.style.visibility = 'hidden';
       overlay.style.opacity = '0';
       overlay.style.pointerEvents = 'none';
-      if (window.lenis) window.lenis.start();
     });
   });
 
@@ -1320,11 +1226,7 @@ function applyThemeHeroTrustBadge() {
         ? (document.querySelector('#work') || document.querySelector('.section-portfolio') || document.querySelector('#creators'))
         : (document.querySelector('#creators') || document.querySelector('.section-creators'));
       if (target) {
-        if (window.lenis) {
-          window.lenis.scrollTo(target, { offset: -60, duration: 1.2 });
-        } else {
-          target.scrollIntoView({ behavior: 'smooth' });
-        }
+        target.scrollIntoView({ behavior: 'smooth' });
       }
     });
   }
@@ -2155,8 +2057,8 @@ export function initAdscaleTextEffects(root = document) {
     observer.observe(element);
   });
 
-  // Passive scroll listener ensures fast scroll/flick never leaves any element stuck hidden
-  const onScrollCheck = () => {
+  // Initial check ensures any element already in viewport reveals without waiting for scroll
+  const initialCheck = () => {
     revealElements.forEach((element) => {
       if (element.dataset.adscaleAnimated !== 'true') {
         const rect = element.getBoundingClientRect();
@@ -2167,13 +2069,9 @@ export function initAdscaleTextEffects(root = document) {
       }
     });
   };
-  window.__hvAdscaleScrollHandler = onScrollCheck;
-  window.addEventListener('scroll', onScrollCheck, { passive: true });
-
-  // Safety net: after 400ms, ensure no element currently visible remains stuck
-  setTimeout(() => {
-    onScrollCheck();
-  }, 400);
+  window.__hvAdscaleScrollHandler = initialCheck;
+  requestAnimationFrame(initialCheck);
+  setTimeout(initialCheck, 400);
 }
 
 function initHeroIntro(immediate = false) {
@@ -2390,7 +2288,7 @@ function initHeroIntro(immediate = false) {
         trigger: '.hero-section',
         start: 'top top',
         end: 'bottom top',
-        scrub: 1.2,
+        scrub: 0.2,
       }
     });
   }
@@ -2978,7 +2876,7 @@ function initStatementParallax() {
           trigger: '.section-statement',
           start: 'top 85%',
           end: 'bottom 20%',
-          scrub: 1.2 + (index * 0.15),
+          scrub: 0.3,
         }
       }
     );
@@ -3007,7 +2905,7 @@ function initStatementParallax() {
       trigger: '.section-statement',
       start: 'top bottom',
       end: 'bottom top',
-      scrub: 2,
+      scrub: 0.4,
     }
   });
 }
@@ -5573,18 +5471,20 @@ function initProcessScrollDraw() {
     }
   ));
 
-  // Measure the visible track anchors relative to the line itself. offsetLeft
-  // is relative to each element's offsetParent, which can differ between the
-  // track and grid and caused progress/active states to drift apart.
-  const getStepCenters = () => {
+  // Measure the visible track anchors relative to the line itself.
+  // Cache the centers on layout/resize to avoid 10+ getBoundingClientRect calls per scroll frame.
+  let cachedCenters = null;
+  const getStepCenters = (force = false) => {
+    if (cachedCenters && !force) return cachedCenters;
     const trackRect = trackContainer.getBoundingClientRect();
     const trackWidth = trackRect.width || 1;
-    return steps.map((step, index) => {
+    cachedCenters = steps.map((step, index) => {
       const anchor = nodes[index] || step;
       const rect = anchor.getBoundingClientRect();
       const center = rect.left + rect.width / 2 - trackRect.left;
       return Math.min(100, Math.max(0, (center / trackWidth) * 100));
     });
+    return cachedCenters;
   };
 
   // Function to set active state based on width percent
@@ -5668,8 +5568,9 @@ function initProcessScrollDraw() {
   // Recalculate on window resize
   const onResize = () => {
     if (disposed) return;
+    cachedCenters = null;
     ScrollTrigger.refresh();
-    const centers = getStepCenters();
+    const centers = getStepCenters(true);
     const activeSteps = steps.filter((step) => step.classList.contains('active'));
     const lastActiveIdx = activeSteps.length - 1;
     if (lastActiveIdx >= 0 && centers[lastActiveIdx]) {

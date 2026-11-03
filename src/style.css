@@ -2010,8 +2010,11 @@ body.mobile-menu-active .work-creator-card {
   grid-template-columns: 1fr !important;
   grid-template-rows: 1fr !important;
   height: 1.08em !important;
+  min-width: 3.55em !important;
   vertical-align: baseline !important;
   align-items: center !important;
+  justify-items: start !important;
+  text-align: left !important;
   overflow: hidden !important;
   position: relative !important;
   background: transparent !important;
@@ -2019,6 +2022,7 @@ body.mobile-menu-active .work-creator-card {
   margin: 0 0 0 -0.08em !important;
   cursor: pointer !important;
   isolation: isolate !important;
+  contain: layout paint !important;
 }
 
 .hero-word-roller::after {
@@ -2062,6 +2066,7 @@ body.mobile-menu-active .work-creator-card {
   grid-area: 1 / 1 !important;
   display: inline-block !important;
   white-space: nowrap !important;
+  text-align: left !important;
   line-height: 1.15 !important;
   font-family: var(--font-display) !important;
   font-style: italic !important;
@@ -5014,6 +5019,7 @@ html.js .floating-badge-item {
   justify-content: center;
   overflow: visible;
   pointer-events: auto;
+  touch-action: pan-y !important;
 }
 
 .card-position {
@@ -20915,9 +20921,10 @@ body::after {
   }
 
   /* 2. Mobile Floating Navbar Pill: Clean, un-cramped, spacious layout */
-  .navbar {
-    top: 0.65rem;
-    padding: 0 0.85rem;
+  .navbar,
+  .navbar.scrolled {
+    top: 0.65rem !important;
+    padding: 0 0.85rem !important;
   }
 
   .navbar .btn-nav-talk {
@@ -20987,13 +20994,13 @@ body::after {
   /* 4. Bold, Authoritative Mobile Hero Typography */
   .hero-headline,
   .hero-headline--centered {
-    font-size: clamp(1.85rem, 6.8vw, 2.75rem) !important;
+    font-size: clamp(1.68rem, 6.2vw, 2.45rem) !important;
     font-weight: 700 !important;
-    line-height: 1.14 !important;
+    line-height: 1.18 !important;
     letter-spacing: -0.035em !important;
     margin-bottom: 0.85rem !important;
     width: 100% !important;
-    max-width: min(92vw, 440px) !important;
+    max-width: min(94vw, 440px) !important;
     margin-left: auto !important;
     margin-right: auto !important;
     text-align: center !important;
@@ -21007,8 +21014,15 @@ body::after {
     text-align: center !important;
     overflow-wrap: break-word !important;
     word-break: normal !important;
-    line-height: 1.15 !important;
+    line-height: 1.18 !important;
     padding: 0.04em 0 !important;
+  }
+
+  .hero-headline .hero-word-roller,
+  .hero-word-roller {
+    min-width: 3.55em !important;
+    text-align: left !important;
+    vertical-align: baseline !important;
   }
 
   @media (max-width: 360px) {
@@ -21711,7 +21725,8 @@ html.theme-switching #hero .hero-global-sensation::after {
   }
 
   #hero.hero-section {
-    padding-top: 1.25rem;
+    min-height: auto !important;
+    padding-top: 1rem !important;
   }
 
   [data-theme="light"] #hero .hero-headline-line {

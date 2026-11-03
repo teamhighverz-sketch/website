@@ -3962,11 +3962,15 @@ export function initHeroReelCarousel() {
         // Keep five cards in the mobile rail (center + two neighbors on each
         // side). The previous ±1 cull left only three cards visible, which
         // made the carousel feel empty and made the infinite loop obvious.
-        if (absU > 2.45) {
-          pos.style.display = 'none';
+        if (absU > 2.5) {
+          pos.style.visibility = 'hidden';
+          pos.style.opacity = '0';
+          pos.style.pointerEvents = 'none';
           return;
         }
-        pos.style.display = 'block';
+        pos.style.visibility = 'visible';
+        pos.style.opacity = '1';
+        pos.style.pointerEvents = '';
 
         const norm = Math.min(1.0, absU / 2.7);
         const screenX = x * (1.0 + Math.pow(norm, 1.2) * 0.08);
@@ -4116,13 +4120,33 @@ export function initHeroReelCarousel() {
 
     // Axis locking: distinguish vertical page swipe from horizontal carousel drag
     if (!isHorizontalDrag) {
-      if (Math.abs(diffX) < 6 && Math.abs(diffY) < 6) return;
-      if (Math.abs(diffY) > Math.abs(diffX)) {
-        isVerticalScroll = true;
-        isDragging = false;
-        isInteracting = false;
-        return;
+      const isTouch = e.pointerType === 'touch';
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+
+      if (isTouch) {
+        // On touch screens, strictly prioritize native page scrolling.
+        // Any upward/downward swipe immediately frees pointer for page scroll.
+        if (absDiffY >= 5 || (absDiffY > 2 && absDiffY >= absDiffX)) {
+          isVerticalScroll = true;
+          isDragging = false;
+          isInteracting = false;
+          return;
+        }
+        // Only trigger horizontal drag if there is an unambiguous horizontal swipe
+        if (absDiffX < 12 || absDiffX < absDiffY * 2.0) {
+          return;
+        }
+      } else {
+        if (absDiffX < 6 && absDiffY < 6) return;
+        if (absDiffY > absDiffX) {
+          isVerticalScroll = true;
+          isDragging = false;
+          isInteracting = false;
+          return;
+        }
       }
+
       isHorizontalDrag = true;
       isDragging = true;
       isInteracting = true;

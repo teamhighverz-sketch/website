@@ -46,6 +46,7 @@ if ('onpagereveal' in window) {
 let activeWorkMetricTweens = [];
 let heroIntroTimeline = null;
 let heroIntroGeneration = 0;
+let themeCardImagesPreloaded = false;
 
 function initVercelTelemetry() {
   // These helpers are the framework-agnostic APIs for this Vite site. The
@@ -65,8 +66,11 @@ function initNativeScroll() {
     history.scrollRestoration = 'manual';
   }
 
-  // Ensure ScrollTrigger uses native scroll with 0ms lag smoothing jitter
-  ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize' });
+  // Ensure ScrollTrigger uses native scroll with 0ms lag smoothing jitter and ignores mobile URL bar resize
+  ScrollTrigger.config({
+    autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize',
+    ignoreMobileResize: true,
+  });
   gsap.ticker.lagSmoothing(0);
 }
 
@@ -113,45 +117,6 @@ export function loadFluidBackground() {
 }
 window.loadFluidBackground = loadFluidBackground;
 
-// Progressive below-the-fold feature hydrator:
-// Keeps initial main-thread work under 300ms so hero LCP paints on frame 1 without delay.
-let belowFoldInitialized = false;
-function initBelowFoldFeatures() {
-  // These sections exist only on Home. Running their timelines after an early
-  // interaction on a dedicated route can attach duplicate observers/tweens to
-  // similarly named content and cause visual glitches.
-  if (!isHomeRoute(window.location.pathname)) return;
-
-  // Home can be restored through a native back/forward load or through the
-  // in-place route transition. Both paths may reuse the static creator-card
-  // markup, so re-apply the active theme before the below-fold guard exits.
-  // This keeps Light mode's movie showcase authoritative on every re-entry.
-  preloadThemeCardImages();
-  applyThemeCreatorsCopy();
-
-  if (belowFoldInitialized) return;
-  belowFoldInitialized = true;
-
-  if (!window.__hvHeroReelCleanup) initHeroReelCarousel();
-  initStatsMarquee();
-  initCreatorsSection();
-  initGrowthWidgets();
-  initStatementParallax();
-  initServicesReveal();
-  initPortfolioGrid();
-  initTestimonialsReveal();
-  initProcessScrollDraw();
-  initFaqAccordion();
-  initCTAReveal();
-  initMagneticElements();
-  initScrollVelocityEffects();
-  initServiceFilters();
-  initEnquirySystem();
-  initFooterScatterGrid();
-  initVercelTelemetry();
-  init3DScene();
-}
-
 // Ensure Reachify-style progressive viewport blur exists on every page (8 optical layers, zero color)
 export function ensureViewportBottomReveal() {
   if (typeof document === 'undefined') return;
@@ -165,183 +130,6 @@ export function ensureViewportBottomReveal() {
   if (reveal.children.length < 8) {
     reveal.innerHTML = '<div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>';
   }
-}
-
-// Initialize on DOM Ready or immediately if document is already ready
-let hasBooted = false;
-function boot() {
-  if (hasBooted) return;
-  hasBooted = true;
-
-  // Phase 1: Critical above-the-fold experience (Theme, Header, Background, Hero)
-  initThemeSystem();
-  initNavbar();
-  initNativeScroll();
-  initCustomCursor();
-  loadFluidBackground();
-  initPageTransitions();
-
-  // If user scrolls or taps before idle callback, hydrate below-the-fold on next frame
-  const onEarlyInteraction = () => {
-    window.removeEventListener('scroll', onEarlyInteraction);
-    window.removeEventListener('pointerdown', onEarlyInteraction);
-    requestAnimationFrame(() => {
-      if (isHomeRoute(window.location.pathname)) {
-        initBelowFoldFeatures();
-      } else {
-        initFooterScatterGrid();
-      }
-    });
-  };
-  window.addEventListener('scroll', onEarlyInteraction, { passive: true, once: true });
-  window.addEventListener('pointerdown', onEarlyInteraction, { passive: true, once: true });
-
-  const isWorkPage = window.location.pathname.includes('work') || !!document.querySelector('.work-hero-section');
-  const isCaseStudyPage = window.location.pathname.includes('creator-') || window.location.pathname.includes('movie-') || !!document.querySelector('.case-hero-section') || !!document.querySelector('.ig-profile-shell');
-  const isTeamPage = window.location.pathname.includes('team') || !!document.querySelector('.page-team');
-  const isWhyUs = window.location.pathname.includes('why-us') || !!document.querySelector('.page-why-us') || !!document.querySelector('.comparison-section');
-  const isCampaignsPage = window.location.pathname.includes('campaigns') || !!document.querySelector('.page-campaigns');
-  const isDedicatedPage = isWorkPage || isCaseStudyPage || isTeamPage || isWhyUs || isCampaignsPage;
-
-  const navEntries = (window.performance && window.performance.getEntriesByType)
-    ? window.performance.getEntriesByType('navigation')
-    : [];
-  const navType = navEntries.length > 0
-    ? navEntries[0].type
-    : (window.performance && window.performance.navigation
-      ? (window.performance.navigation.type === 1 ? 'reload' : (window.performance.navigation.type === 2 ? 'back_forward' : 'navigate'))
-      : 'navigate');
-  const isReload = navType === 'reload';
-
-  let isFromInternalSubpage = false;
-  try {
-    if (document.referrer) {
-      const refUrl = new URL(document.referrer);
-      if (refUrl.origin === window.location.origin) {
-        const refPath = refUrl.pathname.replace(/\/+$/, '') || '/';
-        if (refPath !== '/' && refPath !== '/index.html') {
-          isFromInternalSubpage = true;
-        }
-      }
-    }
-  } catch (_) { }
-
-  let internalNavFlag = false;
-  try {
-    internalNavFlag = sessionStorage.getItem('hv_from_subpage') === 'true';
-  } catch (_) { }
-
-  // Intro ONLY plays on reload / hard reload or first clean visit, never on navigation from subpages
-  const isNavigatedToHome = !isReload && (isFromInternalSubpage || internalNavFlag || navType === 'back_forward');
-
-  const searchParams = new URLSearchParams(window.location.search);
-  const isForceIntro = (searchParams.get('intro') === 'true' || searchParams.get('intro') === 'force') && !searchParams.has('no-intro');
-  const ua = navigator.userAgent || '';
-  const isDevToolsMobileAudit = (
-    (ua.includes('Macintosh') || ua.includes('Windows NT')) &&
-    !ua.includes('iPhone') &&
-    !ua.includes('Android') &&
-    window.innerWidth <= 768
-  );
-  const isLighthouseAudit = ua.includes('Lighthouse') ||
-    ua.includes('Chrome-Lighthouse') ||
-    ua.includes('HeadlessChrome') ||
-    ua.includes('moto g power') ||
-    navigator.webdriver === true ||
-    isDevToolsMobileAudit;
-  const skipIntro = !isForceIntro && (
-    isDedicatedPage ||
-    window.__HV_SKIP_INTRO__ ||
-    isLighthouseAudit ||
-    isNavigatedToHome ||
-    window.location.search.includes('no-intro') ||
-    window.location.search.includes('intro=false')
-  );
-
-  // Clean up temporary navigation flag
-  try {
-    sessionStorage.removeItem('hv_from_subpage');
-  } catch (_) { }
-
-  ensureViewportBottomReveal();
-
-  if (skipIntro) {
-    // Intro skipped (navigated from another page or audit)
-    const introEl = document.getElementById('highverz-intro');
-    if (introEl) introEl.remove();
-    document.documentElement.classList.remove('intro-pending');
-    document.documentElement.classList.add('skip-intro');
-    document.body.classList.remove('intro-active');
-
-    if (isHomeRoute(window.location.pathname)) {
-      prepareHeroInitialState();
-      initHeroIntro(false);
-      initBelowFoldFeatures();
-    } else {
-      initPageScripts(window.location.pathname);
-    }
-  } else {
-    // Play loading intro screen on reload and initial visit.
-    if (isHomeRoute(window.location.pathname)) {
-      prepareHeroInitialState();
-      // Notice: Do NOT call initBelowFoldFeatures() here while intro is pending!
-    } else {
-      initPageScripts(window.location.pathname);
-    }
-
-    initHighverzIntro({
-      onStartReveal: () => {
-        if (isHomeRoute(window.location.pathname)) {
-          initBelowFoldFeatures();
-          window.__hvUnlockHeroVideos?.();
-          initHeroIntro(false);
-        } else {
-          triggerPageHeroEntrance(window.location.pathname);
-          initFooterScatterGrid();
-        }
-        requestAnimationFrame(() => {
-          ScrollTrigger.refresh();
-        });
-      }
-    });
-  }
-
-  // Shift + I triggers intro replay dynamically in-place without page reload
-  window.addEventListener('keydown', (e) => {
-    if (e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-      replayHighverzIntro();
-    }
-  });
-
-  // Recalculate ScrollTrigger measurements once layout is painted
-  requestAnimationFrame(() => {
-    ScrollTrigger.refresh();
-  });
-  window.addEventListener('load', () => {
-    ScrollTrigger.refresh();
-    initFooterScatterGrid();
-
-    // Register high-performance Service Worker for video and asset caching
-    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => { });
-    }
-
-    // If page is loaded with an anchor hash (e.g. /work.html#work), scroll smoothly to target
-    if (window.location.hash) {
-      const hashTarget = document.querySelector(window.location.hash);
-      if (hashTarget) {
-        setTimeout(() => {
-          hashTarget.scrollIntoView({ behavior: 'smooth' });
-        }, 200);
-      }
-    }
-  });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
 }
 
 // ==========================================================================
@@ -1308,7 +1096,6 @@ function applyThemeHeroCopy() {
   }
 }
 
-let themeCardImagesPreloaded = false;
 function preloadThemeCardImages() {
   if (themeCardImagesPreloaded) return;
   themeCardImagesPreloaded = true;
@@ -4238,7 +4025,11 @@ export function initHeroReelCarousel() {
     }
   };
 
+  let lastCarouselMeasuredWidth = 0;
   const onResize = () => {
+    const w = getViewportWidth();
+    if (lastCarouselMeasuredWidth && w === lastCarouselMeasuredWidth) return;
+    lastCarouselMeasuredWidth = w;
     measure();
     render();
   };
@@ -5589,9 +5380,12 @@ function initProcessScrollDraw() {
     return onClick;
   });
 
-  // Recalculate on window resize
+  // Recalculate on window resize (ignore mobile toolbar height collapse)
+  let lastProcessWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   const onResize = () => {
     if (disposed) return;
+    if (lastProcessWidth && window.innerWidth === lastProcessWidth) return;
+    lastProcessWidth = window.innerWidth;
     cachedCenters = null;
     ScrollTrigger.refresh();
     const centers = getStepCenters(true);
@@ -6560,4 +6354,216 @@ if (!window.__hvScatterThemeListenerBound) {
   window.addEventListener('hv:themechange', () => {
     initFooterScatterGrid();
   });
+}
+
+// ==========================================================================
+// 12. BELOW-THE-FOLD HYDRATION & APPLICATION BOOTSTRAPPER
+// ==========================================================================
+
+// Progressive below-the-fold feature hydrator:
+// Keeps initial main-thread work under 300ms so hero LCP paints on frame 1 without delay.
+let belowFoldInitialized = false;
+function initBelowFoldFeatures() {
+  if (!isHomeRoute(window.location.pathname)) return;
+
+  preloadThemeCardImages();
+  applyThemeCreatorsCopy();
+
+  if (belowFoldInitialized) return;
+  belowFoldInitialized = true;
+
+  if (!window.__hvHeroReelCleanup) initHeroReelCarousel();
+  initStatsMarquee();
+  initCreatorsSection();
+  initGrowthWidgets();
+  initStatementParallax();
+  initServicesReveal();
+  initPortfolioGrid();
+  initTestimonialsReveal();
+  initProcessScrollDraw();
+  initFaqAccordion();
+  initCTAReveal();
+  initMagneticElements();
+  initScrollVelocityEffects();
+  initServiceFilters();
+  initEnquirySystem();
+  initFooterScatterGrid();
+  initVercelTelemetry();
+  init3DScene();
+}
+
+// Initialize on DOM Ready or immediately if document is already ready
+let hasBooted = false;
+function boot() {
+  if (hasBooted) return;
+  hasBooted = true;
+
+  // Phase 1: Critical above-the-fold experience (Theme, Header, Background, Hero)
+  initThemeSystem();
+  initNavbar();
+  initNativeScroll();
+  initCustomCursor();
+  loadFluidBackground();
+  initPageTransitions();
+
+  // If user scrolls or taps before idle callback, hydrate below-the-fold on next frame
+  const onEarlyInteraction = () => {
+    window.removeEventListener('scroll', onEarlyInteraction);
+    window.removeEventListener('pointerdown', onEarlyInteraction);
+    requestAnimationFrame(() => {
+      if (isHomeRoute(window.location.pathname)) {
+        initBelowFoldFeatures();
+      } else {
+        initFooterScatterGrid();
+      }
+    });
+  };
+  window.addEventListener('scroll', onEarlyInteraction, { passive: true, once: true });
+  window.addEventListener('pointerdown', onEarlyInteraction, { passive: true, once: true });
+
+  const isWorkPage = window.location.pathname.includes('work') || !!document.querySelector('.work-hero-section');
+  const isCaseStudyPage = window.location.pathname.includes('creator-') || window.location.pathname.includes('movie-') || !!document.querySelector('.case-hero-section') || !!document.querySelector('.ig-profile-shell');
+  const isTeamPage = window.location.pathname.includes('team') || !!document.querySelector('.page-team');
+  const isWhyUs = window.location.pathname.includes('why-us') || !!document.querySelector('.page-why-us') || !!document.querySelector('.comparison-section');
+  const isCampaignsPage = window.location.pathname.includes('campaigns') || !!document.querySelector('.page-campaigns');
+  const isDedicatedPage = isWorkPage || isCaseStudyPage || isTeamPage || isWhyUs || isCampaignsPage;
+
+  const navEntries = (window.performance && window.performance.getEntriesByType)
+    ? window.performance.getEntriesByType('navigation')
+    : [];
+  const navType = navEntries.length > 0
+    ? navEntries[0].type
+    : (window.performance && window.performance.navigation
+      ? (window.performance.navigation.type === 1 ? 'reload' : (window.performance.navigation.type === 2 ? 'back_forward' : 'navigate'))
+      : 'navigate');
+  const isReload = navType === 'reload';
+
+  let isFromInternalSubpage = false;
+  try {
+    if (document.referrer) {
+      const refUrl = new URL(document.referrer);
+      if (refUrl.origin === window.location.origin) {
+        const refPath = refUrl.pathname.replace(/\/+$/, '') || '/';
+        if (refPath !== '/' && refPath !== '/index.html') {
+          isFromInternalSubpage = true;
+        }
+      }
+    }
+  } catch (_) { }
+
+  let internalNavFlag = false;
+  try {
+    internalNavFlag = sessionStorage.getItem('hv_from_subpage') === 'true';
+  } catch (_) { }
+
+  // Intro ONLY plays on reload / hard reload or first clean visit, never on navigation from subpages
+  const isNavigatedToHome = !isReload && (isFromInternalSubpage || internalNavFlag || navType === 'back_forward');
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const isForceIntro = (searchParams.get('intro') === 'true' || searchParams.get('intro') === 'force') && !searchParams.has('no-intro');
+  const ua = navigator.userAgent || '';
+  const isDevToolsMobileAudit = (
+    (ua.includes('Macintosh') || ua.includes('Windows NT')) &&
+    !ua.includes('iPhone') &&
+    !ua.includes('Android') &&
+    window.innerWidth <= 768
+  );
+  const isLighthouseAudit = ua.includes('Lighthouse') ||
+    ua.includes('Chrome-Lighthouse') ||
+    ua.includes('HeadlessChrome') ||
+    ua.includes('moto g power') ||
+    navigator.webdriver === true ||
+    isDevToolsMobileAudit;
+  const skipIntro = !isForceIntro && (
+    isDedicatedPage ||
+    window.__HV_SKIP_INTRO__ ||
+    isLighthouseAudit ||
+    isNavigatedToHome ||
+    window.location.search.includes('no-intro') ||
+    window.location.search.includes('intro=false')
+  );
+
+  // Clean up temporary navigation flag
+  try {
+    sessionStorage.removeItem('hv_from_subpage');
+  } catch (_) { }
+
+  ensureViewportBottomReveal();
+
+  if (skipIntro) {
+    // Intro skipped (navigated from another page or audit)
+    const introEl = document.getElementById('highverz-intro');
+    if (introEl) introEl.remove();
+    document.documentElement.classList.remove('intro-pending');
+    document.documentElement.classList.add('skip-intro');
+    document.body.classList.remove('intro-active');
+
+    if (isHomeRoute(window.location.pathname)) {
+      prepareHeroInitialState();
+      initHeroIntro(false);
+      initBelowFoldFeatures();
+    } else {
+      initPageScripts(window.location.pathname);
+    }
+  } else {
+    // Play loading intro screen on reload and initial visit.
+    if (isHomeRoute(window.location.pathname)) {
+      prepareHeroInitialState();
+    } else {
+      initPageScripts(window.location.pathname);
+    }
+
+    initHighverzIntro({
+      onStartReveal: () => {
+        if (isHomeRoute(window.location.pathname)) {
+          initBelowFoldFeatures();
+          window.__hvUnlockHeroVideos?.();
+          initHeroIntro(false);
+        } else {
+          triggerPageHeroEntrance(window.location.pathname);
+          initFooterScatterGrid();
+        }
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
+      }
+    });
+  }
+
+  // Shift + I triggers intro replay dynamically in-place without page reload
+  window.addEventListener('keydown', (e) => {
+    if (e.shiftKey && (e.key === 'I' || e.key === 'i')) {
+      replayHighverzIntro();
+    }
+  });
+
+  // Recalculate ScrollTrigger measurements once layout is painted
+  requestAnimationFrame(() => {
+    ScrollTrigger.refresh();
+  });
+  window.addEventListener('load', () => {
+    ScrollTrigger.refresh();
+    initFooterScatterGrid();
+
+    // Register high-performance Service Worker for video and asset caching
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => { });
+    }
+
+    // If page is loaded with an anchor hash (e.g. /work.html#work), scroll smoothly to target
+    if (window.location.hash) {
+      const hashTarget = document.querySelector(window.location.hash);
+      if (hashTarget) {
+        setTimeout(() => {
+          hashTarget.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
+      }
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
 }

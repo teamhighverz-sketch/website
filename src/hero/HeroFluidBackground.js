@@ -251,7 +251,10 @@ export function initHeroFluidBackground() {
     );
   };
 
+  let lastFluidWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   const onResize = () => {
+    if (isMobile() && lastFluidWidth && window.innerWidth === lastFluidWidth) return;
+    lastFluidWidth = window.innerWidth;
     resize();
     // Repaint in the same task: never expose a cleared canvas on resize.
     start();

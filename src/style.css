@@ -21727,6 +21727,7 @@ html.theme-switching #hero .hero-global-sensation::after {
   #hero.hero-section {
     min-height: auto !important;
     padding-top: 1rem !important;
+    padding-bottom: 2.5rem !important;
   }
 
   [data-theme="light"] #hero .hero-headline-line {
@@ -23889,10 +23890,12 @@ body.page-team .founder-accord-card .founder-quote strong {
    and below its viewport. */
 @media (max-width: 768px) {
 
-  #hero.hero-section,
+  #hero.hero-section {
+    overflow: visible !important;
+  }
+
   #hero .carousel-viewport {
-    overflow-x: clip !important;
-    overflow-y: visible !important;
+    overflow: hidden !important;
   }
 }
 

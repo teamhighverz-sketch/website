@@ -75,7 +75,7 @@ function initNativeScroll() {
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination
-export function loadFluidBackground() {
+export function loadFluidBackground(forceImmediate = false) {
   if (window.__hvFluidBackgroundPromise) {
     return window.__hvFluidBackgroundPromise;
   }
@@ -90,11 +90,11 @@ export function loadFluidBackground() {
   // Light mode's hero transition depends on the fluid layer already being
   // mounted. Start it immediately there; retain the mobile idle deferral for
   // Dark mode where the CSS canvas is sufficient for first paint.
-  if (window.innerWidth <= 768 && document.documentElement.dataset.theme !== 'light' && !window.__hvFluidBackgroundScheduled) {
+  if (!forceImmediate && window.innerWidth <= 768 && document.documentElement.dataset.theme !== 'light' && !window.__hvFluidBackgroundScheduled) {
     window.__hvFluidBackgroundScheduled = true;
     const startFluid = () => {
       window.__hvFluidBackgroundScheduled = false;
-      loadFluidBackground();
+      loadFluidBackground(true);
     };
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(startFluid, { timeout: 1800 });
@@ -1417,6 +1417,9 @@ function applyThemeCreatorsCopy() {
 // so the cinema message appears as soon as Light mode is selected (and the
 // creator message returns when switching back to Dark mode).
 window.addEventListener('hv:themechange', (event) => {
+  // If the ambient fluid background was deferred on mobile dark mode, load it immediately
+  loadFluidBackground(true);
+
   // Initial theme synchronization is followed by the normal page entrance.
   // Running a second reveal at boot makes the two animations fight.
   if (!event.detail?.animate) return;
@@ -1584,14 +1587,6 @@ export function prepareHeroInitialState() {
   prepareHeroWordRoller();
 
   const isMobile = window.innerWidth < 768;
-  const isLightTheme = document.documentElement.dataset.theme === 'light';
-  if (isMobile && !isLightTheme) {
-    // Keep headline text visible and sharp on mobile for instant LCP and 0 GPU blur overhead
-    const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
-    headlineLines.forEach((line) => { line.style.overflow = 'visible'; });
-    return;
-  }
-
   const platformChips = heroHeadline.querySelectorAll('.hl-platform-chips .platform-chip');
   const headlineLines = heroHeadline.querySelectorAll('.hero-headline-line');
   const navbar = document.getElementById('navbar');
@@ -1602,20 +1597,20 @@ export function prepareHeroInitialState() {
   // blur + slide upward + opacity — content physically travels into focus
   gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller', {
     opacity: 0,
-    y: 25,
-    filter: 'blur(10px)',
-    willChange: 'opacity, transform, filter'
+    y: isMobile ? 18 : 25,
+    filter: isMobile ? 'blur(6px)' : 'blur(10px)',
+    willChange: isMobile ? 'auto' : 'opacity, transform, filter'
   });
   if (platformChips.length) {
-    gsap.set(platformChips, { opacity: 0, filter: 'blur(6px)' });
+    gsap.set(platformChips, { opacity: 0, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   }
   gsap.set('#hero-platform-icons', { opacity: 1 });
-  gsap.set('#hero-desc', { opacity: 0, y: 25, filter: 'blur(10px)' });
-  gsap.set('#hero-actions', { opacity: 0, y: 25, filter: 'blur(8px)' });
-  gsap.set('.hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar', { opacity: 0, y: 20, filter: 'blur(6px)' });
-  gsap.set('.section-trusted', { opacity: 0, y: 20, filter: 'blur(6px)' });
+  gsap.set('#hero-desc', { opacity: 0, y: isMobile ? 16 : 25, filter: isMobile ? 'blur(6px)' : 'blur(10px)' });
+  gsap.set('#hero-actions', { opacity: 0, y: isMobile ? 16 : 25, filter: isMobile ? 'blur(5px)' : 'blur(8px)' });
+  gsap.set('.hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar', { opacity: 0, y: isMobile ? 14 : 20, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
+  gsap.set('.section-trusted', { opacity: 0, y: isMobile ? 14 : 20, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   if (navbar) {
-    gsap.set(navbar, { opacity: 0, y: -15, filter: 'blur(6px)' });
+    gsap.set(navbar, { opacity: 0, y: -15, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   }
 }
 window.prepareHeroInitialState = prepareHeroInitialState;
@@ -1894,7 +1889,7 @@ function initHeroIntro(immediate = false) {
   const navbar = document.getElementById('navbar');
 
   const isMobile = window.innerWidth < 768;
-  if ((immediate && !isLightTheme) || (isMobile && !isLightTheme) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.body.classList.add('hero-revealed');
     gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller, #hero-platform-icons, .platform-chip, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', {
       opacity: 1, y: 0, x: 0, scale: 1, filter: 'none', clearProps: 'all'
@@ -1927,27 +1922,32 @@ function initHeroIntro(immediate = false) {
     ? [...line1Words, ...line2Words]
     : Array.from(heroHeadline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller'));
 
-  gsap.set(allWords, { opacity: 0, y: 25, filter: 'blur(10px)', willChange: 'opacity, transform, filter' });
+  gsap.set(allWords, {
+    opacity: 0,
+    y: isMobile ? 18 : 25,
+    filter: isMobile ? 'blur(6px)' : 'blur(10px)',
+    willChange: isMobile ? 'auto' : 'opacity, transform, filter'
+  });
   if (isLightTheme) {
     if (chips.length) {
-      gsap.set(chips, { opacity: 0, filter: 'blur(6px)' });
+      gsap.set(chips, { opacity: 0, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
     }
     const snippetConnector = heroHeadline.querySelector('.hero-headline-connector');
     if (snippetConnector) {
       gsap.set(snippetConnector, { opacity: 1, y: 0, filter: 'none' });
     }
   } else if (platformChips.length) {
-    gsap.set(platformChips, { opacity: 0, filter: 'blur(6px)' });
+    gsap.set(platformChips, { opacity: 0, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   }
 
   gsap.set('#hero-platform-icons', { opacity: 1 });
-  gsap.set('#hero-desc', { opacity: 0, y: 25, filter: 'blur(10px)' });
-  gsap.set('#hero-actions', { opacity: 0, y: 25, filter: 'blur(8px)' });
-  gsap.set('.hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar', { opacity: 0, y: 20, filter: 'blur(6px)' });
-  gsap.set('.section-trusted', { opacity: 0, y: 20, filter: 'blur(6px)' });
+  gsap.set('#hero-desc', { opacity: 0, y: isMobile ? 16 : 25, filter: isMobile ? 'blur(6px)' : 'blur(10px)' });
+  gsap.set('#hero-actions', { opacity: 0, y: isMobile ? 16 : 25, filter: isMobile ? 'blur(5px)' : 'blur(8px)' });
+  gsap.set('.hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar', { opacity: 0, y: isMobile ? 14 : 20, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
+  gsap.set('.section-trusted', { opacity: 0, y: isMobile ? 14 : 20, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   const isTransitioning = immediate || document.body.classList.contains('page-is-transitioning') || (navbar && navbar.classList.contains('page-nav-outgoing'));
   if (navbar && !isTransitioning) {
-    gsap.set(navbar, { opacity: 0, y: -15, filter: 'blur(6px)' });
+    gsap.set(navbar, { opacity: 0, y: -15, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   } else if (navbar) {
     gsap.set(navbar, { opacity: 1, y: 0, filter: 'none', clearProps: 'opacity,transform,filter' });
   }
@@ -1987,8 +1987,8 @@ function initHeroIntro(immediate = false) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: 0.7,
-        stagger: 0.07,
+        duration: isMobile ? 0.6 : 0.7,
+        stagger: isMobile ? 0.05 : 0.07,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
       },
@@ -1996,14 +1996,14 @@ function initHeroIntro(immediate = false) {
     );
 
     // Platform Chips: reveal right after Line 1 words
-    const chipsStartTime = 0.1 + (line1Words.length * 0.07);
+    const chipsStartTime = 0.1 + (line1Words.length * (isMobile ? 0.05 : 0.07));
     if (chips.length) {
       tl.to(chips,
         {
           opacity: 1,
           filter: 'blur(0px)',
-          duration: 0.5,
-          stagger: 0.06,
+          duration: isMobile ? 0.45 : 0.5,
+          stagger: isMobile ? 0.05 : 0.06,
           ease: 'power3.out',
           clearProps: 'filter,willChange'
         },
@@ -2012,14 +2012,14 @@ function initHeroIntro(immediate = false) {
     }
 
     // Line 2: "Turning Every Scene Into a Global Sensation." right after chips
-    const line2StartTime = chipsStartTime + ((chips.length || 1) * 0.06);
+    const line2StartTime = chipsStartTime + ((chips.length || 1) * (isMobile ? 0.05 : 0.06));
     tl.to(line2Words,
       {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: 0.75,
-        stagger: 0.08,
+        duration: isMobile ? 0.65 : 0.75,
+        stagger: isMobile ? 0.06 : 0.08,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
       },
@@ -2031,8 +2031,8 @@ function initHeroIntro(immediate = false) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: 0.8,
-        stagger: 0.08,
+        duration: isMobile ? 0.65 : 0.8,
+        stagger: isMobile ? 0.06 : 0.08,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
       },
@@ -6373,6 +6373,7 @@ function initBelowFoldFeatures() {
   belowFoldInitialized = true;
 
   if (!window.__hvHeroReelCleanup) initHeroReelCarousel();
+  initAdscaleTextEffects();
   initStatsMarquee();
   initCreatorsSection();
   initGrowthWidgets();

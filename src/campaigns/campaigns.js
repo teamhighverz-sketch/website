@@ -316,9 +316,10 @@ function initFilters() {
     });
   }
 
-  // Isolate scroll containers from parent scroll hijacking
+  // Isolate scroll containers from Lenis and parent scroll hijacking
   [genrePopover, yearPopover, sortPopover].forEach(p => {
     if (!p) return;
+    p.setAttribute('data-lenis-prevent', 'true');
     p.addEventListener('wheel', (e) => {
       e.stopPropagation();
     }, { passive: true });
@@ -329,6 +330,7 @@ function initFilters() {
 
   [genreOptions, yearOptions, sortOptions].forEach(opt => {
     if (!opt) return;
+    opt.setAttribute('data-lenis-prevent', 'true');
     opt.addEventListener('wheel', (e) => {
       e.stopPropagation();
     }, { passive: true });
@@ -414,13 +416,15 @@ function initFilters() {
     }
   }, { passive: true });
 
-  window.addEventListener('scroll', () => {
-    if (genrePopover?.classList.contains('is-open') || 
-        yearPopover?.classList.contains('is-open') || 
-        sortPopover?.classList.contains('is-open')) {
-      closeAllDropdowns();
-    }
-  }, { passive: true });
+  if (window.lenis) {
+    window.lenis.on('scroll', () => {
+      if (genrePopover?.classList.contains('is-open') || 
+          yearPopover?.classList.contains('is-open') || 
+          sortPopover?.classList.contains('is-open')) {
+        closeAllDropdowns();
+      }
+    });
+  }
 
   // Global Reset Button
   if (resetBtn) {
@@ -1040,6 +1044,9 @@ async function openMovieModal(movieId) {
   // Lock outer window scroll cleanly
   document.documentElement.style.overflow = 'hidden';
   document.body.style.overflow = 'hidden';
+  if (window.lenis) {
+    try { window.lenis.stop(); } catch (_) {}
+  }
 
   // Reset modal scroll position to top
   backdrop.scrollTop = 0;
@@ -1141,6 +1148,9 @@ function closeMovieModal() {
   // Restore outer window scroll
   document.documentElement.style.overflow = '';
   document.body.style.overflow = '';
+  if (window.lenis) {
+    try { window.lenis.start(); } catch (_) {}
+  }
 }
 
 function formatMoney(amount) {

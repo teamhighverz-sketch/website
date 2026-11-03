@@ -15,16 +15,6 @@ export default defineConfig({
         whyUs: resolve(__dirname, 'why-us.html'),
         campaigns: resolve(__dirname, 'campaigns.html'),
       },
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/three')) {
-            return 'vendor-three';
-          }
-          if (id.includes('node_modules/gsap')) {
-            return 'vendor-gsap';
-          }
-        },
-      },
     },
   },
   server: {

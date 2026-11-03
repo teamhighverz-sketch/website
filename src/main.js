@@ -80,16 +80,10 @@ function initLenis() {
     history.scrollRestoration = 'manual';
   }
 
-  // Allow native middle-mouse scroll button autoscroll and scrollbar dragging
+  // Prevent Windows middle-mouse autoscroll conflict with Lenis
   window.addEventListener('mousedown', (e) => {
-    if (e.button === 1 && lenis) {
-      lenis.reset();
-    }
-    // If clicking in the right scrollbar track/thumb gutter, reset Lenis for instant response
-    if (e.clientX >= window.innerWidth - 20 && lenis) {
-      lenis.reset();
-    }
-  }, { passive: true });
+    if (e.button === 1) e.preventDefault();
+  }, { passive: false });
 
   lenis = new Lenis({
     lerp: 0.1,
@@ -127,8 +121,11 @@ function initLenis() {
   window.lenis = lenis;
 
   // Connect Lenis to GSAP ScrollTrigger
-  lenis.on('scroll', () => {
-    ScrollTrigger.update();
+  // Native wheel scrolls already reach ScrollTrigger's own scroll listener.
+  // Avoid a second update for those events; Lenis still drives updates for
+  // smoothed wheel, touchpad, and scripted scrolling.
+  lenis.on('scroll', (instance) => {
+    if (instance.isScrolling !== 'native') ScrollTrigger.update();
   });
 
   gsap.ticker.add((time) => {

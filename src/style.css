@@ -223,10 +223,16 @@ body,
     border-color 600ms var(--ease-theme);
 }
 
-/* Reserve the scrollbar track so locking scroll cannot reflow centered content. */
+/* Reserve the scrollbar track on desktop so locking scroll cannot reflow centered content. */
 html {
   scrollbar-gutter: stable;
   overflow-x: clip;
+}
+
+@media (pointer: coarse), (max-width: 900px) {
+  html {
+    scrollbar-gutter: auto;
+  }
 }
 
 .service-card-item,
@@ -304,7 +310,7 @@ html {
   scroll-behavior: auto !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
   width: 100%;
 }
@@ -315,7 +321,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   letter-spacing: -0.01em;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
   width: 100%;
   cursor: none;
@@ -1057,7 +1063,8 @@ body.intro-active .home-theme-capsule-wrap {
   pointer-events: none !important;
 }
 
-body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
+body:has(.navbar.nav-hidden) .home-theme-capsule-wrap,
+.home-theme-capsule-wrap.capsule-hidden {
   transform: translateY(calc(-100% - 3rem));
   pointer-events: none;
 }
@@ -21697,6 +21704,7 @@ html.theme-switching #hero .hero-global-sensation::after {
   /* Keep the audience switcher anchored while the navbar hides on scroll.
      The shared desktop offset animation made it bob on mobile after entry. */
   .home-theme-capsule-wrap,
+  .home-theme-capsule-wrap.capsule-hidden,
   body:has(.navbar.nav-hidden) .home-theme-capsule-wrap {
     transform: none !important;
     transition: opacity 0.35s ease !important;

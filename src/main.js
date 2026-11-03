@@ -65,9 +65,9 @@ function initNativeScroll() {
     history.scrollRestoration = 'manual';
   }
 
-  // Ensure ScrollTrigger updates on native scrolls smoothly
+  // Ensure ScrollTrigger uses native scroll with 0ms lag smoothing jitter
   ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize' });
-  gsap.ticker.lagSmoothing(500, 33);
+  gsap.ticker.lagSmoothing(0);
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination
@@ -181,15 +181,17 @@ function boot() {
   loadFluidBackground();
   initPageTransitions();
 
-  // If user scrolls or taps before idle callback, immediately hydrate below-the-fold
+  // If user scrolls or taps before idle callback, hydrate below-the-fold on next frame
   const onEarlyInteraction = () => {
-    if (isHomeRoute(window.location.pathname)) {
-      initBelowFoldFeatures();
-    } else {
-      initFooterScatterGrid();
-    }
     window.removeEventListener('scroll', onEarlyInteraction);
     window.removeEventListener('pointerdown', onEarlyInteraction);
+    requestAnimationFrame(() => {
+      if (isHomeRoute(window.location.pathname)) {
+        initBelowFoldFeatures();
+      } else {
+        initFooterScatterGrid();
+      }
+    });
   };
   window.addEventListener('scroll', onEarlyInteraction, { passive: true, once: true });
   window.addEventListener('pointerdown', onEarlyInteraction, { passive: true, once: true });
@@ -786,6 +788,7 @@ function initNavbar() {
       // Only hide if scrolled well past hero (> 280px) AND user is scrolling down quickly
       if (scrollY > 280 && (scrollDownDistance > 140 || velocity > 1.2) && !isHidden) {
         navbar.classList.add('nav-hidden');
+        document.querySelector('.home-theme-capsule-wrap')?.classList.add('capsule-hidden');
         isHidden = true;
       }
     } else if (delta < -3) {
@@ -796,6 +799,7 @@ function initNavbar() {
       // Any intentional upward scroll reveals navbar smoothly
       if ((scrollUpDistance > 8 || scrollY <= 140) && isHidden) {
         navbar.classList.remove('nav-hidden');
+        document.querySelector('.home-theme-capsule-wrap')?.classList.remove('capsule-hidden');
         isHidden = false;
       }
     }
@@ -803,10 +807,9 @@ function initNavbar() {
     lastScrollY = scrollY;
   }
 
-  // Listen to native scroll
+  // Listen to native scroll (ScrollTrigger listens independently)
   window.addEventListener('scroll', () => {
     onScrollUpdate(window.scrollY);
-    if (window.ScrollTrigger) window.ScrollTrigger.update();
   }, { passive: true });
 
   // Peek reveal: when cursor moves to top 50px of the viewport, bring navbar back
@@ -2054,8 +2057,8 @@ export function initAdscaleTextEffects(root = document) {
     observer.observe(element);
   });
 
-  // Passive scroll listener ensures fast scroll/flick never leaves any element stuck hidden
-  const onScrollCheck = () => {
+  // Initial check ensures any element already in viewport reveals without waiting for scroll
+  const initialCheck = () => {
     revealElements.forEach((element) => {
       if (element.dataset.adscaleAnimated !== 'true') {
         const rect = element.getBoundingClientRect();
@@ -2066,13 +2069,9 @@ export function initAdscaleTextEffects(root = document) {
       }
     });
   };
-  window.__hvAdscaleScrollHandler = onScrollCheck;
-  window.addEventListener('scroll', onScrollCheck, { passive: true });
-
-  // Safety net: after 400ms, ensure no element currently visible remains stuck
-  setTimeout(() => {
-    onScrollCheck();
-  }, 400);
+  window.__hvAdscaleScrollHandler = initialCheck;
+  requestAnimationFrame(initialCheck);
+  setTimeout(initialCheck, 400);
 }
 
 function initHeroIntro(immediate = false) {
@@ -2289,7 +2288,7 @@ function initHeroIntro(immediate = false) {
         trigger: '.hero-section',
         start: 'top top',
         end: 'bottom top',
-        scrub: 1.2,
+        scrub: 0.2,
       }
     });
   }
@@ -2877,7 +2876,7 @@ function initStatementParallax() {
           trigger: '.section-statement',
           start: 'top 85%',
           end: 'bottom 20%',
-          scrub: 1.2 + (index * 0.15),
+          scrub: 0.3,
         }
       }
     );
@@ -2906,7 +2905,7 @@ function initStatementParallax() {
       trigger: '.section-statement',
       start: 'top bottom',
       end: 'bottom top',
-      scrub: 2,
+      scrub: 0.4,
     }
   });
 }
@@ -5472,18 +5471,20 @@ function initProcessScrollDraw() {
     }
   ));
 
-  // Measure the visible track anchors relative to the line itself. offsetLeft
-  // is relative to each element's offsetParent, which can differ between the
-  // track and grid and caused progress/active states to drift apart.
-  const getStepCenters = () => {
+  // Measure the visible track anchors relative to the line itself.
+  // Cache the centers on layout/resize to avoid 10+ getBoundingClientRect calls per scroll frame.
+  let cachedCenters = null;
+  const getStepCenters = (force = false) => {
+    if (cachedCenters && !force) return cachedCenters;
     const trackRect = trackContainer.getBoundingClientRect();
     const trackWidth = trackRect.width || 1;
-    return steps.map((step, index) => {
+    cachedCenters = steps.map((step, index) => {
       const anchor = nodes[index] || step;
       const rect = anchor.getBoundingClientRect();
       const center = rect.left + rect.width / 2 - trackRect.left;
       return Math.min(100, Math.max(0, (center / trackWidth) * 100));
     });
+    return cachedCenters;
   };
 
   // Function to set active state based on width percent
@@ -5567,8 +5568,9 @@ function initProcessScrollDraw() {
   // Recalculate on window resize
   const onResize = () => {
     if (disposed) return;
+    cachedCenters = null;
     ScrollTrigger.refresh();
-    const centers = getStepCenters();
+    const centers = getStepCenters(true);
     const activeSteps = steps.filter((step) => step.classList.contains('active'));
     const lastActiveIdx = activeSteps.length - 1;
     if (lastActiveIdx >= 0 && centers[lastActiveIdx]) {

@@ -1426,8 +1426,8 @@ window.addEventListener('hv:themechange', (event) => {
   const headline = document.getElementById('hero-headline');
   if (!headline) return;
   heroIntroGeneration += 1;
-  if (heroIntroTimeline || window.__hvLightHeroFluidGate === 'pending') {
-    heroIntroTimeline?.kill();
+  if (heroIntroTimeline) {
+    heroIntroTimeline.kill();
     heroIntroTimeline = null;
     const support = document.querySelectorAll([
       '#hero-platform-icons', '#hero-desc', '#hero-actions', '.hero-trust-badge-wrap',
@@ -1595,12 +1595,26 @@ export function prepareHeroInitialState() {
 
   // Hero entrance continues the loader's motion language:
   // blur + slide upward + opacity — content physically travels into focus
-  gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller', {
+  const isLightTheme = document.documentElement.dataset.theme === 'light';
+  gsap.set('.hl-word, .hero-word-roller', {
     opacity: 0,
     y: isMobile ? 18 : 25,
     filter: isMobile ? 'blur(6px)' : 'blur(10px)',
     willChange: isMobile ? 'auto' : 'opacity, transform, filter'
   });
+  if (isLightTheme) {
+    const snippetConnector = heroHeadline.querySelector('.hero-headline-connector');
+    if (snippetConnector) {
+      gsap.set(snippetConnector, { opacity: 1, y: 0, filter: 'none' });
+    }
+  } else {
+    gsap.set('.hero-headline-connector', {
+      opacity: 0,
+      y: isMobile ? 18 : 25,
+      filter: isMobile ? 'blur(6px)' : 'blur(10px)',
+      willChange: isMobile ? 'auto' : 'opacity, transform, filter'
+    });
+  }
   if (platformChips.length) {
     gsap.set(platformChips, { opacity: 0, filter: isMobile ? 'blur(4px)' : 'blur(6px)' });
   }
@@ -1858,23 +1872,6 @@ export function initAdscaleTextEffects(root = document) {
 
 function initHeroIntro(immediate = false) {
   const isLightTheme = document.documentElement.dataset.theme === 'light';
-  const generation = heroIntroGeneration;
-
-  // Do not let the Light hero reveal outrun its ambient fluid background.
-  // The promise is shared with the boot-time loader, so this adds no second
-  // import and resolves immediately when the background is already ready.
-  if (isLightTheme && window.__hvLightHeroFluidGate !== 'ready') {
-    if (window.__hvLightHeroFluidGate === 'pending') return;
-    window.__hvLightHeroFluidGate = 'pending';
-    Promise.resolve(loadFluidBackground()).then(() => {
-      window.__hvLightHeroFluidGate = 'ready';
-      if (generation === heroIntroGeneration) initHeroIntro(immediate);
-    }).catch(() => {
-      window.__hvLightHeroFluidGate = 'ready';
-      if (generation === heroIntroGeneration) initHeroIntro(immediate);
-    });
-    return;
-  }
 
   applyThemeHeroCopy();
   // The reel is prepared during Home hydration so its media can buffer behind

@@ -1,11 +1,10 @@
 /**
  * HIGHVERZ — Master Animation & Interaction Choreography
- * GSAP 3 + ScrollTrigger + Lenis Smooth Scroll
+ * GSAP 3 + ScrollTrigger + Native High-Performance Scroll
  */
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
 // hv3d.js (three.js, ~600 KB) is lazy-loaded inside init3DScene()
 import { initHighverzIntro, replayHighverzIntro } from './intro/HighverzIntro.js';
 import './style.css';
@@ -42,9 +41,8 @@ if ('onpagereveal' in window) {
 }
 
 // ==========================================================================
-// LENIS SMOOTH SCROLL SETUP
+// NATIVE HIGH-PERFORMANCE SCROLL SETUP
 // ==========================================================================
-let lenis;
 let activeWorkMetricTweens = [];
 let heroIntroTimeline = null;
 let heroIntroGeneration = 0;
@@ -59,82 +57,16 @@ function initVercelTelemetry() {
   };
 }
 
-function initLenis() {
-  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches ||
-    ('ontouchstart' in window && window.innerWidth <= 1024) ||
-    window.innerWidth <= 768;
-  const isWindows = navigator.userAgentData?.platform === 'Windows' ||
-    /Windows/i.test(navigator.userAgent);
-
-  // Touch screens have 120Hz/60Hz native hardware momentum scrolling.
-  // Intercepting touch scrolling with JS creates input latency and sluggish response.
-  if (isTouchDevice) {
-    window.lenis = null;
-    lenis = null;
-    gsap.ticker.lagSmoothing(500, 33);
-    return;
-  }
+function initNativeScroll() {
+  window.lenis = null;
 
   // Prevent browser scrollRestoration jumping on reload or DOM shifts
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
 
-  // Prevent Windows middle-mouse autoscroll conflict with Lenis
-  window.addEventListener('mousedown', (e) => {
-    if (e.button === 1) e.preventDefault();
-  }, { passive: false });
-
-  lenis = new Lenis({
-    lerp: 0.1,
-    orientation: 'vertical',
-    gestureOrientation: 'vertical',
-    smoothWheel: true,
-    wheelMultiplier: 0.85,
-    touchMultiplier: 1.5,
-    infinite: false,
-    autoRaf: false,
-    // Keep Lenis smoothing for Windows touchpads, but let discrete physical
-    // mouse-wheel steps use native scrolling. Chromium may expose mouse
-    // wheels in pixel mode, so also recognize its standard legacy 120-unit
-    // wheel ticks (and the common 100-unit Windows tick).
-    ...(isWindows ? {
-      virtualScroll: ({ event, deltaX }) => {
-        if (event.type !== 'wheel') return true;
-        const wheelEvent = event;
-        const legacyDelta = Math.abs(Number(wheelEvent.wheelDeltaY) || 0);
-        const lineWheel = wheelEvent.deltaMode === WheelEvent.DOM_DELTA_LINE;
-        const discretePixelWheel = deltaX === 0 && Math.abs(wheelEvent.deltaY) >= 50 && legacyDelta >= 80 &&
-          (legacyDelta % 120 === 0 || legacyDelta === 100);
-        const useNativeWheel = lineWheel || discretePixelWheel;
-        if (useNativeWheel && lenis?.isScrolling === 'smooth') {
-          // Hand off an in-progress touchpad/Lenis glide before the browser
-          // applies this native wheel tick, so the two scroll owners cannot
-          // compete for the scroll position.
-          lenis.reset();
-        }
-        return !useNativeWheel;
-      },
-    } : {}),
-  });
-
-  window.lenis = lenis;
-
-  // Connect Lenis to GSAP ScrollTrigger
-  // Native wheel scrolls already reach ScrollTrigger's own scroll listener.
-  // Avoid a second update for those events; Lenis still drives updates for
-  // smoothed wheel, touchpad, and scripted scrolling.
-  lenis.on('scroll', (instance) => {
-    if (instance.isScrolling !== 'native') ScrollTrigger.update();
-  });
-
-  gsap.ticker.add((time) => {
-    if (lenis) lenis.raf(time * 1000);
-  });
-
-  // Cap long frame gaps before forwarding ticker time to Lenis. On Windows,
-  // video decode and compositing can briefly stall; with lag smoothing off,
-  // Lenis receives that full gap and applies it as a sudden scroll correction.
+  // Ensure ScrollTrigger updates on native scrolls smoothly
+  ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize' });
   gsap.ticker.lagSmoothing(500, 33);
 }
 
@@ -244,7 +176,7 @@ function boot() {
   // Phase 1: Critical above-the-fold experience (Theme, Header, Background, Hero)
   initThemeSystem();
   initNavbar();
-  initLenis();
+  initNativeScroll();
   initCustomCursor();
   loadFluidBackground();
   initPageTransitions();
@@ -338,10 +270,7 @@ function boot() {
     document.documentElement.classList.remove('intro-pending');
     document.documentElement.classList.add('skip-intro');
     document.body.classList.remove('intro-active');
-    if (lenis) {
-      lenis.start();
-      lenis.scrollTo(0, { immediate: true });
-    }
+    window.scrollTo(0, 0);
 
     if (isHomeRoute(window.location.pathname)) {
       prepareHeroInitialState();
@@ -358,11 +287,9 @@ function boot() {
     } else {
       initPageScripts(window.location.pathname);
     }
-    if (lenis) lenis.stop();
 
     initHighverzIntro({
       onStartReveal: () => {
-        if (lenis) lenis.start();
         if (isHomeRoute(window.location.pathname)) {
           initBelowFoldFeatures();
           window.__hvUnlockHeroVideos?.();
@@ -381,7 +308,6 @@ function boot() {
   // Shift + I triggers intro replay dynamically in-place without page reload
   window.addEventListener('keydown', (e) => {
     if (e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-      if (lenis) lenis.stop();
       replayHighverzIntro();
     }
   });
@@ -404,11 +330,7 @@ function boot() {
       const hashTarget = document.querySelector(window.location.hash);
       if (hashTarget) {
         setTimeout(() => {
-          if (window.lenis) {
-            window.lenis.scrollTo(hashTarget, { offset: -80, duration: 1.2 });
-          } else {
-            hashTarget.scrollIntoView({ behavior: 'smooth' });
-          }
+          hashTarget.scrollIntoView({ behavior: 'smooth' });
         }, 200);
       }
     }
@@ -881,10 +803,7 @@ function initNavbar() {
     lastScrollY = scrollY;
   }
 
-  // Hook into Lenis smooth scroll and native scroll
-  if (window.lenis) {
-    window.lenis.on('scroll', (e) => onScrollUpdate(e.scroll));
-  }
+  // Listen to native scroll
   window.addEventListener('scroll', () => {
     onScrollUpdate(window.scrollY);
     if (window.ScrollTrigger) window.ScrollTrigger.update();
@@ -928,16 +847,8 @@ function initNavbar() {
           positionIndicator(link, false);
         }
 
-        if (window.lenis) {
-          window.lenis.scrollTo(targetEl, {
-            offset: -80,
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
-          });
-        } else {
-          const top = targetEl.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top, behavior: 'smooth' });
-        }
+        const top = targetEl.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: 'smooth' });
 
         setTimeout(() => {
           isProgrammaticScroll = false;
@@ -950,11 +861,7 @@ function initNavbar() {
           const normCurrent = (window.location.pathname || '/').replace(/\/+$/, '').replace(/\.html$/, '') || '/';
           if (normLink === normCurrent && !linkUrl.hash) {
             e.preventDefault();
-            if (window.lenis) {
-              window.lenis.scrollTo(0, { duration: 0.8 });
-            } else {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         } catch (_) { }
       }
@@ -1124,7 +1031,6 @@ function initMobileNav(navbar) {
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-label', 'Navigation');
-  overlay.setAttribute('data-lenis-prevent', '');
   toggleBtn?.setAttribute('aria-controls', overlay.id);
   toggleBtn?.setAttribute('aria-expanded', 'false');
   const closeBtn = overlay.querySelector('.mobile-nav-close');
@@ -1161,7 +1067,6 @@ function initMobileNav(navbar) {
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('mobile-menu-active');
-    if (window.lenis) window.lenis.stop();
     closeBtn?.focus({ preventScroll: true });
 
     // Staggered Entrance Animation
@@ -1194,7 +1099,6 @@ function initMobileNav(navbar) {
       toggleBtn.setAttribute('aria-expanded', 'false');
     }
     document.body.classList.remove('mobile-menu-active');
-    if (window.lenis) window.lenis.start();
 
     if (typeof gsap !== 'undefined') {
       gsap.to(overlay, {
@@ -1257,7 +1161,6 @@ function initMobileNav(navbar) {
       overlay.style.visibility = 'hidden';
       overlay.style.opacity = '0';
       overlay.style.pointerEvents = 'none';
-      if (window.lenis) window.lenis.start();
     });
   });
 
@@ -1320,11 +1223,7 @@ function applyThemeHeroTrustBadge() {
         ? (document.querySelector('#work') || document.querySelector('.section-portfolio') || document.querySelector('#creators'))
         : (document.querySelector('#creators') || document.querySelector('.section-creators'));
       if (target) {
-        if (window.lenis) {
-          window.lenis.scrollTo(target, { offset: -60, duration: 1.2 });
-        } else {
-          target.scrollIntoView({ behavior: 'smooth' });
-        }
+        target.scrollIntoView({ behavior: 'smooth' });
       }
     });
   }

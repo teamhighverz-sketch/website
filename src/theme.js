@@ -163,7 +163,7 @@ export function initThemeSystem() {
         const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
         applyTheme(nextTheme, true);
         const nextBtn = capsule.querySelector(`.theme-capsule-btn[data-theme-value="${nextTheme}"]`);
-        nextBtn?.focus();
+        nextBtn?.focus({ preventScroll: true });
       }
     });
   });

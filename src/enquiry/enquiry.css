@@ -5,6 +5,7 @@
 /* Custom Cursor Suspension When Modal is Active */
 body.enquiry-modal-open {
   cursor: default !important;
+  overflow: hidden !important;
 }
 
 body.enquiry-modal-open * {

@@ -395,7 +395,6 @@ export function replayHighverzIntro() {
   initHighverzIntro({
     force: true,
     onStartReveal: () => {
-      if (window.lenis) window.lenis.start();
       if (typeof window.initHeroIntro === 'function') {
         window.initHeroIntro(false);
       }

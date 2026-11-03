@@ -91,7 +91,6 @@ function bindEnquiryModalPageLifecycle() {
   window.addEventListener('pageshow', () => {
     if (!resumeEnquiryScrollOnPageShow) return;
     dismissEnquiryModal(false);
-    if (window.lenis) window.lenis.start();
     resumeEnquiryScrollOnPageShow = false;
   });
 }
@@ -103,7 +102,6 @@ function dismissEnquiryModal(resumeScroll = true) {
   backdrop.classList.remove('is-active');
   backdrop.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('enquiry-modal-open');
-  if (resumeScroll && window.lenis) window.lenis.start();
 }
 
 // The router also uses this when navigating without a page reload.
@@ -198,7 +196,7 @@ function injectEnquiryModal() {
 
   const modalHtml = `
     <div class="enquiry-modal-backdrop" id="enquiry-modal-backdrop" aria-hidden="true" role="dialog" aria-labelledby="enquiry-modal-title">
-      <div class="enquiry-modal-window simple-enquiry-window" data-lenis-prevent>
+      <div class="enquiry-modal-window simple-enquiry-window">
         <button type="button" class="enquiry-modal-close" id="enquiry-modal-close" aria-label="Close Enquiry Modal">✕</button>
 
         <!-- Form Stage -->
@@ -882,7 +880,6 @@ export function openEnquiryModal() {
   const backdrop = document.getElementById('enquiry-modal-backdrop');
   if (!backdrop) return;
 
-  if (window.lenis) window.lenis.stop();
   backdrop.classList.add('is-active');
   backdrop.setAttribute('aria-hidden', 'false');
   document.body.classList.add('enquiry-modal-open');
@@ -909,7 +906,6 @@ function bindAdminEvents() {
     overlay.classList.remove('is-active');
     overlay.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('enquiry-modal-open');
-    if (window.lenis) window.lenis.start();
   };
 
   closeBtn.addEventListener('click', closeAdmin);
@@ -1048,7 +1044,6 @@ export function openAdminLeadsDashboard() {
   if (!overlay) return;
 
   renderAdminLeads();
-  if (window.lenis) window.lenis.stop();
   overlay.classList.add('is-active');
   overlay.setAttribute('aria-hidden', 'false');
   document.body.classList.add('enquiry-modal-open');

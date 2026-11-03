@@ -318,12 +318,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       window.__hvEnsureCursorActive();
     }
 
-    // 4. Freeze Lenis scrolling during transition to prevent scroll/layout thrashing
-    if (window.lenis) {
-      window.lenis.stop();
-    }
-
-    // 5. Freeze current content in visual viewport (preserves exact visual frame without bottom cut-off)
+    // 4. Freeze current content in visual viewport (preserves exact visual frame without bottom cut-off)
     const currentScrollY = window.scrollY || window.pageYOffset || 0;
     const currentContentTop = currentContent.getBoundingClientRect().top;
     // On mobile, the audience toggle occupies normal flow above <main>.
@@ -336,11 +331,8 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     // Immediately reset document scroll while outgoing content is pinned at -scrollY
     // This completely eliminates scroll-jump and bottom/top layout gaps when swapping pages
     window.scrollTo(0, 0);
-    if (window.lenis) {
-      window.lenis.scrollTo(0, { immediate: true });
-    }
 
-    // 6. Mount incoming content inside an isolated 100vw x 100vh viewport shell
+    // 5. Mount incoming content inside an isolated 100vw x 100vh viewport shell
     const shell = document.createElement('div');
     shell.className = 'page-transition-shell';
     if (isLightTransition) shell.classList.add('page-transition-shell--glass');
@@ -479,13 +471,12 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       if (incomingScriptsStarted) return;
       incomingScriptsStarted = true;
       shell.style.visibility = 'visible';
-      // Fast route clicks can leave the browser/Lenis scroll state one frame
-      // behind the new shell. Reset every scroll owner before measuring the
+      // Fast route clicks can leave the browser scroll state one frame
+      // behind the new shell. Reset scroll before measuring the
       // incoming hero so Home never opens halfway down the page.
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-      window.lenis?.scrollTo(0, { immediate: true });
       currentContent.remove();
       // Install the incoming route's CSS context before dispatching scripts or
       // measuring its layout. Outgoing body classes used to select the wrong
@@ -544,11 +535,6 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-        if (window.lenis) {
-          window.lenis.scrollTo(0, { immediate: true });
-          window.lenis.start();
-          window.lenis.resize();
-        }
 
         // One layout refresh after promotion. The carousel's own refresh
         // already handles settling frames; the footer was initialized above.
@@ -656,11 +642,7 @@ export function initPageTransitions() {
       if (!url.hash) {
         // Clicking same page link without hash: scroll smoothly to top
         e.preventDefault();
-        if (window.lenis) {
-          window.lenis.scrollTo(0);
-        } else {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       return;
     }

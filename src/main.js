@@ -434,8 +434,7 @@ function initCustomCursor() {
   if (!cursorWrap || !cursorRing) return;
 
   // Touch device and small screen check
-  const isTouchOnly = window.matchMedia('(pointer: coarse) and (hover: none)').matches || window.innerWidth <= 900;
-  if (isTouchOnly) {
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900) {
     cursorWrap.style.display = 'none';
     document.body.style.cursor = 'auto';
     return;
@@ -464,7 +463,7 @@ function initCustomCursor() {
 
   // Expose global cursor restoration hook for transitions
   window.__hvEnsureCursorActive = function () {
-    if (window.innerWidth <= 900 || window.matchMedia('(pointer: coarse) and (hover: none)').matches) return;
+    if (window.innerWidth <= 900 || ('ontouchstart' in window || navigator.maxTouchPoints > 0)) return;
     document.body.classList.add('cursor-active');
     if (cursorWrap) cursorWrap.classList.remove('is-hidden');
     if (cursorDot) cursorDot.classList.remove('is-hidden');
@@ -1412,8 +1411,8 @@ function preloadThemeCardImages() {
   if (themeCardImagesPreloaded) return;
   themeCardImagesPreloaded = true;
   const images = [
-    '/assets/creators/opt/niv0ne.jpg',
-    '/assets/creators/opt/umarpnj.jpg',
+    '/assets/creators/image_new/image.png',
+    '/assets/creators/image_new/image%20copy.png',
     '/assets/movie/runner.png',
     '/assets/movie/kingofkings.png'
   ];
@@ -1440,7 +1439,7 @@ const HOME_CASE_STUDIES_DARK = {
   card1: `
     <div class="creator-image-col">
       <a href="https://www.instagram.com/niv0ne/" target="_blank" rel="noopener noreferrer" class="creator-image-wrap" data-cursor="INSTAGRAM ↗" aria-label="Niv0ne Instagram Profile">
-        <img src="/assets/creators/opt/niv0ne.jpg" alt="Niv0ne — Creator growth case study" class="creator-img" loading="lazy" decoding="async" />
+        <img src="/assets/creators/image_new/image.png" alt="Niv0ne — Creator growth case study" class="creator-img" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
           <span class="badge-growth">↗ 4,900% Growth</span>
@@ -1499,7 +1498,7 @@ const HOME_CASE_STUDIES_DARK = {
   card2: `
     <div class="creator-image-col">
       <a href="https://www.instagram.com/umarpnj/" target="_blank" rel="noopener noreferrer" class="creator-image-wrap" data-cursor="INSTAGRAM ↗" aria-label="Umarpnj Instagram Profile">
-        <img src="/assets/creators/opt/umarpnj.jpg" alt="Umarpnj — Creator growth case study" class="creator-img" loading="lazy" decoding="async" />
+        <img src="/assets/creators/image_new/image%20copy.png" alt="Umarpnj — Creator growth case study" class="creator-img" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
           <span class="badge-growth">↗ From Zero</span>

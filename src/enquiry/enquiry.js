@@ -97,9 +97,6 @@ function bindEnquiryModalPageLifecycle() {
 }
 
 function dismissEnquiryModal(resumeScroll = true) {
-  if (typeof window.__hvCloseCountryDropdown === 'function') {
-    try { window.__hvCloseCountryDropdown(); } catch (_) {}
-  }
   const backdrop = document.getElementById('enquiry-modal-backdrop');
   if (!backdrop || !backdrop.classList.contains('is-active')) return;
 
@@ -508,12 +505,7 @@ function bindModalEvents() {
   };
 
   typeOptions.forEach((option) => {
-    option.addEventListener('click', () => {
-      if (typeof window.__hvCloseCountryDropdown === 'function') {
-        try { window.__hvCloseCountryDropdown(); } catch (_) {}
-      }
-      setEnquiryType(option.dataset.enquiryType);
-    });
+    option.addEventListener('click', () => setEnquiryType(option.dataset.enquiryType));
   });
   positionInput.addEventListener('change', updatePositionFields);
   setEnquiryType('brand');

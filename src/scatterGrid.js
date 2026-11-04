@@ -6,6 +6,7 @@ export function initScatterGrid(container, options = {}) {
   const stiffness = options.stiffness || 0.02;
   const damping = options.damping || 0.88;
   const bleed = options.bleed || 50;
+  const maxDots = options.maxDots || 8000;
   const base = options.base || [30, 41, 59]; // slate-800
   const accent = options.accent || [0, 229, 255]; // cyan
   const STEPS = 14;
@@ -117,13 +118,29 @@ export function initScatterGrid(container, options = {}) {
         const minStep = Math.max(1, Math.min(dotSize + dotGap, boxW / 320));
         let step = minStep;
 
+        // Test each grid cell for any opaque mask pixel instead of sampling only
+        // its center. Center-only sampling drops narrow silhouettes at the
+        // rocket tip and the bottom of the g, making both look cropped.
+        const cellHasInk = (x, y, s) => {
+          const x0 = Math.max(0, Math.floor(x - s / 2));
+          const y0 = Math.max(0, Math.floor(y - s / 2));
+          const x1 = Math.min(width, Math.ceil(x + s / 2));
+          const y1 = Math.min(height, Math.ceil(y + s / 2));
+          for (let py = y0; py < y1; py++) {
+            let px = (py * width + x0) * 4 + 3;
+            for (let ix = x0; ix < x1; ix++, px += 4) {
+              if (data[px] > 50) return true;
+            }
+          }
+          return false;
+        };
+
         const countAt = (s) => {
           let n = 0;
           const half = s / 2;
           for (let y = half; y < height; y += s) {
             for (let x = half; x < width; x += s) {
-              const px = (Math.round(y) * width + Math.round(x)) * 4;
-              if (data[px + 3] > 50) n++; // Alpha threshold
+              if (cellHasInk(x, y, s)) n++;
             }
           }
           return n;
@@ -131,7 +148,7 @@ export function initScatterGrid(container, options = {}) {
 
         let count = countAt(step);
         let guard = 0;
-        while (count > 8000 && guard < 20) {
+        while (count > maxDots && guard < 20) {
           step *= 1.15;
           count = countAt(step);
           guard++;
@@ -142,8 +159,7 @@ export function initScatterGrid(container, options = {}) {
         const half = step / 2;
         for (let y = half; y < height; y += step) {
           for (let x = half; x < width; x += step) {
-            const px = (Math.round(y) * width + Math.round(x)) * 4;
-            if (data[px + 3] > 50) {
+            if (cellHasInk(x, y, step)) {
               nextDots.push({ hx: x, hy: y, x, y, vx: 0, vy: 0 });
             }
           }

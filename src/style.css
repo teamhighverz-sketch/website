@@ -2048,13 +2048,11 @@ body.mobile-menu-active .work-creator-card {
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 8px;
-  width: 100%;
-  background-color: #00e5ff;
+  width: var(--hero-word-underline-width, 0px);
+  height: 0.075em;
   background: linear-gradient(90deg, #00D5FF 0%, #5EFBFF 50%, #00D5FF 100%);
   box-shadow: 0 0 12px rgba(0, 213, 255, 0.5);
   border-radius: 2px;
-  /* Match the highlight cyan color */
   z-index: 1;
   transform: scaleX(0);
   transform-origin: left center;
@@ -2062,6 +2060,7 @@ body.mobile-menu-active .work-creator-card {
   visibility: hidden;
   transition: transform 0.3s ease-in-out, opacity 0.2s ease, visibility 0s linear 0.3s;
   will-change: transform;
+  pointer-events: none;
 }
 
 .hero-word-roller:focus-visible::after {
@@ -2120,7 +2119,6 @@ body.mobile-menu-active .work-creator-card {
 }
 
 [data-theme="light"] .hero-word-roller::after {
-  background-color: #0EA5E9 !important;
   background: linear-gradient(90deg, #0284C7 0%, #0EA5E9 50%, #38BDF8 100%) !important;
   box-shadow: 0 2px 10px rgba(14, 165, 233, 0.45) !important;
 }
@@ -19830,32 +19828,23 @@ body::after {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  /* Keep the scatter grid and logo contained strictly beneath the top boundary line */
-  min-height: clamp(450px, 48vh, 540px);
+  /* Leave room for the full scatter wordmark, including the rocket and g descender. */
+  min-height: max(clamp(450px, 48vh, 540px), min(620px, calc(32.8vw + 60px)));
   padding: clamp(3.5rem, 5vw, 5rem) 0 clamp(2.5rem, 3.5vw, 3.5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid transparent;
   background: linear-gradient(180deg, rgba(10, 18, 26, 0.72) 0%, rgba(4, 7, 10, 0.92) 100%);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   box-shadow:
-    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.18),
     inset 0 0 40px 0 rgba(0, 229, 255, 0.03),
     0 -18px 45px rgba(0, 0, 0, 0.45);
 }
 
 .footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 6%;
-  right: 6%;
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 20%, rgba(0, 229, 255, 0.75) 50%, rgba(255, 255, 255, 0.45) 80%, transparent 100%);
-  pointer-events: none;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.45);
+  display: none;
 }
 
 .footer-watermark-logo {
@@ -19864,7 +19853,7 @@ body::after {
   top: 50%;
   bottom: auto;
   z-index: 0;
-  width: min(960px, 66vw);
+  width: min(1500px, 88vw);
   aspect-ratio: 2415 / 900;
   transform: translate(50%, -50%);
   pointer-events: none;
@@ -20093,7 +20082,8 @@ body::after {
 /* The CTA remains a compact framed moment; the footer watermark is the hero. */
 .section-cta {
   padding-top: clamp(2rem, 2.8vw, 2.6rem);
-  padding-bottom: clamp(1.5rem, 2.2vw, 2rem);
+  /* Reduce the gap below the CTA so its single divider sits higher above the footer rocket. */
+  padding-bottom: clamp(0.75rem, 1.2vw, 1rem);
 }
 
 .cta-inner-layout {
@@ -20256,9 +20246,9 @@ body::after {
 
 /* ── Light Theme Footer — original white card style ── */
 [data-theme="light"] .footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  border-top-color: transparent;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.75) 0%, rgba(238, 245, 249, 0.92) 100%);
-  box-shadow: inset 0 1px 0 0 #FFFFFF;
+  box-shadow: none;
 }
 
 [data-theme="light"] .footer-watermark-logo {
@@ -20377,8 +20367,9 @@ body::after {
 /* Keep the footer watermark atmospheric without letting it wash over the
    footer copy and navigation. */
 .footer-watermark-logo {
-  width: min(960px, 66vw);
-  top: 50%;
+  width: min(1500px, 88vw);
+  /* Give the rocket tip a little breathing room below the footer divider. */
+  top: calc(50% + 10px);
   bottom: auto;
   transform: translate(50%, -50%);
   opacity: 1;
@@ -20389,8 +20380,8 @@ body::after {
 }
 
 [data-theme="light"] .footer-watermark-logo {
-  width: min(960px, 66vw);
-  top: 50%;
+  width: min(1500px, 88vw);
+  top: calc(50% + 10px);
   bottom: auto;
   transform: translate(50%, -50%);
   opacity: 0.95;
@@ -21686,10 +21677,19 @@ html.theme-switching:has(#hero) .viewport-bottom-reveal>div:last-child {
   }
 }
 
-/* Keep decorative underlines out of the compositor during the theme swap.
-   A zero-width transformed line can otherwise leave a colored edge in Safari. */
-html.theme-switching #hero .hero-word-roller::after,
+/* Keep the separate headline flourish out of the compositor during the
+   theme swap; the rotating word underline is text-sized and stays independent. */
 html.theme-switching #hero .hero-global-sensation::after {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+html.theme-switching #hero .hero-word-roller::after {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
@@ -21704,10 +21704,9 @@ html.theme-switching #hero .hero-global-sensation::after {
    compositor translation and decorative underline are suppressed. */
 @media (max-width: 768px) {
 
-  /* Touch browsers can retain :active/:hover after a theme tap. Remove the
-     decorative headline strokes on phones so no colored edge is left behind
-     the blurred text while the new copy is being painted. */
-  #hero .hero-word-roller::after,
+  /* Touch browsers can retain :active/:hover after a theme tap. Suppress the
+     section flourish during theme changes, while keeping the word-sized
+     roller underline available outside the transition. */
   #hero .hero-global-sensation::after {
     display: none !important;
   }
@@ -21716,7 +21715,6 @@ html.theme-switching #hero .hero-global-sensation::after {
     transform: none !important;
   }
 
-  html.theme-switching:has(#hero) #hero .hero-word-roller::after,
   html.theme-switching:has(#hero) #hero .hero-global-sensation::after {
     display: none !important;
   }
@@ -24379,5 +24377,51 @@ body.page-team .founder-accord-card .founder-quote strong {
 
   #creators.section-creators {
     padding-top: 2rem !important;
+  }
+}
+
+/* Mobile compositing budget: keep the existing glass surfaces and their
+   motion, but use a smaller sampling radius when many translucent cards are
+   stacked on screen. Large backdrop blurs are particularly expensive in
+   Safari and on mid-range Android GPUs. */
+@media (max-width: 768px) {
+  :is(
+    .founder-accord-card,
+    .pillar-card,
+    .accord-stat,
+    .founder-quote,
+    .service-card-item,
+    .comp-card,
+    .work-creator-card,
+    .work-creator-stat-box,
+    .team-metric-item,
+    .testi-card,
+    .workflow-card,
+    .capability-card,
+    .growth-widget,
+    .process-col-card,
+    .standard-card,
+    .case-hud-card,
+    .case-follower-transform-card,
+    .breakdown-card
+  ) {
+    -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
+    backdrop-filter: blur(12px) saturate(125%) !important;
+  }
+
+  :is(
+    .domain-chip,
+    .work-filter-chip,
+    .comp-badge,
+    .work-creator-tag-item
+  ) {
+    -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
+    backdrop-filter: blur(8px) saturate(120%) !important;
+  }
+
+  [data-theme="light"] #growth-system .growth-widget,
+  [data-theme="light"] #growth-system .widget-visual {
+    -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
+    backdrop-filter: blur(12px) saturate(125%) !important;
   }
 }

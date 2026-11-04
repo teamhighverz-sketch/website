@@ -6,6 +6,16 @@
 
 import gsap from 'gsap';
 
+function updateUnderlineWidth(container, item) {
+  if (!container || !item) return;
+  const range = document.createRange();
+  range.selectNodeContents(item);
+  const width = range.getBoundingClientRect().width;
+  if (width > 0) {
+    container.style.setProperty('--hero-word-underline-width', `${width}px`);
+  }
+}
+
 export class HeroWordRoller {
   constructor(options = {}) {
     this.container = document.getElementById('hero-word-roller');
@@ -20,6 +30,7 @@ export class HeroWordRoller {
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
     this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+    this.handleResize = () => updateUnderlineWidth(this.container, this.items[this.currentIndex]);
   }
 
   init() {
@@ -48,6 +59,7 @@ export class HeroWordRoller {
     });
 
     this.currentIndex = 0;
+    updateUnderlineWidth(this.container, this.items[0]);
   }
 
   startCycle() {
@@ -121,6 +133,7 @@ export class HeroWordRoller {
         });
 
         this.currentIndex = toIndex;
+        updateUnderlineWidth(this.container, nextItem);
         this.isAnimating = false;
         if (!this.isPaused) {
           this.startCycle();
@@ -158,6 +171,7 @@ export class HeroWordRoller {
     gsap.set(nextItem, { rotateX: 0, opacity: 1, filter: 'none', visibility: 'visible', clearProps: 'filter' });
 
     this.currentIndex = toIndex;
+    updateUnderlineWidth(this.container, nextItem);
     this.isAnimating = false;
     this.startCycle();
   }
@@ -188,6 +202,7 @@ export class HeroWordRoller {
       this.container.addEventListener('mouseleave', this.handleMouseLeave);
     }
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    window.addEventListener('resize', this.handleResize, { passive: true });
   }
 
   clearTimer() {
@@ -204,6 +219,7 @@ export class HeroWordRoller {
       this.container.removeEventListener('mouseleave', this.handleMouseLeave);
     }
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    window.removeEventListener('resize', this.handleResize);
   }
 }
 
@@ -224,6 +240,7 @@ export function prepareHeroWordRoller() {
       gsap.set(item, { rotateX: -90, opacity: 0, filter: 'none', visibility: 'hidden', transformOrigin: '50% 50% -0.5em' });
     }
   });
+  updateUnderlineWidth(el, items[0]);
 }
 
 export function initHeroWordRoller() {

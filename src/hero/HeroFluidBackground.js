@@ -179,6 +179,7 @@ export function initHeroFluidBackground() {
 
   let frameId = null;
   let lastFrameTime = null;
+  let lastDesktopRenderTime = null;
   let elapsedTime = 0;
   let isVisible = true;
   let isDestroyed = false;
@@ -192,7 +193,10 @@ export function initHeroFluidBackground() {
     const isMobile = window.innerWidth < 768;
     const width = Math.max(1, window.innerWidth);
     const height = Math.max(1, window.innerHeight);
-    const pixelRatio = isMobile ? 0.65 : Math.min(window.devicePixelRatio || 1, 1.5);
+    // This is a full-viewport shader with several layered noise samples. Keep
+    // its backing buffer at native desktop resolution so high-DPI displays do
+    // not multiply the fill-rate cost for a decorative background.
+    const pixelRatio = isMobile ? 0.65 : Math.min(window.devicePixelRatio || 1, 1);
     // Resizing clears the drawing buffer, even if dimensions did not change.
     if (renderer.getPixelRatio() !== pixelRatio) renderer.setPixelRatio(pixelRatio);
     if (canvas.width !== Math.floor(width * pixelRatio) || canvas.height !== Math.floor(height * pixelRatio)) {
@@ -217,6 +221,15 @@ export function initHeroFluidBackground() {
       return;
     }
 
+    // The fluid moves slowly, so this decorative pass does not need to redraw
+    // at the display's full refresh rate. Leave more main-thread time for reels,
+    // scrolling, and interface motion.
+    if (lastDesktopRenderTime !== null && now - lastDesktopRenderTime < 1000 / 30) {
+      frameId = requestAnimationFrame(render);
+      return;
+    }
+    lastDesktopRenderTime = now;
+
     pointer.lerp(targetPointer, 0.18);
     material.uniforms.uPointer.value.copy(pointer);
     // Resume from the displayed frame after suspension, not wall-clock time.
@@ -233,6 +246,7 @@ export function initHeroFluidBackground() {
     if (!isVisible || isDestroyed) return;
     cancelAnimationFrame(frameId);
     lastFrameTime = null;
+    lastDesktopRenderTime = null;
     if (isMobile()) {
       render(0);
       return;
@@ -267,6 +281,7 @@ export function initHeroFluidBackground() {
       cancelAnimationFrame(frameId);
       frameId = null;
       lastFrameTime = null;
+      lastDesktopRenderTime = null;
     }
   }, { threshold: 0.01 });
   // The document body can collapse while both route layers are fixed. The
@@ -324,6 +339,7 @@ export function initHeroFluidBackground() {
       cancelAnimationFrame(frameId);
       frameId = null;
       lastFrameTime = null;
+      lastDesktopRenderTime = null;
     } else if (isVisible && !isDestroyed) {
       start();
     }

@@ -5,6 +5,7 @@
 
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
 // hv3d.js (three.js, ~600 KB) is lazy-loaded inside init3DScene()
 import { initHighverzIntro, replayHighverzIntro } from './intro/HighverzIntro.js';
 import './style.css';
@@ -41,8 +42,9 @@ if ('onpagereveal' in window) {
 }
 
 // ==========================================================================
-// NATIVE HIGH-PERFORMANCE SCROLL SETUP
+// LENIS / NATIVE SCROLL SETUP
 // ==========================================================================
+let lenis = null;
 let activeWorkMetricTweens = [];
 let heroIntroTimeline = null;
 let heroIntroGeneration = 0;
@@ -58,25 +60,63 @@ function initVercelTelemetry() {
   };
 }
 
-function initNativeScroll() {
-  window.lenis = null;
+function initSmoothScroll() {
+  ScrollTrigger.config({
+    autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize',
+    ignoreMobileResize: true,
+  });
+  gsap.ticker.lagSmoothing(500, 33);
+
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches ||
+    ('ontouchstart' in window && window.innerWidth <= 1024) ||
+    window.innerWidth <= 768;
+  const isWindows = navigator.userAgentData?.platform === 'Windows' ||
+    /Windows/i.test(navigator.userAgent);
+
+  // Native touch scrolling has lower input latency and better browser momentum.
+  if (isTouchDevice) {
+    window.lenis = null;
+    return;
+  }
 
   // Prevent browser scrollRestoration jumping on reload or DOM shifts
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
 
-  // Prevent Windows middle-mouse autoscroll conflict on PC
-  window.addEventListener('mousedown', (e) => {
-    if (e.button === 1) e.preventDefault();
-  }, { passive: false });
-
-  // Ensure ScrollTrigger uses native scroll with safe lag smoothing and ignores mobile URL bar resize
-  ScrollTrigger.config({
-    autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize',
-    ignoreMobileResize: true,
+  lenis = new Lenis({
+    lerp: 0.1,
+    orientation: 'vertical',
+    gestureOrientation: 'vertical',
+    smoothWheel: true,
+    wheelMultiplier: 0.85,
+    touchMultiplier: 1.5,
+    infinite: false,
+    autoRaf: false,
+    // Discrete Windows mouse-wheel ticks use native scrolling. Keep Lenis for
+    // pixel-based touchpad gestures and programmatic scrolling.
+    ...(isWindows ? {
+      virtualScroll: ({ event, deltaX }) => {
+        if (event.type !== 'wheel') return true;
+        const legacyDelta = Math.abs(Number(event.wheelDeltaY) || 0);
+        const lineWheel = event.deltaMode === 1;
+        const discretePixelWheel = deltaX === 0 && Math.abs(event.deltaY) >= 50 && legacyDelta >= 80 &&
+          (legacyDelta % 120 === 0 || legacyDelta === 100);
+        const useNativeWheel = lineWheel || discretePixelWheel;
+        if (useNativeWheel && lenis?.isScrolling === 'smooth') lenis.reset();
+        return !useNativeWheel;
+      },
+    } : {}),
   });
-  gsap.ticker.lagSmoothing(500, 33);
+
+  window.lenis = lenis;
+  lenis.on('scroll', (instance) => {
+    // Native wheel input already reaches ScrollTrigger's native listener.
+    if (instance.isScrolling !== 'native') ScrollTrigger.update();
+  });
+  gsap.ticker.add((time) => {
+    lenis?.raf(time * 1000);
+  });
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination
@@ -642,8 +682,12 @@ function initNavbar() {
           positionIndicator(link, false);
         }
 
-        const top = targetEl.getBoundingClientRect().top + window.scrollY - 80;
-        window.scrollTo({ top, behavior: 'smooth' });
+        if (window.lenis) {
+          window.lenis.scrollTo(targetEl, { offset: -80, duration: 1 });
+        } else {
+          const top = targetEl.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
 
         setTimeout(() => {
           isProgrammaticScroll = false;
@@ -656,7 +700,8 @@ function initNavbar() {
           const normCurrent = (window.location.pathname || '/').replace(/\/+$/, '').replace(/\.html$/, '') || '/';
           if (normLink === normCurrent && !linkUrl.hash) {
             e.preventDefault();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (window.lenis) window.lenis.scrollTo(0, { duration: 1 });
+            else window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         } catch (_) { }
       }
@@ -1019,7 +1064,8 @@ function applyThemeHeroTrustBadge() {
         ? (document.querySelector('#work') || document.querySelector('.section-portfolio') || document.querySelector('#creators'))
         : (document.querySelector('#creators') || document.querySelector('.section-creators'));
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
+        if (window.lenis) window.lenis.scrollTo(target, { duration: 1 });
+        else target.scrollIntoView({ behavior: 'smooth' });
       }
     });
   }
@@ -1490,8 +1536,11 @@ window.addEventListener('hv:themechange', (event) => {
   // subtitle span force repeated rasterization during the theme swap, which
   // reads as a flash or a dropped frame on mid-range devices.
   const initialBlur = isMobile ? 'blur(5px)' : 'blur(7px)';
-  const wordStagger = isMobile ? 0.036 : 0.045;
-  const wordDuration = isMobile ? 0.44 : 0.52;
+  // The theme-swap reveal is intentionally a little more deliberate than the
+  // cold-load entrance. A slightly wider cadence lets each word register
+  // without stretching the whole theme change into a long wait.
+  const wordStagger = isMobile ? 0.055 : 0.06;
+  const wordDuration = isMobile ? 0.58 : 0.64;
 
   // Staggered one-by-one text reveal with optical blur only. Keeping the
   // layout coordinates untouched is important here: a translate-based reveal
@@ -1564,6 +1613,10 @@ function settleMobileCampaignEntrance() {
   const hero = document.querySelector('body.page-campaigns .campaign-hero');
   if (!hero || !window.matchMedia('(max-width: 768px)').matches) return;
   hero.dataset.entrySettledByTheme = 'true';
+  hero.querySelectorAll('.campaign-hero-headline').forEach((heading) => {
+    heading.dataset.adscaleRevealState = 'complete';
+    heading.dataset.adscaleAnimated = 'true';
+  });
   const targets = document.querySelectorAll([
     'body.page-campaigns .campaign-hero',
     '.campaign-hero-content', '.campaign-hero-tag', '.campaign-hero-headline',
@@ -1772,35 +1825,50 @@ export function initAdscaleTextEffects(root = document) {
 
   const revealElements = (root || document).querySelectorAll(headingSelectors.join(', '));
   if (!revealElements.length) return;
+  const introPending = document.documentElement.classList.contains('intro-pending') ||
+    document.body.classList.contains('intro-active');
+  const pageEntryHeroSelector = '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title';
 
   function revealWords(element) {
-    if (element.dataset.adscaleAnimated === 'true') {
+    const revealState = element.dataset.adscaleRevealState;
+    // Page-entry timelines own hero headings. The shared in-view engine must
+    // leave those words alone while their coordinated sequence is pending or
+    // running; forcing them visible here was cancelling the word stagger.
+    if (revealState === 'page-entry-pending' || revealState === 'running') return;
+
+    if (revealState === 'complete' || element.dataset.adscaleAnimated === 'true') {
       const words = element.querySelectorAll('.adscale-reveal-word');
       if (words.length) {
         gsap.set(words, { opacity: 1, y: 0, filter: 'none', clearProps: 'all' });
       }
       return;
     }
-    element.dataset.adscaleAnimated = 'true';
-
     const words = element.querySelectorAll('.adscale-reveal-word');
     if (!words.length) {
+      element.dataset.adscaleRevealState = 'running';
       gsap.to(element, {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
         duration: isMobile ? 0.58 : 0.72,
         ease: 'power2.out',
-        clearProps: 'all'
+        clearProps: 'all',
+        onComplete: () => {
+          element.dataset.adscaleRevealState = 'complete';
+          element.dataset.adscaleAnimated = 'true';
+        }
       });
       return;
     }
 
     if (isReducedMotion) {
       gsap.set(words, { opacity: 1, y: 0, filter: 'none', clearProps: 'all' });
+      element.dataset.adscaleRevealState = 'complete';
+      element.dataset.adscaleAnimated = 'true';
       return;
     }
 
+    element.dataset.adscaleRevealState = 'running';
     // Reachify slide-in: words slide UP from below with de-blur, spring-like deceleration
     gsap.to(words, {
       opacity: 1,
@@ -1812,6 +1880,8 @@ export function initAdscaleTextEffects(root = document) {
       clearProps: 'all',
       onComplete: () => {
         gsap.set(words, { opacity: 1, y: 0, filter: 'none', clearProps: 'all' });
+        element.dataset.adscaleRevealState = 'complete';
+        element.dataset.adscaleAnimated = 'true';
       }
     });
   }
@@ -1847,17 +1917,26 @@ export function initAdscaleTextEffects(root = document) {
       splitAdscaleWords(element);
     }
 
+    // Dedicated hero headlines wait behind the branded loader and are
+    // animated by triggerPageHeroEntrance when the loader reveals. Letting
+    // this scroll engine animate them under the loader consumes the reveal.
+    if (introPending && element.matches(pageEntryHeroSelector)) return;
+
     const words = element.querySelectorAll('.adscale-reveal-word');
     if (!words.length) return;
 
     if (isReducedMotion) {
       gsap.set(words, { opacity: 1, y: 0, filter: 'none', clearProps: 'all' });
+      element.dataset.adscaleRevealState = 'complete';
       element.dataset.adscaleAnimated = 'true';
       return;
     }
 
     // If already revealed once, keep permanently visible and unblurred!
-    if (element.dataset.adscaleAnimated === 'true') {
+    if (element.dataset.adscaleRevealState === 'page-entry-pending' || element.dataset.adscaleRevealState === 'running') {
+      return;
+    }
+    if (element.dataset.adscaleRevealState === 'complete' || element.dataset.adscaleAnimated === 'true') {
       gsap.set(words, { opacity: 1, y: 0, filter: 'none', clearProps: 'all' });
       return;
     }
@@ -1885,7 +1964,9 @@ export function initAdscaleTextEffects(root = document) {
   // Initial check ensures any element already in viewport reveals without waiting for scroll
   const initialCheck = () => {
     revealElements.forEach((element) => {
-      if (element.dataset.adscaleAnimated !== 'true') {
+      if (element.dataset.adscaleRevealState !== 'page-entry-pending' &&
+          element.dataset.adscaleRevealState !== 'running' &&
+          element.dataset.adscaleAnimated !== 'true') {
         const rect = element.getBoundingClientRect();
         if ((rect.top < window.innerHeight * 0.94 && rect.bottom > 0) || rect.bottom <= 0) {
           revealWords(element);
@@ -3030,12 +3111,19 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   );
   heroHeadings.forEach((heading) => {
     splitAdscaleWords(heading);
-    heading.dataset.adscaleAnimated = 'true';
   });
 
   const introIsPending = document.documentElement.classList.contains('intro-pending') ||
     document.body.classList.contains('intro-active');
   if (introIsPending && !isFromTransition) return;
+
+  // Reserve these headings for the coordinated page-entry sequence before
+  // initAdscaleTextEffects runs later in initPageScripts. The shared scroll
+  // reveal must not race the hero sequence or force its words fully visible.
+  heroHeadings.forEach((heading) => {
+    heading.dataset.adscaleRevealState = 'page-entry-pending';
+    delete heading.dataset.adscaleAnimated;
+  });
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -3127,6 +3215,10 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
 
   if (reducedMotion) {
     gsap.set([...heroHeadings, ...allSupportingElements, ...allTargetWords], { opacity: 1, y: 0, filter: 'none', clearProps: 'all' });
+    heroHeadings.forEach((heading) => {
+      heading.dataset.adscaleRevealState = 'complete';
+      heading.dataset.adscaleAnimated = 'true';
+    });
     finishPageEntry();
     if (window.__hvSetTransitionState) {
       window.__hvSetTransitionState('IDLE');
@@ -3142,6 +3234,10 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     // scheduled callback ran. Do not restart the movement afterwards.
     if (isCampaigns && heroRoot.dataset.entrySettledByTheme === 'true') {
       settleMobileCampaignEntrance();
+      heroHeadings.forEach((heading) => {
+        heading.dataset.adscaleRevealState = 'complete';
+        heading.dataset.adscaleAnimated = 'true';
+      });
       window.__hvSetTransitionState?.('IDLE');
       return;
     }
@@ -3174,7 +3270,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
 
     // 1. HERO HEADLINE WORDS ANIMATE FIRST (0.0s) — STRICTLY ONE BY ONE
     if (allTargetWords.length) {
-      heroHeadings.forEach((heading) => { heading.dataset.adscaleAnimated = 'true'; });
+      heroHeadings.forEach((heading) => { heading.dataset.adscaleRevealState = 'running'; });
       gsap.killTweensOf(allTargetWords);
       gsap.set(allTargetWords, {
         opacity: 0,
@@ -3207,9 +3303,18 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
         ease: 'power3.out',
         clearProps: 'filter,transform,willChange',
         onComplete: () => {
+          heroHeadings.forEach((heading) => {
+            heading.dataset.adscaleRevealState = 'complete';
+            heading.dataset.adscaleAnimated = 'true';
+          });
           completeEntry();
           if (homeHeadline) initHeroWordRoller();
         },
+      });
+    } else {
+      heroHeadings.forEach((heading) => {
+        heading.dataset.adscaleRevealState = 'complete';
+        heading.dataset.adscaleAnimated = 'true';
       });
     }
 
@@ -4612,55 +4717,73 @@ function initWhyUsAnimations(isFromTransition = false) {
   if (pageContent?.dataset.whyAnimationsInit === 'true') return;
   if (pageContent) pageContent.dataset.whyAnimationsInit = 'true';
 
-  const comparison = pageContent?.querySelector('.comp-dual-cards');
-  if (!comparison || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const cards = comparison.querySelectorAll('.comp-card');
-  const rows = comparison.querySelectorAll('.comp-list-row');
+  const section = pageContent?.querySelector('.comparison-section');
+  if (!section || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  // If already scrolled into or past the comparison section, reveal immediately!
-  const compRect = comparison.getBoundingClientRect();
-  if (compRect.top < window.innerHeight * 0.95) {
-    gsap.set(cards, { opacity: 1, y: 0, clearProps: 'all' });
-    gsap.set(rows, { opacity: 1, y: 0, clearProps: 'all' });
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const mobileRows = section.querySelectorAll('.comp-mobile-row');
+  const desktopCards = section.querySelectorAll('.comp-dual-cards > .comp-card');
+  const traditionalRows = section.querySelectorAll('.comp-card-traditional .comp-list-row');
+  const highverzRows = section.querySelectorAll('.comp-card-hv .comp-list-row');
+  const desktopRows = Array.from({ length: Math.max(traditionalRows.length, highverzRows.length) }, (_, index) => [
+    traditionalRows[index],
+    highverzRows[index],
+  ]).flat().filter(Boolean);
+  const revealTargets = isMobile ? mobileRows : [...desktopCards, ...desktopRows];
+  if (!revealTargets.length) return;
+
+  // If navigation restored the page below the comparison section, leave the
+  // content visible. Otherwise replay its one-by-one entrance on first view.
+  const sectionRect = section.getBoundingClientRect();
+  if (sectionRect.bottom <= 0) {
+    gsap.set(revealTargets, { opacity: 1, y: 0, clearProps: 'all' });
     return;
   }
 
-  gsap.fromTo(cards,
-    { opacity: 0, y: 20 },
-    {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      stagger: 0.1,
-      ease: 'power2.out',
-      clearProps: 'all',
-      scrollTrigger: {
-        trigger: comparison,
-        start: 'top 85%',
-        once: true,
-      },
-    }
-  );
+  const sequence = gsap.timeline({
+    scrollTrigger: {
+      trigger: section,
+      start: 'top 82%',
+      once: true,
+    },
+  });
 
-  // Reveal each point at its own scroll position, including when the cards
-  // stack vertically on phones. Scrolling back up must not hide it again.
-  rows.forEach(row => {
-    gsap.fromTo(row,
-      { opacity: 0, y: 14 },
+  if (isMobile) {
+    sequence.fromTo(mobileRows,
+      { opacity: 0, y: 16 },
       {
         opacity: 1,
         y: 0,
-        duration: 0.5,
+        duration: 0.48,
+        stagger: 0.14,
         ease: 'power2.out',
         clearProps: 'all',
-        scrollTrigger: {
-          trigger: row,
-          start: 'top 85%',
-          once: true,
-        },
       }
     );
-  });
+  } else {
+    sequence.fromTo(desktopCards,
+      { opacity: 0, y: 18 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.56,
+        stagger: 0.12,
+        ease: 'power2.out',
+        clearProps: 'all',
+      }
+    ).fromTo(desktopRows,
+      { opacity: 0, y: 12 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.42,
+        stagger: 0.085,
+        ease: 'power2.out',
+        clearProps: 'all',
+      },
+      '-=0.16'
+    );
+  }
 }
 
 function initServiceFilters() {
@@ -6347,8 +6470,11 @@ export function initFooterScatterGrid() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   // Enhanced reactive scatter physics: Sky Blue in light mode, Electric Cyan in dark mode
   window.__hvFooterScatterCleanup = initScatterGrid(watermark, {
-    dotSize: 4,
-    dotGap: 2,
+    // The footer wordmark includes a narrow rocket-to-letter join. Use a finer
+    // sampling grid so that join and the rocket silhouette do not break apart.
+    dotSize: 3,
+    dotGap: 1,
+    maxDots: 7000,
     radius: 270,
     strength: 2.4,
     stiffness: 0.035,
@@ -6414,7 +6540,7 @@ function boot() {
   // Phase 1: Critical above-the-fold experience (Theme, Header, Background, Hero)
   initThemeSystem();
   initNavbar();
-  initNativeScroll();
+  initSmoothScroll();
   initCustomCursor();
   loadFluidBackground();
   initPageTransitions();
@@ -6527,8 +6653,10 @@ function boot() {
       initPageScripts(window.location.pathname);
     }
 
+    window.lenis?.stop();
     initHighverzIntro({
       onStartReveal: () => {
+        window.lenis?.start();
         if (isHomeRoute(window.location.pathname)) {
           initBelowFoldFeatures();
           window.__hvUnlockHeroVideos?.();
@@ -6569,7 +6697,8 @@ function boot() {
       const hashTarget = document.querySelector(window.location.hash);
       if (hashTarget) {
         setTimeout(() => {
-          hashTarget.scrollIntoView({ behavior: 'smooth' });
+          if (window.lenis) window.lenis.scrollTo(hashTarget, { duration: 1 });
+          else hashTarget.scrollIntoView({ behavior: 'smooth' });
         }, 200);
       }
     }

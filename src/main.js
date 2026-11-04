@@ -3605,6 +3605,25 @@ export function initHeroReelCarousel() {
   // decoded frame or an empty black surface while the new source is loading.
   const mediaStates = new Map();
   const warmPosters = [];
+  const decodedPosterPromises = new Map();
+  const preparePoster = (src) => {
+    if (!src) return Promise.resolve(false);
+    if (decodedPosterPromises.has(src)) return decodedPosterPromises.get(src);
+    const image = new Image();
+    image.decoding = 'async';
+    image.fetchPriority = 'low';
+    const ready = new Promise((resolve) => {
+      image.onload = () => resolve(true);
+      image.onerror = () => resolve(false);
+    });
+    image.src = src;
+    const decoded = typeof image.decode === 'function'
+      ? image.decode().then(() => true).catch(() => ready)
+      : ready;
+    decodedPosterPromises.set(src, decoded);
+    warmPosters.push(image);
+    return decoded;
+  };
   videos.forEach((video, index) => {
     if (!video) return;
     const poster = document.createElement('img');
@@ -3612,12 +3631,21 @@ export function initHeroReelCarousel() {
     poster.alt = '';
     poster.setAttribute('aria-hidden', 'true');
     video.insertAdjacentElement('afterend', poster);
-    mediaStates.set(video, { poster, cancelReady: () => { }, playAttempt: null, priority: null });
+    const activePoster = document.documentElement.dataset.theme === 'light'
+      ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`)
+      : video.dataset.darkPoster;
+    if (activePoster) poster.src = activePoster;
+    mediaStates.set(video, {
+      poster,
+      cancelReady: () => { },
+      playAttempt: null,
+      priority: null,
+      sourceRequest: 0,
+      pendingSource: null,
+      index,
+    });
     for (const src of [video.dataset.darkPoster, video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`]) {
-      if (!src) continue;
-      const image = new Image();
-      image.src = src;
-      warmPosters.push(image);
+      preparePoster(src);
     }
   });
 
@@ -3642,42 +3670,62 @@ export function initHeroReelCarousel() {
     else video.removeAttribute('autoplay');
     video.preload = priority === 'high' ? 'auto' : 'metadata';
     if (targetSrc && video.getAttribute('src') !== targetSrc) {
-      state.cancelReady();
-      state.playAttempt = null;
       const card = video.closest('.video-card');
       const poster = document.documentElement.dataset.theme === 'light'
-        ? video.dataset.lightPoster
+        ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${state.index + 1}.jpg`)
         : video.dataset.darkPoster;
-      state.poster.src = poster || video.getAttribute('poster') || '';
-      video.setAttribute('poster', state.poster.src);
-      card.classList.add('reel-media-loading');
-      let frameCallback = null;
-      let fallbackFrame = null;
-      const reveal = () => {
-        if (video.getAttribute('src') !== targetSrc || !video.isConnected) return;
-        card.classList.remove('reel-media-loading');
+      const safePoster = poster || video.getAttribute('poster') || '';
+      const requestId = ++state.sourceRequest;
+      state.pendingSource = targetSrc;
+      // Keep the currently decoded frame visible until the replacement
+      // theme's poster has decoded. Swapping src before this point produces
+      // a black/blank surface on mobile Safari while its decoder restarts.
+      preparePoster(safePoster).then((posterReady) => {
+        if (requestId !== state.sourceRequest || !video.isConnected) return;
+        if (targetSrc !== getThemeVideoSource(video)) return;
+        if (!posterReady && !video.videoWidth) return;
+
         state.cancelReady();
-      };
-      const onReady = () => {
-        if (frameCallback !== null || fallbackFrame !== null) return;
-        if (typeof video.requestVideoFrameCallback === 'function') {
-          frameCallback = video.requestVideoFrameCallback(reveal);
-        } else {
-          fallbackFrame = requestAnimationFrame(reveal);
+        state.playAttempt = null;
+        state.poster.src = safePoster;
+        video.setAttribute('poster', safePoster);
+        card?.classList.add('reel-media-loading');
+        let frameCallback = null;
+        let fallbackFrame = null;
+        const reveal = () => {
+          if (requestId !== state.sourceRequest || video.getAttribute('src') !== targetSrc || !video.isConnected) return;
+          card?.classList.remove('reel-media-loading');
+          state.pendingSource = null;
+          state.cancelReady();
+        };
+        const onReady = () => {
+          if (frameCallback !== null || fallbackFrame !== null) return;
+          if (typeof video.requestVideoFrameCallback === 'function') {
+            frameCallback = video.requestVideoFrameCallback(reveal);
+          } else {
+            fallbackFrame = requestAnimationFrame(reveal);
+          }
+        };
+        state.cancelReady = () => {
+          video.removeEventListener('loadeddata', onReady);
+          video.removeEventListener('playing', onReady);
+          if (frameCallback !== null) video.cancelVideoFrameCallback?.(frameCallback);
+          if (fallbackFrame !== null) cancelAnimationFrame(fallbackFrame);
+        };
+        video.addEventListener('loadeddata', onReady);
+        video.addEventListener('playing', onReady);
+        video.pause();
+        video.setAttribute('src', targetSrc);
+        video.dataset.activeThemeSrc = targetSrc;
+        video.load();
+        if (state.priority === 'high' && !document.documentElement.classList.contains('intro-pending')) {
+          const attempt = video.play();
+          state.playAttempt = attempt;
+          attempt?.catch(() => { }).finally(() => {
+            if (state.playAttempt === attempt) state.playAttempt = null;
+          });
         }
-      };
-      state.cancelReady = () => {
-        video.removeEventListener('loadeddata', onReady);
-        video.removeEventListener('playing', onReady);
-        if (frameCallback !== null) video.cancelVideoFrameCallback?.(frameCallback);
-        if (fallbackFrame !== null) cancelAnimationFrame(fallbackFrame);
-      };
-      video.addEventListener('loadeddata', onReady);
-      video.addEventListener('playing', onReady);
-      video.pause();
-      video.setAttribute('src', targetSrc);
-      video.dataset.activeThemeSrc = targetSrc;
-      video.load();
+      });
     }
     video.fetchPriority = priority;
   };
@@ -3686,6 +3734,9 @@ export function initHeroReelCarousel() {
   const playVideo = (video) => {
     if (!video || !mediaStates.has(video)) return;
     loadVideo(video, 'high');
+    // A theme swap is still waiting for its decoded fallback poster. Do not
+    // restart the outgoing reel while that handoff is pending.
+    if (video.getAttribute('src') !== getThemeVideoSource(video)) return;
     // Buffer behind the loader without spending that buffer on hidden playback.
     if (document.documentElement.classList.contains('intro-pending')) return;
     const state = mediaStates.get(video);

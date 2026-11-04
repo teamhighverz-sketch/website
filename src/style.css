@@ -2412,7 +2412,14 @@ body.mobile-menu-active .work-creator-card {
 .comp-main-title:has(.adscale-reveal-word),
 .founders-title:has(.adscale-reveal-word),
 .pillars-title:has(.adscale-reveal-word),
-.creators-title:has(.adscale-reveal-word) {
+.creators-title:has(.adscale-reveal-word),
+.work-capabilities-title:has(.adscale-reveal-word),
+.workflow-section h2:has(.adscale-reveal-word),
+.services-main-title:has(.adscale-reveal-word),
+.case-section-title:has(.adscale-reveal-word),
+.breakdown-title:has(.adscale-reveal-word),
+.breakdown-title span:has(.adscale-reveal-word),
+.cta-main-title:has(.adscale-reveal-word) {
   background: none !important;
   background-image: none !important;
   -webkit-background-clip: initial !important;

@@ -1677,8 +1677,15 @@ export function splitAdscaleWords(element) {
 
   textNodes.forEach((textNode) => {
     const parentSpan = textNode.parentElement;
-    const isHighlight = parentSpan && parentSpan.classList.contains('highlight-cyan');
-    const isBoldItalic = parentSpan && parentSpan.classList.contains('font-bold-italic');
+    const isHighlight = parentSpan && (
+      parentSpan.classList.contains('highlight-cyan') ||
+      parentSpan.closest('.highlight-cyan') ||
+      (parentSpan.tagName === 'SPAN' && parentSpan.parentElement && parentSpan.parentElement.classList.contains('breakdown-title'))
+    );
+    const isBoldItalic = parentSpan && (
+      parentSpan.classList.contains('font-bold-italic') ||
+      parentSpan.closest('.font-bold-italic')
+    );
     if (parentSpan && isHighlight) {
       // Prevent parent highlight span from double-applying background/filters or box-clipping child words
       parentSpan.style.setProperty('background', 'none', 'important');
@@ -1724,27 +1731,44 @@ window.splitAdscaleWords = splitAdscaleWords;
 
 export function initAdscaleTextEffects(root = document) {
   const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches);
 
-  // Preserve Home's existing text effects. Dedicated pages use only their
-  // hero title so lower sections cannot reset after the route entrance.
-  const headingSelectors = isHomeRoute(window.location.pathname)
-    ? [
-      '.creators-title',
-      '.creators-intro',
-      '.growth-widgets-heading h2',
-      '.portfolio-section-title',
-      '.testimonials-title',
-      '.process-headline',
-      '.faq-heading',
-      '.cta-main-title'
-    ]
-    : [
-      '.work-hero-title',
-      '.campaign-hero-headline',
-      '.why-hero-title',
-      '.team-hero-title',
-      '.case-hero-title'
-    ];
+  const headingSelectors = [
+    // Home Page
+    '.creators-title',
+    '.creators-intro',
+    '.growth-widgets-heading h2',
+    '.portfolio-section-title',
+    '.testimonials-title',
+    '.process-headline',
+    '.faq-heading',
+
+    // Work Page
+    '.work-capabilities-title',
+    '.workflow-section h2',
+    '.services-main-title',
+
+    // Why Us Page
+    '.comp-main-title',
+
+    // Team Page
+    '.founders-title',
+    '.pillars-title',
+
+    // Case Studies (Creators & Movies)
+    '.case-section-title',
+    '.breakdown-title',
+
+    // All Pages CTA
+    '.cta-main-title',
+
+    // Dedicated Page Hero Headings (when not already animated by page entry)
+    '.work-hero-title',
+    '.campaign-hero-headline',
+    '.why-hero-title',
+    '.team-hero-title',
+    '.case-hero-title'
+  ];
 
   const revealElements = (root || document).querySelectorAll(headingSelectors.join(', '));
   if (!revealElements.length) return;
@@ -1765,7 +1789,7 @@ export function initAdscaleTextEffects(root = document) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: 0.72,
+        duration: isMobile ? 0.58 : 0.72,
         ease: 'power2.out',
         clearProps: 'all'
       });
@@ -1782,8 +1806,8 @@ export function initAdscaleTextEffects(root = document) {
       opacity: 1,
       y: 0,
       filter: 'blur(0px)',
-      duration: 0.65,
-      stagger: 0.055,
+      duration: isMobile ? 0.56 : 0.65,
+      stagger: isMobile ? 0.045 : 0.055,
       ease: 'power3.out',
       clearProps: 'all',
       onComplete: () => {
@@ -1802,7 +1826,7 @@ export function initAdscaleTextEffects(root = document) {
     window.__hvAdscaleScrollHandler = null;
   }
 
-  // Widen rootMargin so words finish revealing BEFORE reaching view
+  // Native IntersectionObserver guarantees reliable in-view triggering on scroll
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
@@ -1812,7 +1836,7 @@ export function initAdscaleTextEffects(root = document) {
     });
   }, {
     root: null,
-    rootMargin: '250px 0px 250px 0px',
+    rootMargin: isMobile ? '0px 0px -25px 0px' : '50px 0px 50px 0px',
     threshold: 0
   });
 
@@ -1839,10 +1863,10 @@ export function initAdscaleTextEffects(root = document) {
     }
 
     const rect = element.getBoundingClientRect();
-    // If element is AT or ABOVE viewport (including already scrolled past), reveal immediately!
-    const isAtOrAboveViewport = rect.top < window.innerHeight * 0.96;
+    const isAboveScreen = rect.bottom <= 0;
+    const isCurrentlyVisible = rect.top < window.innerHeight * 0.94 && rect.bottom > 0;
 
-    if (isAtOrAboveViewport) {
+    if (isAboveScreen || isCurrentlyVisible) {
       revealWords(element);
       return;
     }
@@ -1850,8 +1874,8 @@ export function initAdscaleTextEffects(root = document) {
     // Elements below viewport start hidden waiting to be scrolled into
     gsap.set(words, {
       opacity: 0,
-      y: 20,
-      filter: 'blur(8px)',
+      y: isMobile ? 16 : 20,
+      filter: isMobile ? 'blur(6px)' : 'blur(8px)',
       willChange: 'opacity, transform, filter'
     });
 
@@ -1863,7 +1887,7 @@ export function initAdscaleTextEffects(root = document) {
     revealElements.forEach((element) => {
       if (element.dataset.adscaleAnimated !== 'true') {
         const rect = element.getBoundingClientRect();
-        if (rect.top < window.innerHeight + 150) {
+        if ((rect.top < window.innerHeight * 0.94 && rect.bottom > 0) || rect.bottom <= 0) {
           revealWords(element);
           observer.unobserve(element);
         }
@@ -1871,6 +1895,7 @@ export function initAdscaleTextEffects(root = document) {
     });
   };
   window.__hvAdscaleScrollHandler = initialCheck;
+  window.addEventListener('scroll', initialCheck, { passive: true });
   requestAnimationFrame(initialCheck);
   setTimeout(initialCheck, 400);
 }
@@ -2972,6 +2997,7 @@ export function initPageScripts(pathname, isFromTransition = false) {
   initEnquirySystem();
   initFooterScatterGrid();
   triggerPageHeroEntrance(normPath, isFromTransition);
+  initAdscaleTextEffects();
 
   if (window.ScrollTrigger && !isFromTransition) {
     ScrollTrigger.refresh();
@@ -3031,21 +3057,18 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   const lightEntry = document.documentElement.dataset.theme === 'light';
   const heroLineElements = Array.from(document.querySelectorAll(heroLineSelectors));
 
-  // 2. Next section header and individual cards
+  // 2. Next section individual cards and supporting components
   const nextSectionSelectors = [
-    // Work page: capabilities header & 6 cards
-    '.work-capabilities-header', '.capability-card',
-    // Why-us page: philosophy section header & 3 cards
-    '.why-philosophy-section .services-header-row', '.why-philosophy-grid .service-card-item',
-    '.comp-header-centered',
+    // Work page: 6 cards
+    '.capability-card',
+    // Why-us page: 3 cards
+    '.why-philosophy-grid .service-card-item',
     // Campaigns page: search bar and cards
     '.campaign-search-section', '.campaign-featured-label', '.campaign-movie-card',
     // Team page: leadership and member cards
     '.team-grid .founder-card', '.team-member-card',
     // Home page: creator reels follow the hero text reveal
     '.carousel-viewport',
-    // Home page: creators carousel
-    '.section-creators',
     // Case study: media & hud
     '.case-hero-media', '.case-follower-transform-card', '.case-stats-hud'
   ].join(', ');
@@ -6405,6 +6428,7 @@ function boot() {
         initBelowFoldFeatures();
       } else {
         initFooterScatterGrid();
+        initAdscaleTextEffects();
       }
     });
   };

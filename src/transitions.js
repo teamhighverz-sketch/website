@@ -560,6 +560,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
             window.__hvResetNavbar?.(window.location.pathname);
             window.__hvHeroReelRefresh?.();
             window.__hvUpdateCapsuleSwitchers?.();
+            window.initAdscaleTextEffects?.();
             ScrollTrigger.refresh();
           } catch (err) {
             console.error('Incoming page initialization failed:', err);

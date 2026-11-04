@@ -66,12 +66,17 @@ function initNativeScroll() {
     history.scrollRestoration = 'manual';
   }
 
-  // Ensure ScrollTrigger uses native scroll with 0ms lag smoothing jitter and ignores mobile URL bar resize
+  // Prevent Windows middle-mouse autoscroll conflict on PC
+  window.addEventListener('mousedown', (e) => {
+    if (e.button === 1) e.preventDefault();
+  }, { passive: false });
+
+  // Ensure ScrollTrigger uses native scroll with safe lag smoothing and ignores mobile URL bar resize
   ScrollTrigger.config({
     autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load,resize',
     ignoreMobileResize: true,
   });
-  gsap.ticker.lagSmoothing(0);
+  gsap.ticker.lagSmoothing(500, 33);
 }
 
 // Load the ambient WebGL background promptly and return promise for preloader coordination
@@ -2061,21 +2066,8 @@ function initHeroIntro(immediate = false) {
     0.85
   );
 
-  // Mobile visual-viewport changes (browser chrome opening/closing) can race
-  // this scrubbed parallax and make the headline bob after its reveal. Keep
-  // the decorative scroll motion on desktop; mobile retains blur/opacity.
-  if (window.matchMedia('(min-width: 769px)').matches) {
-    gsap.to('.hero-content', {
-      y: -40,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: '.hero-section',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 0.2,
-      }
-    });
-  }
+  // Content remains cleanly anchored across both mobile and desktop without scrubbed
+  // parallax drift or scroll-anchoring jumps between the reel carousel and creator cards.
 }
 
 // Expose globally for replay / testing

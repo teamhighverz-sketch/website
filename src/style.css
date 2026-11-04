@@ -227,9 +227,27 @@ body,
 html {
   scrollbar-gutter: stable;
   overflow-x: clip;
+  overflow-anchor: none;
 }
 
-@media (pointer: coarse), (max-width: 900px) {
+body {
+  overflow-anchor: none;
+}
+
+/* Eliminate browser scroll anchoring adjustments on elements in the hero & creator boundary */
+#hero,
+.hero-section,
+.hero-content,
+.carousel-viewport,
+.carousel-track,
+.card-position,
+.section-creators,
+#creators {
+  overflow-anchor: none !important;
+}
+
+@media (pointer: coarse),
+(max-width: 900px) {
   html {
     scrollbar-gutter: auto;
   }
@@ -20059,7 +20077,7 @@ body::after {
     right: auto !important;
     bottom: auto !important;
     transform: none !important;
-    width: clamp(145px, 40vw, 180px) !important;
+    width: clamp(230px, 64vw, 310px) !important;
     margin: 0.75rem auto 0.25rem !important;
     opacity: 1 !important;
   }
@@ -20127,9 +20145,8 @@ body::after {
   text-decoration: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2),
+  inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: all 0.25s ease;
@@ -20139,9 +20156,8 @@ body::after {
   color: #5EFBFF;
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.1) 0%, rgba(0, 229, 255, 0.02) 100%);
   border-color: rgba(0, 229, 255, 0.35);
-  box-shadow:
-    0 4px 14px rgba(0, 229, 255, 0.18),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 229, 255, 0.18),
+  inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
 }
 
@@ -20200,9 +20216,8 @@ body::after {
 
 [data-theme="light"] .section-cta::before {
   opacity: 0.12;
-  background-image:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+  linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
 }
 
 [data-theme="light"] .section-cta::after {
@@ -20272,9 +20287,8 @@ body::after {
   color: #334155 !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.78) 100%);
   border: 1px solid rgba(14, 165, 233, 0.18);
-  box-shadow:
-    0 2px 8px rgba(14, 165, 233, 0.08),
-    inset 0 1px 1px 0 #FFFFFF;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.08),
+  inset 0 1px 1px 0 #FFFFFF;
 }
 
 [data-theme="light"] .footer-social-links a:hover,
@@ -20282,9 +20296,8 @@ body::after {
   color: #0284C7 !important;
   background: linear-gradient(180deg, #FFFFFF 0%, rgba(224, 242, 254, 0.92) 100%);
   border-color: rgba(14, 165, 233, 0.48);
-  box-shadow:
-    0 6px 18px -2px rgba(14, 165, 233, 0.25),
-    inset 0 1px 1px 0 #FFFFFF;
+  box-shadow: 0 6px 18px -2px rgba(14, 165, 233, 0.25),
+  inset 0 1px 1px 0 #FFFFFF;
   transform: translateY(-2px);
 }
 
@@ -20386,7 +20399,7 @@ body::after {
     right: auto !important;
     bottom: auto !important;
     transform: none !important;
-    width: clamp(145px, 40vw, 180px) !important;
+    width: clamp(230px, 64vw, 310px) !important;
     margin: 0.75rem auto 0.25rem !important;
     opacity: 1 !important;
   }
@@ -20443,11 +20456,11 @@ body::after {
 [data-theme="light"] .hero-trust-number {
   color: #008fa8 !important;
   background-image: linear-gradient(105deg,
-      #008fa8 0%,
-      #00bad2 38%,
-      #ffffff 50%,
-      #00bad2 62%,
-      #008fa8 100%) !important;
+    #008fa8 0%,
+    #00bad2 38%,
+    #ffffff 50%,
+    #00bad2 62%,
+    #008fa8 100%) !important;
   background-size: 200% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
@@ -20504,12 +20517,11 @@ body::after {
 .section-cta .cta-inner-layout:hover {
   border-color: rgba(255, 255, 255, 0.09);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 100%);
-  box-shadow:
-    0 32px 84px -10px rgba(0, 0, 0, 0.7),
-    0 12px 36px -6px rgba(0, 0, 0, 0.4),
-    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.16),
-    inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 32px 84px -10px rgba(0, 0, 0, 0.7),
+  0 12px 36px -6px rgba(0, 0, 0, 0.4),
+  inset 0 1.5px 0 0 rgba(255, 255, 255, 0.16),
+  inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
+  inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* ==========================================================================
@@ -20742,6 +20754,7 @@ body::after {
 }
 
 @media (pointer: coarse) {
+
   html,
   body {
     scrollbar-width: none;
@@ -20887,9 +20900,9 @@ body::after {
     right: auto !important;
     bottom: auto !important;
     transform: none !important;
-    width: clamp(140px, 38vw, 175px) !important;
+    width: clamp(230px, 64vw, 310px) !important;
     aspect-ratio: 2415 / 900 !important;
-    margin: 0.65rem auto 0.2rem !important;
+    margin: 0.75rem auto 0.25rem !important;
     pointer-events: auto !important;
     z-index: 2 !important;
     opacity: 1 !important;
@@ -20905,8 +20918,8 @@ body::after {
 
   @media (max-width: 480px) {
     :is(.footer-home, .footer-compact-mobile) .footer-watermark-logo {
-      width: clamp(130px, 36vw, 155px) !important;
-      margin: 0.5rem auto 0.15rem !important;
+      width: clamp(210px, 60vw, 275px) !important;
+      margin: 0.65rem auto 0.2rem !important;
     }
   }
 }
@@ -22195,9 +22208,8 @@ html.theme-switching #hero .hero-global-sensation::after {
   .comp-card,
   .work-creator-card,
   .work-creator-stat-box) {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018) 54%, rgba(255, 255, 255, 0.04)) padding-box,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.14) 48%, rgba(255, 255, 255, 0.36)) border-box !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018) 54%, rgba(255, 255, 255, 0.04)) padding-box,
+  linear-gradient(145deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.14) 48%, rgba(255, 255, 255, 0.36)) border-box !important;
   border: 1px solid transparent !important;
   -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
   backdrop-filter: blur(26px) saturate(175%) !important;
@@ -22365,21 +22377,19 @@ html.theme-switching #hero .hero-global-sensation::after {
 
 /* Restore the original softer treatment on the two light-theme film concept cards. */
 [data-theme="light"] .section-creators.is-movie-showcase .creator-card {
-  background:
-    linear-gradient(150deg, rgba(255, 255, 255, 0.72) 0%, rgba(246, 250, 254, 0.42) 50%, rgba(234, 243, 252, 0.58) 100%) padding-box,
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(212, 224, 238, 0.62) 15%, rgba(168, 185, 206, 0.25) 48%, rgba(206, 222, 238, 0.45) 82%, rgba(255, 255, 255, 0.96) 100%) border-box !important;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.72) 0%, rgba(246, 250, 254, 0.42) 50%, rgba(234, 243, 252, 0.58) 100%) padding-box,
+  linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(212, 224, 238, 0.62) 15%, rgba(168, 185, 206, 0.25) 48%, rgba(206, 222, 238, 0.45) 82%, rgba(255, 255, 255, 0.96) 100%) border-box !important;
   border: 1px solid transparent !important;
   border-radius: 40px !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%) !important;
   backdrop-filter: blur(28px) saturate(190%) contrast(102%) !important;
-  box-shadow:
-    0 1px 3px rgba(15, 23, 42, 0.015),
-    0 6px 16px -3px rgba(15, 23, 42, 0.035),
-    0 16px 36px -6px rgba(15, 23, 42, 0.05),
-    0 32px 64px -10px rgba(15, 23, 42, 0.06),
-    inset 0 1.5px 1.5px 0 #fff,
-    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.45),
-    inset 1px 1px 0 0 rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.015),
+  0 6px 16px -3px rgba(15, 23, 42, 0.035),
+  0 16px 36px -6px rgba(15, 23, 42, 0.05),
+  0 32px 64px -10px rgba(15, 23, 42, 0.06),
+  inset 0 1.5px 1.5px 0 #fff,
+  inset 0 -1px 1px 0 rgba(255, 255, 255, 0.45),
+  inset 1px 1px 0 0 rgba(255, 255, 255, 0.75) !important;
 }
 
 [data-theme="light"] .section-creators.is-movie-showcase .creator-card::before,
@@ -22390,17 +22400,15 @@ html.theme-switching #hero .hero-global-sensation::after {
 
 [data-theme="light"] .section-creators.is-movie-showcase .creator-card:hover {
   transform: translateY(-8px) !important;
-  background:
-    linear-gradient(150deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 252, 255, 0.65) 50%, rgba(238, 246, 255, 0.78) 100%) padding-box,
-    linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.9) 25%, rgba(14, 165, 233, 0.4) 75%, #fff) border-box !important;
-  box-shadow:
-    0 2px 6px rgba(15, 23, 42, 0.02),
-    0 12px 28px -4px rgba(15, 23, 42, 0.05),
-    0 28px 56px -8px rgba(15, 23, 42, 0.07),
-    0 48px 90px -12px rgba(14, 165, 233, 0.12),
-    inset 0 2px 2px 0 #fff,
-    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.6),
-    inset 1px 1px 0 0 rgba(255, 255, 255, 0.95) !important;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 252, 255, 0.65) 50%, rgba(238, 246, 255, 0.78) 100%) padding-box,
+  linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.9) 25%, rgba(14, 165, 233, 0.4) 75%, #fff) border-box !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02),
+  0 12px 28px -4px rgba(15, 23, 42, 0.05),
+  0 28px 56px -8px rgba(15, 23, 42, 0.07),
+  0 48px 90px -12px rgba(14, 165, 233, 0.12),
+  inset 0 2px 2px 0 #fff,
+  inset 0 -1px 1px 0 rgba(255, 255, 255, 0.6),
+  inset 1px 1px 0 0 rgba(255, 255, 255, 0.95) !important;
 }
 
 /* Restore the Home creator carousel to db66ea3's glass-card presentation. */
@@ -23633,23 +23641,21 @@ html.theme-switching #hero .hero-global-sensation::after {
   [data-theme="light"] body.page-work .capability-card,
   [data-theme="light"] body.page-work .workflow-card {
     border-color: rgba(49, 91, 110, 0.22) !important;
-    box-shadow:
-      0 0 0 1px rgba(53, 97, 117, 0.1),
-      -5px 0 16px rgba(55, 103, 128, 0.075),
-      5px 0 16px rgba(55, 103, 128, 0.075),
-      0 12px 26px rgba(38, 66, 82, 0.11),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+    box-shadow: 0 0 0 1px rgba(53, 97, 117, 0.1),
+    -5px 0 16px rgba(55, 103, 128, 0.075),
+    5px 0 16px rgba(55, 103, 128, 0.075),
+    0 12px 26px rgba(38, 66, 82, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
   }
 
   [data-theme="light"] body.page-work .capability-card:hover,
   [data-theme="light"] body.page-work .workflow-card:hover {
     transform: none !important;
-    box-shadow:
-      0 0 0 1px rgba(14, 165, 233, 0.2),
-      -6px 0 18px rgba(14, 165, 233, 0.1),
-      6px 0 18px rgba(14, 165, 233, 0.1),
-      0 14px 30px rgba(38, 66, 82, 0.14),
-      inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2),
+    -6px 0 18px rgba(14, 165, 233, 0.1),
+    6px 0 18px rgba(14, 165, 233, 0.1),
+    0 14px 30px rgba(38, 66, 82, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
   }
 
   /* Retain the animated highlight in the light theme; the illustrations keep
@@ -23717,11 +23723,10 @@ html.theme-switching #hero .hero-global-sensation::after {
     border: 1px solid rgba(255, 255, 255, 0.76) !important;
     -webkit-backdrop-filter: blur(20px) saturate(135%) !important;
     backdrop-filter: blur(20px) saturate(135%) !important;
-    box-shadow:
-      0 10px 26px rgba(24, 39, 50, 0.09),
-      0 1px 3px rgba(24, 39, 50, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92),
-      inset 0 -1px 0 rgba(35, 54, 67, 0.055) !important;
+    box-shadow: 0 10px 26px rgba(24, 39, 50, 0.09),
+    0 1px 3px rgba(24, 39, 50, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(35, 54, 67, 0.055) !important;
   }
 
   [data-theme="light"] :is(.domain-chip,
@@ -23732,9 +23737,8 @@ html.theme-switching #hero .hero-global-sensation::after {
     border: 1px solid rgba(255, 255, 255, 0.78) !important;
     -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
     backdrop-filter: blur(16px) saturate(130%) !important;
-    box-shadow:
-      0 4px 12px rgba(24, 39, 50, 0.07),
-      inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+    box-shadow: 0 4px 12px rgba(24, 39, 50, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
   }
 
   [data-theme="light"] :is(.founder-accord-card,
@@ -24327,9 +24331,8 @@ body.page-team .founder-accord-card .founder-quote strong {
   [data-theme="light"] body.page-why-us .comp-mobile-values>.is-highverz {
     border-color: rgba(20, 100, 119, 0.42);
     background: rgba(222, 244, 250, 0.76);
-    box-shadow:
-      0 5px 14px rgba(28, 70, 88, 0.11),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    box-shadow: 0 5px 14px rgba(28, 70, 88, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   [data-theme="light"] body.page-why-us .comp-mobile-values .is-highverz>span {
@@ -24345,9 +24348,8 @@ body.page-team .founder-accord-card .founder-quote strong {
   [data-theme="dark"] body.page-why-us .comp-mobile-values>.is-highverz {
     border-color: rgba(35, 199, 216, 0.48);
     background: rgba(14, 75, 86, 0.46);
-    box-shadow:
-      0 5px 14px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(145, 239, 248, 0.12);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(145, 239, 248, 0.12);
   }
 
   [data-theme="dark"] body.page-why-us .comp-mobile-values .is-highverz>span {

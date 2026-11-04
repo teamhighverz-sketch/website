@@ -20014,16 +20014,18 @@ body::after {
   transform: translate(2px, -2px);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .footer {
-    min-height: 0;
-    padding: 2rem 0 1.5rem;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 1.25rem 0 0.85rem !important;
+    justify-content: flex-start !important;
   }
 
   .footer-row-content {
     grid-template-columns: 1fr 1fr;
     justify-items: stretch;
-    gap: 1.25rem 1rem;
+    gap: 1rem 0.85rem;
     min-height: auto;
     text-align: left;
   }
@@ -20042,7 +20044,7 @@ body::after {
   /* Restore scatter canvas but lower opacity slightly so it's not overpowering */
   .footer-scatter-canvas {
     display: block !important;
-    opacity: 0.45 !important;
+    opacity: 0.85 !important;
   }
 
   .cta-cyan-logo-img {
@@ -20050,17 +20052,16 @@ body::after {
   }
 
   .footer-watermark-logo {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
+    position: relative !important;
+    order: 3 !important;
+    top: auto !important;
+    left: auto !important;
     right: auto !important;
     bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(340px, 82vw) !important;
-    margin: 0 !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
-    opacity: 0.14 !important;
+    transform: none !important;
+    width: clamp(145px, 40vw, 180px) !important;
+    margin: 0.75rem auto 0.25rem !important;
+    opacity: 1 !important;
   }
 }
 
@@ -20376,23 +20377,22 @@ body::after {
   filter: none !important;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .footer-watermark-logo {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
+    position: relative !important;
+    order: 3 !important;
+    top: auto !important;
+    left: auto !important;
     right: auto !important;
     bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(340px, 82vw) !important;
-    margin: 0 !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
-    opacity: 0.14 !important;
+    transform: none !important;
+    width: clamp(145px, 40vw, 180px) !important;
+    margin: 0.75rem auto 0.25rem !important;
+    opacity: 1 !important;
   }
 
   [data-theme="light"] .footer-watermark-logo {
-    opacity: 0.08 !important;
+    opacity: 1 !important;
   }
 }
 
@@ -20756,7 +20756,7 @@ body::after {
 /* Phone and tablet controls, including short landscape viewports. */
 /* Reserve the logo's full aspect-ratio height plus room above and below it.
    The Work footer has fewer links, so its content alone was too short. */
-@media (min-width: 721px) {
+@media (min-width: 901px) {
   .footer {
     box-sizing: border-box;
     min-height: calc(min(960px, 66vw) * 900 / 2415 + 140px);
@@ -20765,12 +20765,14 @@ body::after {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   :is(.footer-home, .footer-compact-mobile) {
-    display: flex;
-    flex-direction: column;
-    padding: 2rem 0 1.5rem;
-    min-height: auto;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 1.25rem 0 0.75rem !important;
+    min-height: 0 !important;
+    height: auto !important;
+    justify-content: flex-start !important;
     overflow: hidden;
     position: relative;
   }
@@ -20876,23 +20878,36 @@ body::after {
     margin-left: auto;
   }
 
-  /* Ambient watermark logo sits behind footer content instead of consuming vertical flow height */
+  /* Keep the animated mark in its own clean row below footer content, never behind navigation text */
   :is(.footer-home, .footer-compact-mobile) .footer-watermark-logo {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
+    position: relative !important;
+    order: 3 !important;
+    top: auto !important;
+    left: auto !important;
     right: auto !important;
     bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(340px, 82vw) !important;
-    margin: 0 !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
-    opacity: 0.14 !important;
+    transform: none !important;
+    width: clamp(140px, 38vw, 175px) !important;
+    aspect-ratio: 2415 / 900 !important;
+    margin: 0.65rem auto 0.2rem !important;
+    pointer-events: auto !important;
+    z-index: 2 !important;
+    opacity: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
   }
 
   [data-theme="light"] :is(.footer-home, .footer-compact-mobile) .footer-watermark-logo {
-    opacity: 0.08 !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  @media (max-width: 480px) {
+    :is(.footer-home, .footer-compact-mobile) .footer-watermark-logo {
+      width: clamp(130px, 36vw, 155px) !important;
+      margin: 0.5rem auto 0.15rem !important;
+    }
   }
 }
 

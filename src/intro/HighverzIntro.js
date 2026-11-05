@@ -87,14 +87,14 @@ export class HighverzIntro {
       opacity: 1,
       scale: 1,
       y: 0,
-      duration: 0.35,
+      duration: 0.24,
       ease: 'power2.out',
     }, 0);
 
     // Initial progress bump while assets begin loading
     this.tl.to(progress, {
       scaleX: 0.25,
-      duration: 0.2,
+      duration: 0.13,
       ease: 'power1.out',
     }, 0);
   }
@@ -102,7 +102,8 @@ export class HighverzIntro {
   // ─────────────────────────────────────────────────────────────────────────
   // REAL ASSET PRELOADING COORDINATOR
   // Warm fonts and media in parallel while the intro is displayed.
-  // Home includes all photos, posters, and a playable buffer for every reel.
+  // Home waits for its hero images, carousel posters, and first frames for
+  // the five reels visible at the initial rail position.
   // ─────────────────────────────────────────────────────────────────────────
   async startAssetPreload() {
     const progress = this.container?.querySelector('.hv-loader-progress-fill');
@@ -185,24 +186,24 @@ export class HighverzIntro {
       window.__hvUnlockHeroVideos();
     }
 
-    // 5. Reveal only after the first visible page is stable. The cap prevents
-    // an unreachable asset from trapping visitors in the intro indefinitely.
-    const minDelay = new Promise(resolve => setTimeout(
-      resolve,
-      isMobile ? 1250 : 1100
-    ));
+    // 5. Reveal as soon as the page's real startup assets are ready. Home's
+    // carousel preloader reports decoded posters and visible reel frames;
+    // there is no decorative minimum hold. The cap prevents a stalled request
+    // from trapping visitors in the intro indefinitely.
+    const nonHomeEntrance = isHomePage
+      ? Promise.resolve()
+      : new Promise(resolve => setTimeout(resolve, 256));
     const maxTimeout = new Promise(resolve => setTimeout(
       resolve,
       isHomePage ? HOME_MEDIA_TIMEOUT + 250 : (isMobile ? 3200 : 4200)
     ));
 
     await Promise.race([
-      Promise.all([fontTask, homeMediaTask, viewportMediaTask, fluidTask, minDelay]),
+      Promise.all([fontTask, homeMediaTask, viewportMediaTask, fluidTask, nonHomeEntrance]),
       maxTimeout
     ]);
 
-    setProgress(1.0, 0.15);
-    await new Promise(resolve => setTimeout(resolve, 150));
+    setProgress(1.0, 0.08);
 
     if (!this.isCompleted && !this.isFinishing) {
       this.finishLoading();
@@ -237,7 +238,7 @@ export class HighverzIntro {
       finishTl.to(center, {
         opacity: 0,
         scale: 0.98,
-        duration: isMobile ? 0.28 : 0.38,
+        duration: isMobile ? 0.20 : 0.27,
         ease: 'power2.inOut',
       }, isMobile ? 0.02 : 0.04);
     }
@@ -245,7 +246,7 @@ export class HighverzIntro {
     if (progressWrap) {
       finishTl.to(progressWrap, {
         opacity: 0,
-        duration: isMobile ? 0.22 : 0.30,
+        duration: isMobile ? 0.16 : 0.21,
         ease: 'power2.inOut',
       }, isMobile ? 0.02 : 0.04);
     }
@@ -253,7 +254,7 @@ export class HighverzIntro {
     // Elegant fade out of the entire loading screen backdrop
     finishTl.to(this.container, {
       opacity: 0,
-      duration: isMobile ? 0.42 : 0.58,
+      duration: isMobile ? 0.29 : 0.40,
       ease: 'power2.inOut',
     }, isMobile ? 0.04 : 0.08);
   }

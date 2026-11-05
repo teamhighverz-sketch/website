@@ -1490,6 +1490,14 @@ window.addEventListener('hv:themechange', (event) => {
   }
   applyThemeHeroCopy();
 
+  const reelViewport = document.getElementById('heroCarouselViewport') || document.querySelector('.carousel-viewport');
+  if (reelViewport) {
+    // Hide the rail before the theme-specific media is committed. Only fade
+    // the viewport: filtering its 3D cards would flatten and stall the wall.
+    gsap.killTweensOf(reelViewport);
+    gsap.set(reelViewport, { opacity: 0 });
+  }
+
   // Commit reel identities in the same task as the headline; decoded frames
   // fade in independently without stopping the rail or its playback loop.
   window.__hvHeroReelRefreshTheme?.();
@@ -1519,6 +1527,7 @@ window.addEventListener('hv:themechange', (event) => {
   if (!revealItems.length) {
     revealItems = Array.from(headline.querySelectorAll('.hl-word, .hero-word-roller, .platform-chip, .hero-headline-connector'));
   }
+  const firstLineItemCount = headlineLines[0]?.querySelectorAll(isLight ? '.hl-word, .platform-chip' : '.hl-word, .hero-word-roller').length || 1;
 
   const description = document.getElementById('hero-desc');
   const descSpans = description ? Array.from(description.querySelectorAll('span')) : [];
@@ -1569,6 +1578,19 @@ window.addEventListener('hv:themechange', (event) => {
       }
     }
   });
+
+  if (reelViewport) {
+    // Let the first headline line land before showing the already-switched
+    // reels. A fresh theme tap kills this tween and starts the sequence again.
+    const reelRevealDelay = 0.1 + wordDuration + (firstLineItemCount - 1) * wordStagger;
+    gsap.to(reelViewport, {
+      opacity: 1,
+      duration: isMobile ? 0.42 : 0.48,
+      delay: reelRevealDelay,
+      ease: 'power2.out',
+      clearProps: 'opacity'
+    });
+  }
 
 
 

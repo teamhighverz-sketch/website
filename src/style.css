@@ -21101,6 +21101,24 @@ body::after {
     vertical-align: baseline !important;
   }
 
+  /* Keep the dark hero's changing keyword beside "Into" on phones. The
+     previous 3.55em roller slot plus a wrapping headline pushed Reach onto
+     its own line on narrow Safari viewports. */
+  [data-theme="dark"] #hero .hero-headline--centered {
+    font-size: clamp(1.3rem, 5.7vw, 2.05rem) !important;
+  }
+
+  [data-theme="dark"] #hero .hero-headline-line:first-child {
+    width: max-content !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    margin-inline: auto !important;
+  }
+
+  [data-theme="dark"] #hero .hero-headline-line:first-child .hero-word-roller {
+    min-width: 3.1em !important;
+  }
+
   @media (max-width: 360px) {
 
     .hero-headline,

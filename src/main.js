@@ -1532,6 +1532,7 @@ window.addEventListener('hv:themechange', (event) => {
   ]);
 
   const isMobile = window.innerWidth <= 768;
+  const isDarkMobileThemeReveal = isMobile && !isLight;
   // Keep the blur deliberately shallow. Large filters on every word and
   // subtitle span force repeated rasterization during the theme swap, which
   // reads as a flash or a dropped frame on mid-range devices.
@@ -1539,8 +1540,9 @@ window.addEventListener('hv:themechange', (event) => {
   // The theme-swap reveal is intentionally a little more deliberate than the
   // cold-load entrance. A slightly wider cadence lets each word register
   // without stretching the whole theme change into a long wait.
-  const wordStagger = isMobile ? 0.055 : 0.06;
-  const wordDuration = isMobile ? 0.58 : 0.64;
+  const wordStagger = isDarkMobileThemeReveal ? 0.075 : isMobile ? 0.055 : 0.06;
+  const wordDuration = isDarkMobileThemeReveal ? 0.68 : isMobile ? 0.58 : 0.64;
+  const headlineRevealEnd = 0.1 + wordDuration + Math.max(0, revealItems.length - 1) * wordStagger;
 
   // Staggered one-by-one text reveal with optical blur only. Keeping the
   // layout coordinates untouched is important here: a translate-based reveal
@@ -1580,7 +1582,7 @@ window.addEventListener('hv:themechange', (event) => {
     gsap.to(description, {
       opacity: 1,
       duration: 0.65,
-      delay: 0.24,
+      delay: isDarkMobileThemeReveal ? Math.max(0.12, headlineRevealEnd - 0.1) : 0.24,
       ease: 'power3.out',
       clearProps: 'filter,willChange'
     });
@@ -1997,6 +1999,7 @@ function initHeroIntro(immediate = false) {
   const navbar = document.getElementById('navbar');
 
   const isMobile = window.innerWidth < 768;
+  const isDarkMobileIntro = isMobile && !isLightTheme;
   if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.body.classList.add('hero-revealed');
     gsap.set('.hl-word, .hero-headline-connector, .hero-word-roller, #hero-platform-icons, .platform-chip, #hero-desc, #hero-actions, .hero-trust-badge-wrap, .carousel-viewport, .hero-tag-bar, .section-trusted', {
@@ -2075,6 +2078,27 @@ function initHeroIntro(immediate = false) {
   });
   heroIntroTimeline = tl;
 
+  // Give the dark mobile hero a clear reading rhythm: finish revealing the
+  // headline before the supporting copy and controls enter, then bring in the
+  // reel rail. Desktop and the light theme retain their existing timings.
+  const darkMobileTextStart = 0.1;
+  const darkMobileTextDuration = 0.78;
+  const darkMobileTextStagger = 0.085;
+  const darkMobileTextEnd = darkMobileTextStart + darkMobileTextDuration +
+    Math.max(0, allWords.length - 1) * darkMobileTextStagger;
+  const lightMobileLine1Stagger = 0.075;
+  const lightMobileChipsStagger = 0.075;
+  const lightMobileLine2Stagger = 0.075;
+  const lightMobileChipsStart = 0.1 + line1Words.length * lightMobileLine1Stagger;
+  const lightMobileLine2Start = lightMobileChipsStart + chips.length * lightMobileChipsStagger;
+  const lightMobileTextEnd = lightMobileLine2Start + 0.75 +
+    Math.max(0, line2Words.length - 1) * lightMobileLine2Stagger;
+  const isMobileHeroIntro = isMobile && (isLightTheme || isDarkMobileIntro);
+  const textRevealEnd = isDarkMobileIntro ? darkMobileTextEnd : lightMobileTextEnd;
+  const descriptionStart = isMobileHeroIntro ? textRevealEnd - 0.12 : 0.45;
+  const actionsStart = isMobileHeroIntro ? textRevealEnd + 0.6 : 0.6;
+  const reelStart = isMobileHeroIntro ? textRevealEnd + 0.95 : 0.65;
+
   // 0. Navbar slides down from blur into sharp focus (initial cold load only)
   if (navbar && !isTransitioning) {
     tl.to(navbar, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out' }, 0);
@@ -2095,8 +2119,8 @@ function initHeroIntro(immediate = false) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: isMobile ? 0.6 : 0.7,
-        stagger: isMobile ? 0.05 : 0.07,
+        duration: isMobile ? 0.72 : 0.7,
+        stagger: isMobile ? lightMobileLine1Stagger : 0.07,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
       },
@@ -2104,14 +2128,14 @@ function initHeroIntro(immediate = false) {
     );
 
     // Platform Chips: reveal right after Line 1 words
-    const chipsStartTime = 0.1 + (line1Words.length * (isMobile ? 0.05 : 0.07));
+    const chipsStartTime = 0.1 + (line1Words.length * (isMobile ? lightMobileLine1Stagger : 0.07));
     if (chips.length) {
       tl.to(chips,
         {
           opacity: 1,
           filter: 'blur(0px)',
-          duration: isMobile ? 0.45 : 0.5,
-          stagger: isMobile ? 0.05 : 0.06,
+          duration: isMobile ? 0.55 : 0.5,
+          stagger: isMobile ? lightMobileChipsStagger : 0.06,
           ease: 'power3.out',
           clearProps: 'filter,willChange'
         },
@@ -2120,14 +2144,14 @@ function initHeroIntro(immediate = false) {
     }
 
     // Line 2: "Turning Every Scene Into a Global Sensation." right after chips
-    const line2StartTime = chipsStartTime + ((chips.length || 1) * (isMobile ? 0.05 : 0.06));
+    const line2StartTime = chipsStartTime + ((chips.length || 1) * (isMobile ? lightMobileChipsStagger : 0.06));
     tl.to(line2Words,
       {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: isMobile ? 0.65 : 0.75,
-        stagger: isMobile ? 0.06 : 0.08,
+        duration: isMobile ? 0.75 : 0.75,
+        stagger: isMobile ? lightMobileLine2Stagger : 0.08,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
       },
@@ -2139,31 +2163,31 @@ function initHeroIntro(immediate = false) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: isMobile ? 0.65 : 0.8,
-        stagger: isMobile ? 0.06 : 0.08,
+        duration: isDarkMobileIntro ? darkMobileTextDuration : isMobile ? 0.65 : 0.8,
+        stagger: isDarkMobileIntro ? darkMobileTextStagger : isMobile ? 0.06 : 0.08,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
       },
-      0.1
+      darkMobileTextStart
     );
   }
 
   // 4. Subtitle paragraph: blur + slide + sharp (same motion language)
   tl.to('#hero-desc',
     { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.8, ease: 'power3.out', clearProps: 'filter' },
-    0.45
+    descriptionStart
   );
 
   // 5. Action buttons: blur + slide + sharp
   tl.fromTo('#hero-actions',
     { opacity: 0, y: 25, filter: 'blur(8px)' },
     { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out', clearProps: 'filter' },
-    0.6
+    actionsStart
   );
 
   // 5b. Social proof and creator reel: blur + slide + sharp
-  tl.to('.carousel-viewport', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out', clearProps: 'filter' }, 0.65);
-  tl.to('.hero-tag-bar', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'power3.out', clearProps: 'filter' }, 0.75);
+  tl.to('.carousel-viewport', { opacity: 1, y: 0, filter: 'blur(0px)', duration: isMobileHeroIntro ? 0.8 : 0.7, ease: 'power3.out', clearProps: 'filter' }, reelStart);
+  tl.to('.hero-tag-bar', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'power3.out', clearProps: 'filter' }, isMobileHeroIntro ? reelStart + 0.12 : 0.75);
 
   // 6. Trusted by ambitious brands: blur + slide + sharp
   tl.fromTo('.section-trusted',
@@ -3718,36 +3742,41 @@ export function initHeroReelCarousel() {
         video.setAttribute('src', targetSrc);
         video.dataset.activeThemeSrc = targetSrc;
         video.load();
-        if (state.priority === 'high' && !document.documentElement.classList.contains('intro-pending')) {
-          const attempt = video.play();
-          state.playAttempt = attempt;
-          attempt?.catch(() => { }).finally(() => {
-            if (state.playAttempt === attempt) state.playAttempt = null;
-          });
-        }
       });
     }
     video.fetchPriority = priority;
   };
 
-  // Ensure a loaded reel plays inline, muted, and looping reliably
+  // Ensure a loaded reel plays inline, muted, and looping reliably. Safari
+  // can reject play() when called in the same task as video.load(); retry
+  // when the visible reel has decoded enough data to begin playback.
+  const attemptVideoPlayback = (video) => {
+    if (!video || !mediaStates.has(video)) return;
+    const state = mediaStates.get(video);
+    if (state.priority !== 'high' || !visibleReels.has(video) || !isCarouselVisible || document.hidden) return;
+    if (video.getAttribute('src') !== getThemeVideoSource(video)) return;
+    if (document.documentElement.classList.contains('intro-pending') || !video.paused || state.playAttempt) return;
+    const attempt = video.play();
+    state.playAttempt = attempt;
+    attempt?.catch(() => { }).finally(() => {
+      if (state.playAttempt === attempt) state.playAttempt = null;
+    });
+  };
+  videos.forEach((video) => {
+    if (!video) return;
+    const retryPlayback = () => attemptVideoPlayback(video);
+    video.addEventListener('loadeddata', retryPlayback);
+    video.addEventListener('canplay', retryPlayback);
+    mediaStates.get(video).retryPlayback = retryPlayback;
+  });
+
   const playVideo = (video) => {
     if (!video || !mediaStates.has(video)) return;
     loadVideo(video, 'high');
     // A theme swap is still waiting for its decoded fallback poster. Do not
     // restart the outgoing reel while that handoff is pending.
     if (video.getAttribute('src') !== getThemeVideoSource(video)) return;
-    // Buffer behind the loader without spending that buffer on hidden playback.
-    if (document.documentElement.classList.contains('intro-pending')) return;
-    const state = mediaStates.get(video);
-    if (!video.paused || state.playAttempt) return;
-    // play() already waits for data. Adding new canplay/loadeddata listeners
-    // on every switch left stale playback attempts attached to old sources.
-    const attempt = video.play();
-    state.playAttempt = attempt;
-    attempt?.catch(() => { }).finally(() => {
-      if (state.playAttempt === attempt) state.playAttempt = null;
-    });
+    attemptVideoPlayback(video);
   };
 
   let scrollPosition = 0;
@@ -4277,6 +4306,20 @@ export function initHeroReelCarousel() {
 
   measure();
   render();
+  // IntersectionObserver's first callback is asynchronous. Seed the initial
+  // phone rail from its measured card bounds so visible reels begin loading
+  // on the first update instead of waiting for the observer round trip.
+  if (isMobileViewport) {
+    const viewportRect = viewport.getBoundingClientRect();
+    cardPositions.forEach((position, index) => {
+      const video = videos[index];
+      const rect = position.getBoundingClientRect();
+      if (video && rect.right > viewportRect.left && rect.left < viewportRect.right &&
+        rect.bottom > viewportRect.top && rect.top < viewportRect.bottom) {
+        visibleReels.add(video);
+      }
+    });
+  }
   updateVideoPriority(true);
   // A route handoff can promote the carousel one paint after this function is
   // called. Re-measure only after a stable visible layout is available.
@@ -4304,7 +4347,14 @@ export function initHeroReelCarousel() {
   window.__hvHeroReelCommitThemeSwap = () => { };
 
   window.__hvHeroReelCleanup = () => {
-    mediaStates.forEach(state => { state.cancelReady(); state.poster.remove(); });
+    mediaStates.forEach((state, video) => {
+      state.cancelReady();
+      if (state.retryPlayback) {
+        video.removeEventListener('loadeddata', state.retryPlayback);
+        video.removeEventListener('canplay', state.retryPlayback);
+      }
+      state.poster.remove();
+    });
     mediaStates.clear();
     warmPosters.length = 0;
     cardPositions.forEach(position => position.querySelector('.video-card')?.classList.remove('reel-media-loading'));

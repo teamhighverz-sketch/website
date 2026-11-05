@@ -187,7 +187,10 @@ export class HighverzIntro {
 
     // 5. Reveal only after the first visible page is stable. The cap prevents
     // an unreachable asset from trapping visitors in the intro indefinitely.
-    const minDelay = new Promise(resolve => setTimeout(resolve, isMobile ? 850 : 1100));
+    const minDelay = new Promise(resolve => setTimeout(
+      resolve,
+      isMobile ? 1250 : 1100
+    ));
     const maxTimeout = new Promise(resolve => setTimeout(
       resolve,
       isHomePage ? HOME_MEDIA_TIMEOUT + 250 : (isMobile ? 3200 : 4200)

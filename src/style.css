@@ -13603,9 +13603,10 @@ html.js .floating-badge-item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.62rem, 2vw, 0.72rem);
-  font-weight: 800;
-  letter-spacing: clamp(0.06em, 1.2vw, 0.14em);
+  font-family: var(--font-tag, 'Space Grotesk', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent-cyan);
   background: rgba(0, 229, 255, 0.08);
@@ -20388,6 +20389,23 @@ body::after {
   filter: none !important;
 }
 
+/* At narrow desktop widths the columns leave too little room for a readable
+   scatter mark. Give it a full row beneath the links instead of overlapping. */
+@media (min-width: 901px) {
+  .footer.footer-scatter-stacked .footer-watermark-logo,
+  [data-theme="light"] .footer.footer-scatter-stacked .footer-watermark-logo {
+    position: relative;
+    order: 3;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: min(900px, calc(100% - 3rem));
+    margin: 1.5rem auto 0;
+    transform: none;
+  }
+}
+
 @media (max-width: 900px) {
   .footer-watermark-logo {
     position: relative !important;
@@ -21661,13 +21679,13 @@ html.theme-switching.theme-target-dark::before {
   background: rgba(3, 8, 12, 0.15);
 }
 
-/* Use one continuous blur mask while the Home backdrop changes. Stacking
-   eight filtered strips during a color swap can expose colored seams. */
-html.theme-switching:has(#hero) .viewport-bottom-reveal>div {
+/* Keep one continuous bottom blur on Home in both themes. Changing the
+   number of backdrop-filter layers during a swap makes the viewport edge flash. */
+html:has(#hero) .viewport-bottom-reveal>div {
   display: none !important;
 }
 
-html.theme-switching:has(#hero) .viewport-bottom-reveal>div:last-child {
+html:has(#hero) .viewport-bottom-reveal>div:last-child {
   display: block !important;
   backdrop-filter: blur(5px) !important;
   -webkit-backdrop-filter: blur(5px) !important;
@@ -21675,17 +21693,12 @@ html.theme-switching:has(#hero) .viewport-bottom-reveal>div:last-child {
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
 }
 
-/* Keep the same continuous mask on phones before, during and after the swap.
-   Reinstating eight filtered strips halfway through the staggered headline
-   reveal can show seams and overload mobile backdrop compositing. */
+/* Campaigns uses the same stable mask on phones. */
 @media (max-width: 768px) {
-
-  html:has(#hero) .viewport-bottom-reveal>div,
   body.page-campaigns .viewport-bottom-reveal>div {
     display: none !important;
   }
 
-  html:has(#hero) .viewport-bottom-reveal>div:last-child,
   body.page-campaigns .viewport-bottom-reveal>div:last-child {
     display: block !important;
     backdrop-filter: blur(5px) !important;

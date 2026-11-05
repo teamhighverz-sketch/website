@@ -22,9 +22,37 @@ function getInitialTheme() {
 // ─── Apply theme to DOM ───
 let themeTransitionTimer = null;
 
+// The two Home themes have different content heights. Keep the section under
+// the viewport stationary when switching midway through the page.
+function getThemeScrollAnchor() {
+  if (window.scrollY < 80) return null;
+  const viewportMiddle = window.innerHeight / 2;
+  const sections = document.querySelectorAll('main > section, #page-content > section, footer');
+  const anchor = Array.from(sections).find((section) => {
+    const rect = section.getBoundingClientRect();
+    return rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
+  });
+  return anchor ? { element: anchor, top: anchor.getBoundingClientRect().top } : null;
+}
 
+function restoreThemeScrollAnchor(anchor) {
+  if (!anchor?.element.isConnected) return;
+  const offset = anchor.element.getBoundingClientRect().top - anchor.top;
+  if (Math.abs(offset) < 1) return;
+  const target = Math.max(0, Math.min(
+    window.scrollY + offset,
+    document.documentElement.scrollHeight - window.innerHeight
+  ));
+  if (window.lenis) {
+    window.lenis.resize();
+    window.lenis.scrollTo(target, { immediate: true, force: true });
+  } else {
+    window.scrollTo(0, target);
+  }
+}
 
 function applyTheme(theme, animate = false) {
+  const scrollAnchor = animate ? getThemeScrollAnchor() : null;
   if (animate) {
     const root = document.documentElement;
     root.classList.remove('theme-target-light', 'theme-target-dark');
@@ -43,6 +71,7 @@ function applyTheme(theme, animate = false) {
   try {
     window.dispatchEvent(new CustomEvent('hv:themechange', { detail: { theme, animate } }));
   } catch (_) {}
+  restoreThemeScrollAnchor(scrollAnchor);
 }
 
 // ─── Update Capsule Switchers (Creators ↔ Brands) ───

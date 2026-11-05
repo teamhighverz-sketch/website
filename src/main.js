@@ -6577,6 +6577,45 @@ function initInstagramReelsPlayer() {
 }
 
 // FOOTER WATERMARK — INTERACTIVE SCATTER GRID
+// Keep the scatter mark inside the space between the footer columns, even
+// when desktop zoom or a narrower window changes their available width.
+function fitFooterScatterMark(watermark) {
+  const footer = watermark.closest('.footer');
+  const details = footer?.querySelector('.footer-left-info');
+  const links = footer?.querySelector('.footer-link-group');
+  const socials = footer?.querySelector('.footer-social-links');
+  if (!footer || !details || !links || !socials) return;
+
+  const clearSizing = () => {
+    watermark.style.removeProperty('width');
+    watermark.style.removeProperty('left');
+    watermark.style.removeProperty('right');
+    watermark.style.removeProperty('transform');
+    watermark.style.removeProperty('min-height');
+  };
+
+  if (window.innerWidth <= 900) {
+    footer.classList.remove('footer-scatter-stacked');
+    clearSizing();
+    return;
+  }
+
+  const footerBox = footer.getBoundingClientRect();
+  const leftEdge = details.getBoundingClientRect().right;
+  const rightEdge = Math.min(links.getBoundingClientRect().left, socials.getBoundingClientRect().left);
+  const gutter = Math.max(36, Math.min(48, window.innerWidth * 0.02));
+  const available = rightEdge - leftEdge - gutter * 2;
+  const stacked = available < 480;
+  footer.classList.toggle('footer-scatter-stacked', stacked);
+  clearSizing();
+  if (stacked) return;
+
+  watermark.style.width = `${Math.min(1500, available)}px`;
+  watermark.style.left = `${(leftEdge + rightEdge) / 2 - footerBox.left}px`;
+  watermark.style.right = 'auto';
+  watermark.style.transform = 'translate(-50%, -50%)';
+}
+
 // Keeps the large Highverz mark intact at rest, then gently breaks its pixels
 // away from the pointer and lets them settle back into the logo.
 export function initFooterScatterGrid() {
@@ -6586,6 +6625,16 @@ export function initFooterScatterGrid() {
   }
   const watermark = document.querySelector('.footer-watermark-logo');
   if (!watermark) return;
+  fitFooterScatterMark(watermark);
+  if (!window.__hvFooterScatterResizeBound) {
+    window.__hvFooterScatterResizeBound = true;
+    window.addEventListener('resize', () => fitFooterScatterMark(watermark), { passive: true });
+    const row = watermark.closest('.footer')?.querySelector('.footer-row-content');
+    if (row && typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => fitFooterScatterMark(watermark));
+      observer.observe(row);
+    }
+  }
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   // Enhanced reactive scatter physics: Sky Blue in light mode, Electric Cyan in dark mode
   window.__hvFooterScatterCleanup = initScatterGrid(watermark, {

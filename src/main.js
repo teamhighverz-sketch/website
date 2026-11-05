@@ -1546,11 +1546,9 @@ window.addEventListener('hv:themechange', (event) => {
   // subtitle span force repeated rasterization during the theme swap, which
   // reads as a flash or a dropped frame on mid-range devices.
   const initialBlur = isMobile ? 'blur(5px)' : 'blur(7px)';
-  // The theme-swap reveal is intentionally a little more deliberate than the
-  // cold-load entrance. A slightly wider cadence lets each word register
-  // without stretching the whole theme change into a long wait.
-  const wordStagger = isDarkMobileThemeReveal ? 0.075 : isMobile ? 0.055 : 0.06;
-  const wordDuration = isDarkMobileThemeReveal ? 0.68 : isMobile ? 0.58 : 0.64;
+  // Keep each word legible, but let the second line and reels arrive sooner.
+  const wordStagger = isDarkMobileThemeReveal ? 0.065 : isMobile ? 0.05 : 0.055;
+  const wordDuration = isDarkMobileThemeReveal ? 0.58 : isMobile ? 0.52 : 0.56;
   const headlineRevealEnd = 0.1 + wordDuration + Math.max(0, revealItems.length - 1) * wordStagger;
 
   // Staggered one-by-one text reveal with optical blur only. Keeping the
@@ -1585,7 +1583,7 @@ window.addEventListener('hv:themechange', (event) => {
     const reelRevealDelay = 0.1 + wordDuration + (firstLineItemCount - 1) * wordStagger;
     gsap.to(reelViewport, {
       opacity: 1,
-      duration: isMobile ? 0.42 : 0.48,
+      duration: isMobile ? 0.36 : 0.4,
       delay: reelRevealDelay,
       ease: 'power2.out',
       clearProps: 'opacity'
@@ -1603,7 +1601,7 @@ window.addEventListener('hv:themechange', (event) => {
     gsap.set(description, { opacity: 0, filter: 'none' });
     gsap.to(description, {
       opacity: 1,
-      duration: 0.65,
+      duration: 0.55,
       delay: isDarkMobileThemeReveal ? Math.max(0.12, headlineRevealEnd - 0.1) : 0.24,
       ease: 'power3.out',
       clearProps: 'filter,willChange'
@@ -2100,26 +2098,24 @@ function initHeroIntro(immediate = false) {
   });
   heroIntroTimeline = tl;
 
-  // Give the dark mobile hero a clear reading rhythm: finish revealing the
-  // headline before the supporting copy and controls enter, then bring in the
-  // reel rail. Desktop and the light theme retain their existing timings.
+  // Keep the text-first entrance, with less waiting between its parts.
   const darkMobileTextStart = 0.1;
-  const darkMobileTextDuration = 0.78;
-  const darkMobileTextStagger = 0.085;
+  const darkMobileTextDuration = 0.68;
+  const darkMobileTextStagger = 0.07;
   const darkMobileTextEnd = darkMobileTextStart + darkMobileTextDuration +
     Math.max(0, allWords.length - 1) * darkMobileTextStagger;
-  const lightMobileLine1Stagger = 0.075;
-  const lightMobileChipsStagger = 0.075;
-  const lightMobileLine2Stagger = 0.075;
+  const lightMobileLine1Stagger = 0.065;
+  const lightMobileChipsStagger = 0.065;
+  const lightMobileLine2Stagger = 0.065;
   const lightMobileChipsStart = 0.1 + line1Words.length * lightMobileLine1Stagger;
   const lightMobileLine2Start = lightMobileChipsStart + chips.length * lightMobileChipsStagger;
-  const lightMobileTextEnd = lightMobileLine2Start + 0.75 +
+  const lightMobileTextEnd = lightMobileLine2Start + 0.65 +
     Math.max(0, line2Words.length - 1) * lightMobileLine2Stagger;
   const isMobileHeroIntro = isMobile && (isLightTheme || isDarkMobileIntro);
   const textRevealEnd = isDarkMobileIntro ? darkMobileTextEnd : lightMobileTextEnd;
   const descriptionStart = isMobileHeroIntro ? textRevealEnd - 0.12 : 0.45;
-  const actionsStart = isMobileHeroIntro ? textRevealEnd + 0.6 : 0.6;
-  const reelStart = isMobileHeroIntro ? textRevealEnd + 0.95 : 0.65;
+  const actionsStart = isMobileHeroIntro ? textRevealEnd + 0.28 : 0.6;
+  const reelStart = isMobileHeroIntro ? textRevealEnd + 0.18 : 0.65;
 
   // 0. Navbar slides down from blur into sharp focus (initial cold load only)
   if (navbar && !isTransitioning) {
@@ -2141,7 +2137,7 @@ function initHeroIntro(immediate = false) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: isMobile ? 0.72 : 0.7,
+        duration: isMobile ? 0.65 : 0.7,
         stagger: isMobile ? lightMobileLine1Stagger : 0.07,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
@@ -2156,7 +2152,7 @@ function initHeroIntro(immediate = false) {
         {
           opacity: 1,
           filter: 'blur(0px)',
-          duration: isMobile ? 0.55 : 0.5,
+          duration: isMobile ? 0.48 : 0.5,
           stagger: isMobile ? lightMobileChipsStagger : 0.06,
           ease: 'power3.out',
           clearProps: 'filter,willChange'
@@ -2172,7 +2168,7 @@ function initHeroIntro(immediate = false) {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
-        duration: isMobile ? 0.75 : 0.75,
+        duration: isMobile ? 0.65 : 0.75,
         stagger: isMobile ? lightMobileLine2Stagger : 0.08,
         ease: 'power3.out',
         clearProps: 'filter,willChange'
@@ -2196,19 +2192,19 @@ function initHeroIntro(immediate = false) {
 
   // 4. Subtitle paragraph: blur + slide + sharp (same motion language)
   tl.to('#hero-desc',
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.8, ease: 'power3.out', clearProps: 'filter' },
+    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.68, ease: 'power3.out', clearProps: 'filter' },
     descriptionStart
   );
 
   // 5. Action buttons: blur + slide + sharp
   tl.fromTo('#hero-actions',
     { opacity: 0, y: 25, filter: 'blur(8px)' },
-    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'power3.out', clearProps: 'filter' },
+    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.62, ease: 'power3.out', clearProps: 'filter' },
     actionsStart
   );
 
   // 5b. Social proof and creator reel: blur + slide + sharp
-  tl.to('.carousel-viewport', { opacity: 1, y: 0, filter: 'blur(0px)', duration: isMobileHeroIntro ? 0.8 : 0.7, ease: 'power3.out', clearProps: 'filter' }, reelStart);
+  tl.to('.carousel-viewport', { opacity: 1, y: 0, filter: 'blur(0px)', duration: isMobileHeroIntro ? 0.62 : 0.7, ease: 'power3.out', clearProps: 'filter' }, reelStart);
   tl.to('.hero-tag-bar', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'power3.out', clearProps: 'filter' }, isMobileHeroIntro ? reelStart + 0.12 : 0.75);
 
   // 6. Trusted by ambitious brands: blur + slide + sharp

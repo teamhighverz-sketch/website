@@ -1108,7 +1108,7 @@ function applyThemeHeroCopy() {
         <span class="hl-word" data-word>a</span>
         <span class="hl-word highlight-cyan font-bold-italic hero-global-sensation" data-word>Global Sensation.</span>
       </span>`
-    : `<span class="hero-headline-line">
+    : `<span class="hero-headline-line hero-headline-line--dark-keyword">
         <span class="hl-word" data-word>Turn</span>
         <span class="hl-word" data-word>Your</span>
         <span class="hl-word" data-word>Content</span>

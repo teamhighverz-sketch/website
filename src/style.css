@@ -9452,29 +9452,6 @@ html.js .floating-badge-item {
   color: #0EA5E9 !important;
 }
 
-/* ── Enquiry Modal (Light) ── */
-[data-theme="light"] .enquiry-modal-backdrop {
-  background: rgba(220, 230, 242, 0.45) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-}
-
-[data-theme="light"] .enquiry-modal-window {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(240, 246, 252, 0.65) 100%) padding-box,
-    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(0, 229, 255, 0.45) 50%, rgba(14, 165, 233, 0.22) 100%) border-box !important;
-  border: 1px solid transparent !important;
-  backdrop-filter: blur(40px) saturate(210%) contrast(102%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(210%) contrast(102%) !important;
-  box-shadow:
-    0 30px 90px -10px rgba(15, 23, 42, 0.18),
-    0 0 40px rgba(0, 229, 255, 0.10),
-    0 4px 14px rgba(15, 23, 42, 0.05),
-    inset 0 2px 2px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 2px rgba(0, 180, 240, 0.15) !important;
-  color: #0A0D12 !important;
-}
-
 /* ── Light mode: dark teal gradient so highlight reads clearly on white bg ── */
 [data-theme="light"] .highlight-cyan,
 [data-theme="light"] .hl-word.highlight-cyan,

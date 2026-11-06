@@ -100,10 +100,14 @@ function initSmoothScroll() {
         if (event.type !== 'wheel') return true;
         const legacyDelta = Math.abs(Number(event.wheelDeltaY) || 0);
         const lineWheel = event.deltaMode === 1;
-        const discretePixelWheel = deltaX === 0 && Math.abs(event.deltaY) >= 50 && legacyDelta >= 80 &&
-          (legacyDelta % 120 === 0 || legacyDelta === 100);
+        // Windows wheel settings can produce steps smaller than 50px. The old
+        // threshold sent those ticks through Lenis while larger ticks were
+        // native, letting the two scroll targets fight over the same gesture.
+        const discretePixelWheel = Math.abs(deltaX) < 1 &&
+          Math.abs(event.deltaY) >= 20 && legacyDelta >= 80 &&
+          (legacyDelta % 120 === 0 || legacyDelta % 100 === 0);
         const useNativeWheel = lineWheel || discretePixelWheel;
-        if (useNativeWheel && lenis?.isScrolling === 'smooth') lenis.reset();
+        if (useNativeWheel) lenis?.reset();
         return !useNativeWheel;
       },
     } : {}),
@@ -114,6 +118,16 @@ function initSmoothScroll() {
     // Native wheel input already reaches ScrollTrigger's native listener.
     if (instance.isScrolling !== 'native') ScrollTrigger.update();
   });
+  // Lenis ignores native scroll events while one of its smooth animations is
+  // running. If the browser moves independently (wheel, scrollbar, or focus),
+  // its old target otherwise pulls the page back toward the previous position.
+  window.addEventListener('scroll', () => {
+    if (lenis?.isScrolling === 'smooth' &&
+        Math.abs(lenis.actualScroll - lenis.animatedScroll) > 3) {
+      lenis.reset();
+      ScrollTrigger.update();
+    }
+  }, { passive: true });
   gsap.ticker.add((time) => {
     lenis?.raf(time * 1000);
   });

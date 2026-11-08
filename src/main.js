@@ -3691,6 +3691,11 @@ export function initHeroReelCarousel() {
       ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`)
       : video.dataset.darkPoster;
     if (activePoster) poster.src = activePoster;
+    // A video element can be restored from Safari's page cache with a valid
+    // src attribute but no drawable frame. Keep the theme poster in front
+    // until playback has actually started, so returning to Home never shows
+    // an empty/black reel while the browser resumes its decoder.
+    video.closest('.video-card')?.classList.add('reel-media-loading');
     mediaStates.set(video, {
       poster,
       cancelReady: () => { },
@@ -3698,6 +3703,7 @@ export function initHeroReelCarousel() {
       priority: null,
       sourceRequest: 0,
       pendingSource: null,
+      recoveryAttempted: false,
       index,
     });
     for (const src of [video.dataset.darkPoster, video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`]) {
@@ -3712,10 +3718,11 @@ export function initHeroReelCarousel() {
     const state = mediaStates.get(video);
     const hasCurrentFrame = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
     const needsSourceRecovery = video.getAttribute('src') === targetSrc &&
-      !hasCurrentFrame && (
+      !hasCurrentFrame && !state.recoveryAttempted && (
         video.networkState === HTMLMediaElement.NETWORK_EMPTY ||
         video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE ||
-        Boolean(video.error)
+        Boolean(video.error) ||
+        (priority === 'high' && video.networkState === HTMLMediaElement.NETWORK_IDLE)
       );
     // Playback checks must not rewrite media attributes on every rail update.
     if (video.getAttribute('src') === targetSrc && state.priority === priority && !needsSourceRecovery) return;
@@ -3750,33 +3757,15 @@ export function initHeroReelCarousel() {
 
         state.cancelReady();
         state.playAttempt = null;
+        if (needsSourceRecovery) state.recoveryAttempted = true;
         if (safePoster) state.poster.src = safePoster;
         video.setAttribute('poster', safePoster);
         card?.classList.add('reel-media-loading');
-        let frameCallback = null;
-        let fallbackFrame = null;
-        const reveal = () => {
-          if (requestId !== state.sourceRequest || video.getAttribute('src') !== targetSrc || !video.isConnected) return;
-          card?.classList.remove('reel-media-loading');
-          state.pendingSource = null;
-          state.cancelReady();
-        };
-        const onReady = () => {
-          if (frameCallback !== null || fallbackFrame !== null) return;
-          if (typeof video.requestVideoFrameCallback === 'function') {
-            frameCallback = video.requestVideoFrameCallback(reveal);
-          } else {
-            fallbackFrame = requestAnimationFrame(reveal);
-          }
-        };
         state.cancelReady = () => {
           video.removeEventListener('loadeddata', onReady);
-          video.removeEventListener('playing', onReady);
-          if (frameCallback !== null) video.cancelVideoFrameCallback?.(frameCallback);
-          if (fallbackFrame !== null) cancelAnimationFrame(fallbackFrame);
         };
-        video.addEventListener('loadeddata', onReady);
-        video.addEventListener('playing', onReady);
+        const onReady = () => state.retryPlayback?.();
+        video.addEventListener('loadeddata', onReady, { once: true });
         video.pause();
         video.setAttribute('src', targetSrc);
         video.dataset.activeThemeSrc = targetSrc;
@@ -3812,10 +3801,32 @@ export function initHeroReelCarousel() {
   };
   videos.forEach((video) => {
     if (!video) return;
-    const retryPlayback = () => attemptVideoPlayback(video);
+    const retryPlayback = () => {
+      const state = mediaStates.get(video);
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && state) {
+        state.recoveryAttempted = false;
+      }
+      attemptVideoPlayback(video);
+    };
+    const revealPlayingFrame = () => {
+      // The `playing` event is more reliable than a decoded-data event for
+      // deciding when Safari has a visible frame (not just a loaded source).
+      // Reveal on the next paint; this also covers intro-preloaded sources
+      // whose src already matches and therefore don't enter loadVideo's swap.
+      requestAnimationFrame(() => {
+        if (!video.isConnected || video.paused ||
+            video.getAttribute('src') !== getThemeVideoSource(video) ||
+            video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+        video.closest('.video-card')?.classList.remove('reel-media-loading');
+        const state = mediaStates.get(video);
+        if (state) state.pendingSource = null;
+      });
+    };
     video.addEventListener('loadeddata', retryPlayback);
     video.addEventListener('canplay', retryPlayback);
+    video.addEventListener('playing', revealPlayingFrame);
     mediaStates.get(video).retryPlayback = retryPlayback;
+    mediaStates.get(video).revealPlayingFrame = revealPlayingFrame;
   });
 
   const playVideo = (video) => {
@@ -3891,6 +3902,10 @@ export function initHeroReelCarousel() {
     video.autoplay = false;
     const state = mediaStates.get(video);
     if (!video.paused || state?.playAttempt) video.pause();
+    // Keep a ready-to-show frame behind paused reels. This is especially
+    // important after Safari suspends video decoding while another page is
+    // active; playback can then resume over the poster without a black flash.
+    video.closest('.video-card')?.classList.add('reel-media-loading');
     // Allow an immediate return onscreen to issue a fresh play() even while
     // the cancelled attempt's rejection is still queued as a microtask.
     if (state) state.playAttempt = null;
@@ -3957,11 +3972,15 @@ export function initHeroReelCarousel() {
 
   // Resume / unlock autoplay on first interaction if browser blocked initial autoplay
   const unlockOnInteraction = () => {
-    updateVideoPriority(true);
+    // Do not consume this unlock on an unrelated page interaction. SPA/page
+    // restoration may happen later, so every fresh user gesture can retry the
+    // currently visible muted reels.
+    reconcileVisibleReels();
+    updateVideoPriority();
   };
   const unlockEvents = ['pointerdown', 'touchstart', 'keydown'];
   unlockEvents.forEach((evt) => {
-    window.addEventListener(evt, unlockOnInteraction, { once: true, passive: true });
+    window.addEventListener(evt, unlockOnInteraction, { passive: true });
   });
 
   // Expose global unlock so the intro preloader can trigger video buffering during loading screen
@@ -4429,6 +4448,7 @@ export function initHeroReelCarousel() {
         video.removeEventListener('loadeddata', state.retryPlayback);
         video.removeEventListener('canplay', state.retryPlayback);
       }
+      if (state.revealPlayingFrame) video.removeEventListener('playing', state.revealPlayingFrame);
       state.poster.remove();
     });
     mediaStates.clear();

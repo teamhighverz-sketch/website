@@ -3710,8 +3710,15 @@ export function initHeroReelCarousel() {
     if (!video || !mediaStates.has(video)) return;
     const targetSrc = getThemeVideoSource(video);
     const state = mediaStates.get(video);
+    const hasCurrentFrame = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+    const needsSourceRecovery = video.getAttribute('src') === targetSrc &&
+      !hasCurrentFrame && (
+        video.networkState === HTMLMediaElement.NETWORK_EMPTY ||
+        video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE ||
+        Boolean(video.error)
+      );
     // Playback checks must not rewrite media attributes on every rail update.
-    if (video.getAttribute('src') === targetSrc && state.priority === priority) return;
+    if (video.getAttribute('src') === targetSrc && state.priority === priority && !needsSourceRecovery) return;
     state.priority = priority;
     video.defaultMuted = true;
     video.muted = true;
@@ -3725,7 +3732,7 @@ export function initHeroReelCarousel() {
     if (shouldPlay) video.setAttribute('autoplay', '');
     else video.removeAttribute('autoplay');
     video.preload = priority === 'high' ? 'auto' : 'metadata';
-    if (targetSrc && video.getAttribute('src') !== targetSrc) {
+    if (targetSrc && (video.getAttribute('src') !== targetSrc || needsSourceRecovery)) {
       const card = video.closest('.video-card');
       const poster = document.documentElement.dataset.theme === 'light'
         ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${state.index + 1}.jpg`)
@@ -3734,16 +3741,16 @@ export function initHeroReelCarousel() {
       const requestId = ++state.sourceRequest;
       state.pendingSource = targetSrc;
       // Keep the currently decoded frame visible until the replacement
-      // theme's poster has decoded. Swapping src before this point produces
-      // a black/blank surface on mobile Safari while its decoder restarts.
-      preparePoster(safePoster).then((posterReady) => {
+      // theme's poster has decoded. If Safari rejects poster decoding, still
+      // start the video request and keep the poster layer as a fallback; a
+      // failed poster decode must never strand the reel with no source.
+      const startSource = () => {
         if (requestId !== state.sourceRequest || !video.isConnected) return;
         if (targetSrc !== getThemeVideoSource(video)) return;
-        if (!posterReady && !video.videoWidth) return;
 
         state.cancelReady();
         state.playAttempt = null;
-        state.poster.src = safePoster;
+        if (safePoster) state.poster.src = safePoster;
         video.setAttribute('poster', safePoster);
         card?.classList.add('reel-media-loading');
         let frameCallback = null;
@@ -3774,7 +3781,16 @@ export function initHeroReelCarousel() {
         video.setAttribute('src', targetSrc);
         video.dataset.activeThemeSrc = targetSrc;
         video.load();
-      });
+      };
+      const hasOutgoingFrame = video.getAttribute('src') && hasCurrentFrame && !needsSourceRecovery;
+      if (hasOutgoingFrame) {
+        // During a theme swap retain a decoded outgoing frame until the new
+        // theme's poster is ready. On initial/route-return loads there is no
+        // frame to preserve, so never make video loading wait on image decode.
+        preparePoster(safePoster).then(startSource);
+      } else {
+        startSource();
+      }
     }
     video.fetchPriority = priority;
   };
@@ -3885,6 +3901,31 @@ export function initHeroReelCarousel() {
       if (!video) return;
       if (visibleReels.has(video) && isCarouselVisible && !document.hidden) playVideo(video);
       else pauseVideo(video);
+    });
+  };
+
+  // Route transitions can initialize Home while its incoming shell is still
+  // hidden. IntersectionObserver is asynchronous and Safari may not deliver a
+  // fresh callback when that shell is promoted, so explicitly reconcile the
+  // viewport and nearby cards at route/page restoration points.
+  const reconcileVisibleReels = () => {
+    if (document.hidden) return;
+    const viewportRect = viewport.getBoundingClientRect();
+    const viewportIsOnscreen = viewportRect.width > 0 && viewportRect.height > 0 &&
+      viewportRect.bottom > 0 && viewportRect.top < window.innerHeight &&
+      viewportRect.right > 0 && viewportRect.left < window.innerWidth;
+    isCarouselVisible = viewportIsOnscreen;
+    const margin = 80;
+    cardPositions.forEach((position, index) => {
+      const video = videos[index];
+      if (!video) return;
+      const rect = position.getBoundingClientRect();
+      const nearViewport = rect.bottom > viewportRect.top - margin &&
+        rect.top < viewportRect.bottom + margin &&
+        rect.right > viewportRect.left - margin &&
+        rect.left < viewportRect.right + margin;
+      if (viewportIsOnscreen && nearViewport) visibleReels.add(video);
+      else visibleReels.delete(video);
     });
   };
 
@@ -4279,6 +4320,7 @@ export function initHeroReelCarousel() {
     }
 
     onResize();
+    reconcileVisibleReels();
     updateVideoPriority();
 
     // Re-measure across subsequent frames as DOM settles into layout
@@ -4301,6 +4343,7 @@ export function initHeroReelCarousel() {
       videos.forEach(pauseVideo);
       return;
     }
+    reconcileVisibleReels();
     if (isCarouselVisible) {
       lastTime = performance.now();
       updateVideoPriority(true);
@@ -4312,6 +4355,7 @@ export function initHeroReelCarousel() {
     }
   };
   const onPageShow = () => {
+    reconcileVisibleReels();
     updateVideoPriority();
     refreshHeroLayout();
   };

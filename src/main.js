@@ -6598,7 +6598,8 @@ function fitFooterScatterMark(watermark) {
   const details = footer?.querySelector('.footer-left-info');
   const links = footer?.querySelector('.footer-link-group');
   const socials = footer?.querySelector('.footer-social-links');
-  if (!footer || !details || !links || !socials) return;
+  const isCaseStudy = document.body.classList.contains('case-study-page');
+  if (!footer || !details || !socials || (!links && !isCaseStudy)) return;
 
   const clearSizing = () => {
     watermark.style.removeProperty('width');
@@ -6615,8 +6616,18 @@ function fitFooterScatterMark(watermark) {
   }
 
   const footerBox = footer.getBoundingClientRect();
-  const leftEdge = details.getBoundingClientRect().right;
-  const rightEdge = Math.min(links.getBoundingClientRect().left, socials.getBoundingClientRect().left);
+  // Case-study footers omit the Quick Links column. Measure the visible details
+  // content instead of the stretched grid cell, then fit the mark into the
+  // actual space before Socials just as we fit it between columns on Home.
+  const leftEdge = !links && isCaseStudy
+    ? Array.from(details.children).reduce(
+      (right, child) => Math.max(right, child.getBoundingClientRect().right),
+      details.getBoundingClientRect().left,
+    )
+    : details.getBoundingClientRect().right;
+  const rightEdge = links
+    ? Math.min(links.getBoundingClientRect().left, socials.getBoundingClientRect().left)
+    : socials.getBoundingClientRect().left;
   const gutter = Math.max(36, Math.min(48, window.innerWidth * 0.02));
   const available = rightEdge - leftEdge - gutter * 2;
   const stacked = available < 480;

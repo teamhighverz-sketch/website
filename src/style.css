@@ -14726,10 +14726,15 @@ html.js .floating-badge-item {
 .comp-main-title {
   font-family: var(--font-body);
   font-size: clamp(2.2rem, 4.5vw, 3.6rem);
-  font-weight: 800;
+  font-weight: 400;
   letter-spacing: -0.025em;
   color: var(--text-primary);
   line-height: 1.15;
+}
+
+.comp-main-title .highlight-cyan {
+  font-weight: 700;
+  font-style: normal;
 }
 
 .comp-dual-cards {
@@ -21664,8 +21669,8 @@ html:has(#hero) .viewport-bottom-reveal>div {
 
 html:has(#hero) .viewport-bottom-reveal>div:last-child {
   display: block !important;
-  backdrop-filter: blur(5px) !important;
-  -webkit-backdrop-filter: blur(5px) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   mask-image: linear-gradient(to bottom, transparent, #000) !important;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
 }
@@ -21678,8 +21683,8 @@ html:has(#hero) .viewport-bottom-reveal>div:last-child {
 
   body.page-campaigns .viewport-bottom-reveal>div:last-child {
     display: block !important;
-    backdrop-filter: blur(5px) !important;
-    -webkit-backdrop-filter: blur(5px) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     mask-image: linear-gradient(to bottom, transparent, #000) !important;
     -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
   }

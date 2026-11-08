@@ -470,6 +470,10 @@ body.enquiry-modal-open .admin-leads-close {
 }
 
 .enquiry-flag-symbol {
+  /* Use the OS emoji font explicitly: custom site fonts can make regional
+     indicator flag sequences disappear on Windows browsers. */
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  font-variant-emoji: emoji;
   font-size: 1.25rem;
   line-height: 1;
   display: inline-block;
@@ -596,6 +600,8 @@ body.enquiry-modal-open .admin-leads-close {
 }
 
 .enquiry-flag-item .flag-symbol {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  font-variant-emoji: emoji;
   font-size: 1.15rem;
   line-height: 1;
   flex-shrink: 0;

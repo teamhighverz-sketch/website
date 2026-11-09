@@ -3712,6 +3712,7 @@ export function initHeroReelCarousel() {
       playRetryCount: 0,
       playRetryTimer: null,
       routeResume: routeResumePending,
+      sourceAssigned: false,
       revealPending: false,
       revealFrame: null,
       index,
@@ -3733,7 +3734,10 @@ export function initHeroReelCarousel() {
     // visible forever even though the source and frame metadata look valid.
     // Explicitly reload each newly visible reel once on Home route return;
     // ordinary priority updates still avoid rewriting healthy media.
-    const routeResumeRecovery = priority === 'high' && state.routeResume;
+    // Only recover a source inherited from an earlier page lifecycle. A
+    // source assigned by this carousel instance is already loading; reloading
+    // it on the first high-priority pass restarts the download from zero.
+    const routeResumeRecovery = priority === 'high' && state.routeResume && !state.sourceAssigned;
     const needsSourceRecovery = hasMatchingSource && !state.recoveryAttempted && (
       routeResumeRecovery ||
       (!hasCurrentFrame && (
@@ -3747,6 +3751,7 @@ export function initHeroReelCarousel() {
     if (video.getAttribute('src') === targetSrc && state.priority === priority && !needsSourceRecovery) return;
     const enteringPlaybackPriority = priority === 'high' && state.priority !== 'high';
     state.priority = priority;
+    if (priority === 'high') state.routeResume = false;
     if (enteringPlaybackPriority) {
       state.playRetryCount = 0;
       if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
@@ -3794,6 +3799,7 @@ export function initHeroReelCarousel() {
         video.addEventListener('loadeddata', onReady, { once: true });
         video.pause();
         video.setAttribute('src', targetSrc);
+        state.sourceAssigned = true;
         video.dataset.activeThemeSrc = targetSrc;
         video.load();
       };
@@ -3864,6 +3870,7 @@ export function initHeroReelCarousel() {
       const state = mediaStates.get(video);
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && state) {
         state.recoveryAttempted = false;
+        if (video === videos[0]) releaseFirstFrame();
       }
       if (!video.paused) revealPlayingFrame();
       attemptVideoPlayback(video);
@@ -3989,6 +3996,23 @@ export function initHeroReelCarousel() {
   let isCarouselVisible = true;
   let videosUnlocked = true;
   const visibleReels = new Set();
+  // A route return on a phone should decode the center card before the other
+  // visible reels compete for the same connection and decoder.
+  let firstFramePending = cachedViewportWidth <= 768 &&
+    videos[0]?.readyState < HTMLMediaElement.HAVE_CURRENT_DATA;
+  let firstFrameFallback = firstFramePending
+    ? window.setTimeout(() => {
+      firstFramePending = false;
+      updateVideoPriority();
+    }, 5000)
+    : null;
+  const releaseFirstFrame = () => {
+    if (!firstFramePending) return;
+    firstFramePending = false;
+    if (firstFrameFallback !== null) clearTimeout(firstFrameFallback);
+    firstFrameFallback = null;
+    updateVideoPriority();
+  };
 
   const pauseVideo = (video) => {
     if (!video) return;
@@ -4018,6 +4042,10 @@ export function initHeroReelCarousel() {
     reconcileVisibleReels();
     videos.forEach((video) => {
       if (!video) return;
+      if (firstFramePending && video !== videos[0]) {
+        pauseVideo(video);
+        return;
+      }
       if (visibleReels.has(video) && isCarouselVisible && !document.hidden) playVideo(video);
       else pauseVideo(video);
     });
@@ -4047,6 +4075,15 @@ export function initHeroReelCarousel() {
     cardPositions.forEach((position, index) => {
       const video = videos[index];
       if (!video) return;
+      // Hidden mobile slots retain their last transform, so their rectangles
+      // can overlap the viewport even though the cards are not displayed.
+      // Never let those stale bounds start ten concurrent mobile downloads.
+      if (position.style.visibility === 'hidden' ||
+          position.style.display === 'none' ||
+          Number(position.style.opacity) === 0) {
+        visibleReels.delete(video);
+        return;
+      }
       const rect = position.getBoundingClientRect();
       const nearViewport = rect.bottom > viewportRect.top - margin &&
         rect.top < viewportRect.bottom + margin &&
@@ -4076,12 +4113,9 @@ export function initHeroReelCarousel() {
     else if (videos[index]) visibleReels.add(videos[index]);
   });
 
-  // Desktop can afford metadata warm-up. On phones, only the visible
-  // reel receives sources; poster images keep the other cards lightweight.
+  // Visible cards start first on every device. Starting all ten metadata
+  // downloads here competes with their first playable frames on slow links.
   const isMobileViewport = cachedViewportWidth <= 768;
-  if (!isMobileViewport) {
-    videos.forEach((video) => loadVideo(video, 'low'));
-  }
 
   // Resume / unlock autoplay on first interaction if browser blocked initial autoplay
   const unlockOnInteraction = () => {
@@ -4567,7 +4601,10 @@ export function initHeroReelCarousel() {
   // handoffs handle readiness; no timer locks the rail or its playback.
   const onThemeChange = (options = {}) => {
     if (options.preloadOnly) return;
-    videos.forEach(video => loadVideo(video, 'low'));
+    // The current rail gets the new theme immediately. Hidden cards switch
+    // when they enter view, rather than competing for the first frame now.
+    reconcileVisibleReels();
+    visibleReels.forEach(video => loadVideo(video, 'low'));
     cardPositions.forEach((position, index) => {
       const viewCount = position.querySelector('.reel-view-count');
       if (!viewCount) return;
@@ -4582,6 +4619,7 @@ export function initHeroReelCarousel() {
   window.__hvHeroReelCommitThemeSwap = () => { };
 
   window.__hvHeroReelCleanup = () => {
+    if (firstFrameFallback !== null) clearTimeout(firstFrameFallback);
     // Carry an explicit marker across SPA page disposal. Safari may keep the
     // <video> src while discarding its decoder, so the next Home visit must
     // reload visible media instead of trusting the stale source attribute.

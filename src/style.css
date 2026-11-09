@@ -5017,7 +5017,7 @@ html.js .floating-badge-item {
 
 .reel-media-loading .reel-theme-poster {
   opacity: 1;
-  filter: blur(2px);
+  filter: none;
   transition: none;
 }
 

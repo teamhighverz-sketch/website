@@ -3694,11 +3694,13 @@ export function initHeroReelCarousel() {
       ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`)
       : video.dataset.darkPoster;
     if (activePoster) poster.src = activePoster;
-    // A video element can be restored from Safari's page cache with a valid
-    // src attribute but no drawable frame. Keep the theme poster in front
-    // until playback has actually started, so returning to Home never shows
-    // an empty/black reel while the browser resumes its decoder.
-    video.closest('.video-card')?.classList.add('reel-media-loading');
+    // Preserve a drawable frame on an already playing video. Safari can also
+    // restore a stale media element, which the route recovery below reloads.
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+      video.closest('.video-card')?.classList.add('reel-media-loading');
+    } else {
+      video.closest('.video-card')?.classList.remove('reel-media-loading');
+    }
     mediaStates.set(video, {
       poster,
       cancelReady: () => { },
@@ -3811,7 +3813,7 @@ export function initHeroReelCarousel() {
     if (document.documentElement.classList.contains('intro-pending') || !video.paused || state.playAttempt) return;
     const attempt = video.play();
     state.playAttempt = attempt;
-    attempt?.catch(() => { }).finally(() => {
+    attempt?.then(() => state.revealPlayingFrame?.()).catch(() => { }).finally(() => {
       if (state.playAttempt === attempt) state.playAttempt = null;
     });
   };
@@ -3943,10 +3945,13 @@ export function initHeroReelCarousel() {
     video.autoplay = false;
     const state = mediaStates.get(video);
     if (!video.paused || state?.playAttempt) video.pause();
-    // Keep a ready-to-show frame behind paused reels. This is especially
-    // important after Safari suspends video decoding while another page is
-    // active; playback can then resume over the poster without a black flash.
-    video.closest('.video-card')?.classList.add('reel-media-loading');
+    // Pausing a decoded reel does not invalidate its frame. Covering it here
+    // left Safari showing the fallback poster indefinitely on later visits.
+    // A fresh source change still adds the loading state in startSource().
+    if (state?.priority === 'high') state.priority = 'paused';
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || video.videoWidth === 0) {
+      video.closest('.video-card')?.classList.add('reel-media-loading');
+    }
     // Allow an immediate return onscreen to issue a fresh play() even while
     // the cancelled attempt's rejection is still queued as a microtask.
     if (state) state.playAttempt = null;

@@ -3709,6 +3709,8 @@ export function initHeroReelCarousel() {
       sourceRequest: 0,
       pendingSource: null,
       recoveryAttempted: false,
+      playRetryCount: 0,
+      playRetryTimer: null,
       routeResume: routeResumePending,
       revealPending: false,
       revealFrame: null,
@@ -3743,7 +3745,13 @@ export function initHeroReelCarousel() {
     );
     // Playback checks must not rewrite media attributes on every rail update.
     if (video.getAttribute('src') === targetSrc && state.priority === priority && !needsSourceRecovery) return;
+    const enteringPlaybackPriority = priority === 'high' && state.priority !== 'high';
     state.priority = priority;
+    if (enteringPlaybackPriority) {
+      state.playRetryCount = 0;
+      if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
+      state.playRetryTimer = null;
+    }
     video.defaultMuted = true;
     video.muted = true;
     video.playsInline = true;
@@ -3802,18 +3810,51 @@ export function initHeroReelCarousel() {
     video.fetchPriority = priority;
   };
 
-  // Ensure a loaded reel plays inline, muted, and looping reliably. Safari
-  // can reject play() when called in the same task as video.load(); retry
-  // when the visible reel has decoded enough data to begin playback.
+  // Keep playback as part of the normal visible-reel lifecycle. A rejected
+  // play() must not strand a visible card on its poster; retry briefly while
+  // it remains eligible, and let readiness/visibility/gesture events retry
+  // again after that bounded window.
+  const schedulePlaybackRetry = (video, state) => {
+    if (state.playRetryTimer !== null || state.playRetryCount >= 5) return;
+    const delays = [180, 320, 550, 900, 1400];
+    const delay = delays[state.playRetryCount++];
+    state.playRetryTimer = window.setTimeout(() => {
+      state.playRetryTimer = null;
+      if (!video.isConnected || state.priority !== 'high' || !visibleReels.has(video) ||
+          !isCarouselVisible || document.hidden ||
+          video.getAttribute('src') !== getThemeVideoSource(video)) return;
+
+      // A decoder can be left empty after a route handoff. Re-arm the active
+      // source only when the media element reports a real source/network error.
+      if (video.error || video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+        state.recoveryAttempted = false;
+        state.routeResume = true;
+        loadVideo(video, 'high');
+      }
+      attemptVideoPlayback(video);
+    }, delay);
+  };
   const attemptVideoPlayback = (video) => {
     if (!video || !mediaStates.has(video)) return;
     const state = mediaStates.get(video);
     if (state.priority !== 'high' || !visibleReels.has(video) || !isCarouselVisible || document.hidden) return;
     if (video.getAttribute('src') !== getThemeVideoSource(video)) return;
     if (document.documentElement.classList.contains('intro-pending') || !video.paused || state.playAttempt) return;
-    const attempt = video.play();
+    video.defaultMuted = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.loop = true;
+    let attempt;
+    try {
+      attempt = video.play();
+    } catch (_) {
+      schedulePlaybackRetry(video, state);
+      return;
+    }
     state.playAttempt = attempt;
-    attempt?.then(() => state.revealPlayingFrame?.()).catch(() => { }).finally(() => {
+    Promise.resolve(attempt).then(() => state.revealPlayingFrame?.()).catch(() => {
+      schedulePlaybackRetry(video, state);
+    }).finally(() => {
       if (state.playAttempt === attempt) state.playAttempt = null;
     });
   };
@@ -3860,12 +3901,22 @@ export function initHeroReelCarousel() {
       };
       state.revealFrame = requestAnimationFrame(checkFrame);
     };
+    const onPlaybackStarted = () => {
+      const state = mediaStates.get(video);
+      if (state) {
+        state.playRetryCount = 0;
+        if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
+        state.playRetryTimer = null;
+      }
+      revealPlayingFrame();
+    };
     video.addEventListener('loadeddata', retryPlayback);
     video.addEventListener('canplay', retryPlayback);
-    video.addEventListener('playing', revealPlayingFrame);
+    video.addEventListener('playing', onPlaybackStarted);
     video.addEventListener('timeupdate', revealPlayingFrame);
     mediaStates.get(video).retryPlayback = retryPlayback;
     mediaStates.get(video).revealPlayingFrame = revealPlayingFrame;
+    mediaStates.get(video).onPlaybackStarted = onPlaybackStarted;
     // A bfcache or SPA return may preserve a playing element without firing a
     // new `playing` event after this runtime installs its listener. Reconcile
     // that state immediately so its fallback poster cannot cover the movie.
@@ -3949,6 +4000,10 @@ export function initHeroReelCarousel() {
     // left Safari showing the fallback poster indefinitely on later visits.
     // A fresh source change still adds the loading state in startSource().
     if (state?.priority === 'high') state.priority = 'paused';
+    if (state?.playRetryTimer !== null && state?.playRetryTimer !== undefined) {
+      clearTimeout(state.playRetryTimer);
+      state.playRetryTimer = null;
+    }
     if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || video.videoWidth === 0) {
       video.closest('.video-card')?.classList.add('reel-media-loading');
     }
@@ -3958,6 +4013,9 @@ export function initHeroReelCarousel() {
   };
   const updateVideoPriority = () => {
     if (!videosUnlocked) return;
+    // The 3D cards move with the rail. Refresh bounds before assigning media
+    // priority so a stale IntersectionObserver result cannot pause visible reels.
+    reconcileVisibleReels();
     videos.forEach((video) => {
       if (!video) return;
       if (visibleReels.has(video) && isCarouselVisible && !document.hidden) playVideo(video);
@@ -4022,6 +4080,13 @@ export function initHeroReelCarousel() {
     // restoration may happen later, so every fresh user gesture can retry the
     // currently visible muted reels.
     reconcileVisibleReels();
+    visibleReels.forEach(video => {
+      const state = mediaStates.get(video);
+      if (!state || !video.paused) return;
+      state.playRetryCount = 0;
+      if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
+      state.playRetryTimer = null;
+    });
     updateVideoPriority();
   };
   const unlockEvents = ['pointerdown', 'touchstart', 'keydown'];
@@ -4508,10 +4573,11 @@ export function initHeroReelCarousel() {
         video.removeEventListener('canplay', state.retryPlayback);
       }
       if (state.revealPlayingFrame) {
-        video.removeEventListener('playing', state.revealPlayingFrame);
         video.removeEventListener('timeupdate', state.revealPlayingFrame);
       }
+      if (state.onPlaybackStarted) video.removeEventListener('playing', state.onPlaybackStarted);
       if (state.revealFrame !== null) cancelAnimationFrame(state.revealFrame);
+      if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
       state.poster.remove();
     });
     mediaStates.clear();

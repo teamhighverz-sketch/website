@@ -3559,7 +3559,9 @@ export function initHeroReelCarousel() {
         introWarmupHandle = window.setTimeout(warmNextIntroVideo, 80);
       }
     };
-    if (remainingIntroIndexes.length) {
+    // Mobile Safari has a small media decoder budget. Warming all ten video
+    // elements can evict the five visible reels before the intro ends.
+    if (remainingIntroIndexes.length && window.innerWidth > 768) {
       if ('requestIdleCallback' in window) {
         introWarmupHandle = window.requestIdleCallback(warmNextIntroVideo, { timeout: 120 });
       } else {
@@ -3705,6 +3707,7 @@ export function initHeroReelCarousel() {
       poster,
       cancelReady: () => { },
       playAttempt: null,
+      playAttemptTimer: null,
       priority: null,
       sourceRequest: 0,
       pendingSource: null,
@@ -3717,9 +3720,9 @@ export function initHeroReelCarousel() {
       revealFrame: null,
       index,
     });
-    for (const src of [video.dataset.darkPoster, video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`]) {
-      preparePoster(src);
-    }
+    // Only the active theme's visible posters need warming. Preloading both
+    // themes for all ten cards competes with the first video bytes on phones.
+    if (index < 3 || index >= videos.length - 2) preparePoster(activePoster);
   });
 
   // Load reel sources with priority and preload
@@ -3729,18 +3732,12 @@ export function initHeroReelCarousel() {
     const state = mediaStates.get(video);
     const hasCurrentFrame = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
     const hasMatchingSource = video.getAttribute('src') === targetSrc;
-    // Safari can preserve readyState/currentData while its decoder has been
-    // suspended by an SPA route change. In that state a poster can remain
-    // visible forever even though the source and frame metadata look valid.
-    // Explicitly reload each newly visible reel once on Home route return;
-    // ordinary priority updates still avoid rewriting healthy media.
-    // Only recover a source inherited from an earlier page lifecycle. A
-    // source assigned by this carousel instance is already loading; reloading
-    // it on the first high-priority pass restarts the download from zero.
-    const routeResumeRecovery = priority === 'high' && state.routeResume && !state.sourceAssigned;
+    // WebKit can leave an inherited request in NETWORK_LOADING after the
+    // previous Home page has been disposed. Recover that source once when it
+    // has no drawable frame. Keep buffered frames intact on normal returns.
     const needsSourceRecovery = hasMatchingSource && !state.recoveryAttempted && (
-      routeResumeRecovery ||
       (!hasCurrentFrame && (
+        (state.routeResume && !state.sourceAssigned) ||
         video.networkState === HTMLMediaElement.NETWORK_EMPTY ||
         video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE ||
         Boolean(video.error) ||
@@ -3777,15 +3774,16 @@ export function initHeroReelCarousel() {
       const safePoster = poster || video.getAttribute('poster') || '';
       const requestId = ++state.sourceRequest;
       state.pendingSource = targetSrc;
-      // Keep the currently decoded frame visible until the replacement
-      // theme's poster has decoded. If Safari rejects poster decoding, still
-      // start the video request and keep the poster layer as a fallback; a
-      // failed poster decode must never strand the reel with no source.
+      let sourceStarted = false;
       const startSource = () => {
+        if (sourceStarted) return;
         if (requestId !== state.sourceRequest || !video.isConnected) return;
         if (targetSrc !== getThemeVideoSource(video)) return;
+        sourceStarted = true;
 
         state.cancelReady();
+        if (state.playAttemptTimer !== null) clearTimeout(state.playAttemptTimer);
+        state.playAttemptTimer = null;
         state.playAttempt = null;
         if (needsSourceRecovery) state.recoveryAttempted = true;
         state.routeResume = false;
@@ -3805,10 +3803,10 @@ export function initHeroReelCarousel() {
       };
       const hasOutgoingFrame = video.getAttribute('src') && hasCurrentFrame && !needsSourceRecovery;
       if (hasOutgoingFrame) {
-        // During a theme swap retain a decoded outgoing frame until the new
-        // theme's poster is ready. On initial/route-return loads there is no
-        // frame to preserve, so never make video loading wait on image decode.
+        // Safari may leave image.decode() pending for an offscreen image.
+        // Bound the theme-poster handoff so it cannot block the video request.
         preparePoster(safePoster).then(startSource);
+        window.setTimeout(startSource, 220);
       } else {
         startSource();
       }
@@ -3858,10 +3856,33 @@ export function initHeroReelCarousel() {
       return;
     }
     state.playAttempt = attempt;
+    // WebKit can leave play() pending after a route handoff or source change.
+    // A pending promise must not permanently block the visible reel's retry.
+    if (state.playAttemptTimer !== null) clearTimeout(state.playAttemptTimer);
+    state.playAttemptTimer = window.setTimeout(() => {
+      state.playAttemptTimer = null;
+      if (state.playAttempt !== attempt) return;
+      state.playAttempt = null;
+      if (!video.isConnected || state.priority !== 'high' || !visibleReels.has(video) ||
+          !isCarouselVisible || document.hidden ||
+          video.getAttribute('src') !== getThemeVideoSource(video)) return;
+      if (!state.recoveryAttempted && video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA &&
+          (video.networkState === HTMLMediaElement.NETWORK_IDLE ||
+           video.networkState === HTMLMediaElement.NETWORK_EMPTY || video.error)) {
+        state.recoveryAttempted = true;
+        video.load();
+      }
+      if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || video.paused) schedulePlaybackRetry(video, state);
+      else state.revealPlayingFrame?.();
+    }, 1800);
     Promise.resolve(attempt).then(() => state.revealPlayingFrame?.()).catch(() => {
       schedulePlaybackRetry(video, state);
     }).finally(() => {
-      if (state.playAttempt === attempt) state.playAttempt = null;
+      if (state.playAttempt === attempt) {
+        state.playAttempt = null;
+        if (state.playAttemptTimer !== null) clearTimeout(state.playAttemptTimer);
+        state.playAttemptTimer = null;
+      }
     });
   };
   videos.forEach((video) => {
@@ -3870,7 +3891,6 @@ export function initHeroReelCarousel() {
       const state = mediaStates.get(video);
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && state) {
         state.recoveryAttempted = false;
-        if (video === videos[0]) releaseFirstFrame();
       }
       if (!video.paused) revealPlayingFrame();
       attemptVideoPlayback(video);
@@ -3996,24 +4016,6 @@ export function initHeroReelCarousel() {
   let isCarouselVisible = true;
   let videosUnlocked = true;
   const visibleReels = new Set();
-  // A route return on a phone should decode the center card before the other
-  // visible reels compete for the same connection and decoder.
-  let firstFramePending = cachedViewportWidth <= 768 &&
-    videos[0]?.readyState < HTMLMediaElement.HAVE_CURRENT_DATA;
-  let firstFrameFallback = firstFramePending
-    ? window.setTimeout(() => {
-      firstFramePending = false;
-      updateVideoPriority();
-    }, 5000)
-    : null;
-  const releaseFirstFrame = () => {
-    if (!firstFramePending) return;
-    firstFramePending = false;
-    if (firstFrameFallback !== null) clearTimeout(firstFrameFallback);
-    firstFrameFallback = null;
-    updateVideoPriority();
-  };
-
   const pauseVideo = (video) => {
     if (!video) return;
     // A pending load must not start autoplay after the rail leaves the screen.
@@ -4034,6 +4036,10 @@ export function initHeroReelCarousel() {
     // Allow an immediate return onscreen to issue a fresh play() even while
     // the cancelled attempt's rejection is still queued as a microtask.
     if (state) state.playAttempt = null;
+    if (state?.playAttemptTimer !== null && state?.playAttemptTimer !== undefined) {
+      clearTimeout(state.playAttemptTimer);
+      state.playAttemptTimer = null;
+    }
   };
   const updateVideoPriority = () => {
     if (!videosUnlocked) return;
@@ -4042,10 +4048,6 @@ export function initHeroReelCarousel() {
     reconcileVisibleReels();
     videos.forEach((video) => {
       if (!video) return;
-      if (firstFramePending && video !== videos[0]) {
-        pauseVideo(video);
-        return;
-      }
       if (visibleReels.has(video) && isCarouselVisible && !document.hidden) playVideo(video);
       else pauseVideo(video);
     });
@@ -4128,6 +4130,7 @@ export function initHeroReelCarousel() {
       if (!state || !video.paused) return;
       state.playRetryCount = 0;
       if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
+      if (state.playAttemptTimer !== null) clearTimeout(state.playAttemptTimer);
       state.playRetryTimer = null;
     });
     updateVideoPriority();
@@ -4619,7 +4622,6 @@ export function initHeroReelCarousel() {
   window.__hvHeroReelCommitThemeSwap = () => { };
 
   window.__hvHeroReelCleanup = () => {
-    if (firstFrameFallback !== null) clearTimeout(firstFrameFallback);
     // Carry an explicit marker across SPA page disposal. Safari may keep the
     // <video> src while discarding its decoder, so the next Home visit must
     // reload visible media instead of trusting the stale source attribute.

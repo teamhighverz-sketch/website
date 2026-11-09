@@ -5021,8 +5021,10 @@ html.js .floating-badge-item {
   transition: none;
 }
 
+/* Keep WebKit's video layer drawable while the poster covers its first frame.
+   Fully transparent video layers can have decoding deferred on iOS Safari. */
 .reel-media-loading .card-video {
-  opacity: 0 !important;
+  opacity: 1 !important;
   transition: none !important;
 }
 

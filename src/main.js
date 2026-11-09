@@ -3583,6 +3583,9 @@ export function initHeroReelCarousel() {
     return;
   }
 
+  const routeResumePending = window.__hvHeroReelRouteResume === true;
+  window.__hvHeroReelRouteResume = false;
+
   const cardPositions = Array.from(track.querySelectorAll('.card-position'));
   const count = cardPositions.length;
   if (!count) return;
@@ -3704,6 +3707,9 @@ export function initHeroReelCarousel() {
       sourceRequest: 0,
       pendingSource: null,
       recoveryAttempted: false,
+      routeResume: routeResumePending,
+      revealPending: false,
+      revealFrame: null,
       index,
     });
     for (const src of [video.dataset.darkPoster, video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`]) {
@@ -3722,7 +3728,8 @@ export function initHeroReelCarousel() {
         video.networkState === HTMLMediaElement.NETWORK_EMPTY ||
         video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE ||
         Boolean(video.error) ||
-        (priority === 'high' && video.networkState === HTMLMediaElement.NETWORK_IDLE)
+        (priority === 'high' && video.networkState === HTMLMediaElement.NETWORK_IDLE) ||
+        (priority === 'high' && state.routeResume)
       );
     // Playback checks must not rewrite media attributes on every rail update.
     if (video.getAttribute('src') === targetSrc && state.priority === priority && !needsSourceRecovery) return;
@@ -3758,6 +3765,7 @@ export function initHeroReelCarousel() {
         state.cancelReady();
         state.playAttempt = null;
         if (needsSourceRecovery) state.recoveryAttempted = true;
+        state.routeResume = false;
         if (safePoster) state.poster.src = safePoster;
         video.setAttribute('poster', safePoster);
         card?.classList.add('reel-media-loading');
@@ -3806,27 +3814,52 @@ export function initHeroReelCarousel() {
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && state) {
         state.recoveryAttempted = false;
       }
+      if (!video.paused) revealPlayingFrame();
       attemptVideoPlayback(video);
     };
     const revealPlayingFrame = () => {
-      // The `playing` event is more reliable than a decoded-data event for
-      // deciding when Safari has a visible frame (not just a loaded source).
-      // Reveal on the next paint; this also covers intro-preloaded sources
-      // whose src already matches and therefore don't enter loadVideo's swap.
-      requestAnimationFrame(() => {
+      const state = mediaStates.get(video);
+      if (!state || state.revealPending || video.paused ||
+          video.getAttribute('src') !== getThemeVideoSource(video)) return;
+
+      // Route restoration can resume playback before Safari reports its first
+      // drawable frame. Poll for at most 45 paints; `loadeddata`, `canplay`,
+      // and `timeupdate` will retry if WebKit needs longer to restore decoding.
+      state.revealPending = true;
+      let frames = 0;
+      const checkFrame = () => {
+        state.revealFrame = null;
         if (!video.isConnected || video.paused ||
-            video.getAttribute('src') !== getThemeVideoSource(video) ||
-            video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
-        video.closest('.video-card')?.classList.remove('reel-media-loading');
-        const state = mediaStates.get(video);
-        if (state) state.pendingSource = null;
-      });
+            video.getAttribute('src') !== getThemeVideoSource(video)) {
+          state.revealPending = false;
+          return;
+        }
+        const hasDecodedFrame = video.videoWidth > 0 && video.videoHeight > 0 &&
+          video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+        if (hasDecodedFrame) {
+          video.closest('.video-card')?.classList.remove('reel-media-loading');
+          state.pendingSource = null;
+          state.revealPending = false;
+          return;
+        }
+        if (++frames >= 45) {
+          state.revealPending = false;
+          return;
+        }
+        state.revealFrame = requestAnimationFrame(checkFrame);
+      };
+      state.revealFrame = requestAnimationFrame(checkFrame);
     };
     video.addEventListener('loadeddata', retryPlayback);
     video.addEventListener('canplay', retryPlayback);
     video.addEventListener('playing', revealPlayingFrame);
+    video.addEventListener('timeupdate', revealPlayingFrame);
     mediaStates.get(video).retryPlayback = retryPlayback;
     mediaStates.get(video).revealPlayingFrame = revealPlayingFrame;
+    // A bfcache or SPA return may preserve a playing element without firing a
+    // new `playing` event after this runtime installs its listener. Reconcile
+    // that state immediately so its fallback poster cannot cover the movie.
+    if (!video.paused) revealPlayingFrame();
   });
 
   const playVideo = (video) => {
@@ -4373,9 +4406,18 @@ export function initHeroReelCarousel() {
       }
     }
   };
-  const onPageShow = () => {
+  const onPageShow = (event) => {
+    if (event?.persisted) {
+      videos.forEach(video => {
+        const state = mediaStates.get(video);
+        if (state) state.routeResume = true;
+      });
+    }
     reconcileVisibleReels();
     updateVideoPriority();
+    videos.forEach(video => {
+      if (!video.paused) mediaStates.get(video)?.revealPlayingFrame?.();
+    });
     refreshHeroLayout();
   };
   const resizeObserver = 'ResizeObserver' in window
@@ -4442,13 +4484,21 @@ export function initHeroReelCarousel() {
   window.__hvHeroReelCommitThemeSwap = () => { };
 
   window.__hvHeroReelCleanup = () => {
+    // Carry an explicit marker across SPA page disposal. Safari may keep the
+    // <video> src while discarding its decoder, so the next Home visit must
+    // reload visible media instead of trusting the stale source attribute.
+    window.__hvHeroReelRouteResume = true;
     mediaStates.forEach((state, video) => {
       state.cancelReady();
       if (state.retryPlayback) {
         video.removeEventListener('loadeddata', state.retryPlayback);
         video.removeEventListener('canplay', state.retryPlayback);
       }
-      if (state.revealPlayingFrame) video.removeEventListener('playing', state.revealPlayingFrame);
+      if (state.revealPlayingFrame) {
+        video.removeEventListener('playing', state.revealPlayingFrame);
+        video.removeEventListener('timeupdate', state.revealPlayingFrame);
+      }
+      if (state.revealFrame !== null) cancelAnimationFrame(state.revealFrame);
       state.poster.remove();
     });
     mediaStates.clear();

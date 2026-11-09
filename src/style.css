@@ -4353,7 +4353,7 @@ html.js .floating-badge-item {
 
 @media (max-width: 768px) {
   .viewport-bottom-reveal {
-    height: clamp(2.2rem, 5vh, 3.2rem) !important;
+    height: clamp(3.5rem, 8vh, 5rem) !important;
   }
 }
 
@@ -21659,35 +21659,6 @@ html.theme-switching.theme-target-light::before {
 
 html.theme-switching.theme-target-dark::before {
   background: rgba(3, 8, 12, 0.15);
-}
-
-/* Keep one continuous bottom blur on Home in both themes. Changing the
-   number of backdrop-filter layers during a swap makes the viewport edge flash. */
-html:has(#hero) .viewport-bottom-reveal>div {
-  display: none !important;
-}
-
-html:has(#hero) .viewport-bottom-reveal>div:last-child {
-  display: block !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  mask-image: linear-gradient(to bottom, transparent, #000) !important;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
-}
-
-/* Campaigns uses the same stable mask on phones. */
-@media (max-width: 768px) {
-  body.page-campaigns .viewport-bottom-reveal>div {
-    display: none !important;
-  }
-
-  body.page-campaigns .viewport-bottom-reveal>div:last-child {
-    display: block !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    mask-image: linear-gradient(to bottom, transparent, #000) !important;
-    -webkit-mask-image: linear-gradient(to bottom, transparent, #000) !important;
-  }
 }
 
 /* Keep the separate headline flourish out of the compositor during the

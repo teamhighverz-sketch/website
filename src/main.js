@@ -4029,6 +4029,15 @@ export function initHeroReelCarousel() {
   // viewport and nearby cards at route/page restoration points.
   const reconcileVisibleReels = () => {
     if (document.hidden) return;
+    // The SPA mounts Home in a hidden transition shell before promoting it
+    // into the document. WebKit may reject autoplay for those hidden videos;
+    // the existing retry window can expire before the handoff finishes. Wait
+    // until the rail is in its final, visible page before starting playback.
+    if (viewport.closest('#page-transition-shell')) {
+      isCarouselVisible = false;
+      visibleReels.clear();
+      return;
+    }
     const viewportRect = viewport.getBoundingClientRect();
     const viewportIsOnscreen = viewportRect.width > 0 && viewportRect.height > 0 &&
       viewportRect.bottom > 0 && viewportRect.top < window.innerHeight &&
@@ -4105,9 +4114,11 @@ export function initHeroReelCarousel() {
   if (document.readyState !== 'complete') window.addEventListener('load', onLoad, { once: true });
 
   const heroVisibilityObserver = 'IntersectionObserver' in window
-    ? new IntersectionObserver(([entry]) => {
+    ? new IntersectionObserver(() => {
       const wasVisible = isCarouselVisible;
-      isCarouselVisible = entry.isIntersecting;
+      // Observer entries can be queued while the shell is being removed.
+      // Read the current mounted layout instead of applying a stale entry.
+      reconcileVisibleReels();
       if (!isCarouselVisible) {
         if (animId) {
           cancelAnimationFrame(animId);
@@ -4461,7 +4472,16 @@ export function initHeroReelCarousel() {
 
   const refreshHeroLayout = () => {
     if (layoutRetryId) cancelAnimationFrame(layoutRetryId);
-    layoutRetryId = requestAnimationFrame(() => stabilizeLayout());
+    layoutRetryId = requestAnimationFrame(() => {
+      stabilizeLayout();
+      // The first RAF loop exits while Home is in the transition shell.
+      // Promotion does not guarantee a new IntersectionObserver callback, so
+      // explicitly restart motion and playback once the live page is mounted.
+      if (isCarouselVisible && !document.hidden && !animId) {
+        lastTime = performance.now();
+        animId = requestAnimationFrame(loop);
+      }
+    });
   };
 
   const onVisibilityChange = () => {

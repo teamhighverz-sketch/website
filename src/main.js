@@ -3723,14 +3723,22 @@ export function initHeroReelCarousel() {
     const targetSrc = getThemeVideoSource(video);
     const state = mediaStates.get(video);
     const hasCurrentFrame = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
-    const needsSourceRecovery = video.getAttribute('src') === targetSrc &&
-      !hasCurrentFrame && !state.recoveryAttempted && (
+    const hasMatchingSource = video.getAttribute('src') === targetSrc;
+    // Safari can preserve readyState/currentData while its decoder has been
+    // suspended by an SPA route change. In that state a poster can remain
+    // visible forever even though the source and frame metadata look valid.
+    // Explicitly reload each newly visible reel once on Home route return;
+    // ordinary priority updates still avoid rewriting healthy media.
+    const routeResumeRecovery = priority === 'high' && state.routeResume;
+    const needsSourceRecovery = hasMatchingSource && !state.recoveryAttempted && (
+      routeResumeRecovery ||
+      (!hasCurrentFrame && (
         video.networkState === HTMLMediaElement.NETWORK_EMPTY ||
         video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE ||
         Boolean(video.error) ||
-        (priority === 'high' && video.networkState === HTMLMediaElement.NETWORK_IDLE) ||
-        (priority === 'high' && state.routeResume)
-      );
+        (priority === 'high' && video.networkState === HTMLMediaElement.NETWORK_IDLE)
+      ))
+    );
     // Playback checks must not rewrite media attributes on every rail update.
     if (video.getAttribute('src') === targetSrc && state.priority === priority && !needsSourceRecovery) return;
     state.priority = priority;

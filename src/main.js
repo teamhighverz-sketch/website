@@ -3718,9 +3718,6 @@ export function initHeroReelCarousel() {
       sourceAssigned: false,
       revealPending: false,
       revealFrame: null,
-      videoFrameCallback: null,
-      lastPlaybackTime: video.currentTime,
-      lastProgressAt: performance.now(),
       index,
     });
     // Only the active theme's visible posters need warming. Preloading both
@@ -3785,10 +3782,6 @@ export function initHeroReelCarousel() {
         sourceStarted = true;
 
         state.cancelReady();
-        if (state.videoFrameCallback !== null && video.cancelVideoFrameCallback) {
-          video.cancelVideoFrameCallback(state.videoFrameCallback);
-          state.videoFrameCallback = null;
-        }
         if (state.playAttemptTimer !== null) clearTimeout(state.playAttemptTimer);
         state.playAttemptTimer = null;
         state.playAttempt = null;
@@ -3911,21 +3904,6 @@ export function initHeroReelCarousel() {
       // drawable frame. Poll for at most 45 paints; `loadeddata`, `canplay`,
       // and `timeupdate` will retry if WebKit needs longer to restore decoding.
       state.revealPending = true;
-      // Safari may report playback before readyState/videoWidth reflects the
-      // composited frame. Use the frame callback to retire the cover at the
-      // first frame actually submitted for display.
-      if (video.requestVideoFrameCallback && state.videoFrameCallback === null) {
-        state.videoFrameCallback = video.requestVideoFrameCallback(() => {
-          state.videoFrameCallback = null;
-          if (!video.isConnected || video.paused ||
-              video.getAttribute('src') !== getThemeVideoSource(video)) return;
-          video.closest('.video-card')?.classList.remove('reel-media-loading');
-          state.pendingSource = null;
-          state.revealPending = false;
-          if (state.revealFrame !== null) cancelAnimationFrame(state.revealFrame);
-          state.revealFrame = null;
-        });
-      }
       let frames = 0;
       const checkFrame = () => {
         state.revealFrame = null;
@@ -4615,34 +4593,6 @@ export function initHeroReelCarousel() {
     });
   }
   updateVideoPriority(true);
-  // WebKit can miss IntersectionObserver notifications when the Home page is
-  // promoted from the route transition shell. Reconcile the moving rail at a
-  // low rate so visible posters cannot stay in place indefinitely.
-  const playbackCheck = window.setInterval(() => {
-    if (document.hidden || viewport.closest('#page-transition-shell')) return;
-    updateVideoPriority();
-    if (!isCarouselVisible) return;
-    const now = performance.now();
-    visibleReels.forEach((video) => {
-      const state = mediaStates.get(video);
-      if (!state || video.getAttribute('src') !== getThemeVideoSource(video)) return;
-      if (Math.abs(video.currentTime - state.lastPlaybackTime) > 0.04) {
-        state.lastPlaybackTime = video.currentTime;
-        state.lastProgressAt = now;
-        if (video.closest('.video-card')?.classList.contains('reel-media-loading')) {
-          state.revealPlayingFrame?.();
-        }
-      } else if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
-          !video.paused && now - state.lastProgressAt > 2500) {
-        // A fulfilled play() can still leave an iOS decoder frozen at one
-        // frame. Reissue playback once it has genuinely stopped advancing.
-        state.lastProgressAt = now;
-        video.pause();
-        state.playAttempt = null;
-        attemptVideoPlayback(video);
-      }
-    });
-  }, 450);
   // A route handoff can promote the carousel one paint after this function is
   // called. Re-measure only after a stable visible layout is available.
   refreshHeroLayout();
@@ -4672,7 +4622,6 @@ export function initHeroReelCarousel() {
   window.__hvHeroReelCommitThemeSwap = () => { };
 
   window.__hvHeroReelCleanup = () => {
-    clearInterval(playbackCheck);
     // Carry an explicit marker across SPA page disposal. Safari may keep the
     // <video> src while discarding its decoder, so the next Home visit must
     // reload visible media instead of trusting the stale source attribute.
@@ -4688,9 +4637,6 @@ export function initHeroReelCarousel() {
       }
       if (state.onPlaybackStarted) video.removeEventListener('playing', state.onPlaybackStarted);
       if (state.revealFrame !== null) cancelAnimationFrame(state.revealFrame);
-      if (state.videoFrameCallback !== null && video.cancelVideoFrameCallback) {
-        video.cancelVideoFrameCallback(state.videoFrameCallback);
-      }
       if (state.playRetryTimer !== null) clearTimeout(state.playRetryTimer);
       state.poster.remove();
     });

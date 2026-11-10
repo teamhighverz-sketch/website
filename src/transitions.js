@@ -361,21 +361,44 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       '.work-hero-container',
       '.team-hero-container',
       '.why-hero-container',
-      '.case-hero-container'
+      '.case-hero-container',
+      '.case-top-bar'
     ].join(',');
     incomingContent.querySelectorAll(heroSelectors).forEach((el) => {
       el.style.opacity = '1';
       el.style.transform = 'none';
       el.style.animation = 'none';
+      el.style.filter = 'none';
     });
     const incCampaignHero = incomingContent.querySelector('.campaign-hero');
     if (incCampaignHero) {
       incCampaignHero.dataset.heroAnimated = 'true';
     }
+    const incCaseHero = incomingContent.querySelector('.case-hero-section');
+    if (incCaseHero) {
+      incCaseHero.dataset.pageEntryStarted = 'true';
+      incomingContent.querySelectorAll(
+        '.case-hero-media, .case-follower-transform-card, .case-stats-hud, .case-hero-title, .case-kicker-tag, .case-profile-chip-row, .case-hero-desc, .case-top-bar'
+      ).forEach((el) => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        el.style.filter = 'none';
+        el.style.animation = 'none';
+      });
+    }
 
     // Pre-split words on incoming hero headings before mounting to prevent layout shifting or clipping artifacts
     incomingContent.querySelectorAll('.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title').forEach((heading) => {
       window.splitAdscaleWords?.(heading);
+      if (incCaseHero && heading.classList.contains('case-hero-title')) {
+        heading.dataset.adscaleRevealState = 'complete';
+        heading.dataset.adscaleAnimated = 'true';
+        heading.querySelectorAll('.adscale-reveal-word').forEach((w) => {
+          w.style.opacity = '1';
+          w.style.transform = 'none';
+          w.style.filter = 'none';
+        });
+      }
     });
 
     // Pre-set metric counters in incoming content to 0 so they never flash target values before animating
@@ -616,7 +639,10 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
  */
 export function initPageTransitions() {
   // Pre-cache all dedicated non-Home pages in memory so transition starts in 0ms without waiting for fetch
-  const targetRoutes = ['/index.html', '/work.html', '/campaigns.html', '/team.html', '/why-us.html'];
+  const targetRoutes = [
+    '/index.html', '/work.html', '/campaigns.html', '/team.html', '/why-us.html',
+    '/creator-niv0ne.html', '/creator-umarpnj.html', '/movie-runner.html', '/movie-kingofkings.html'
+  ];
   setTimeout(() => {
     targetRoutes.forEach(r => {
       if (r !== window.location.pathname) {

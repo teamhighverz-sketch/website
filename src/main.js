@@ -3157,7 +3157,16 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     return;
   }
 
-  if (isFromTransition && heroRoot.dataset.pageEntryStarted === 'true') {
+  if (isFromTransition && (heroRoot.dataset.pageEntryStarted === 'true' || isCase)) {
+    heroRoot.dataset.pageEntryStarted = 'true';
+    heroHeadings.forEach((heading) => {
+      heading.dataset.adscaleRevealState = 'complete';
+      heading.dataset.adscaleAnimated = 'true';
+    });
+    finishPageEntry();
+    if (window.__hvSetTransitionState) {
+      window.__hvSetTransitionState('IDLE');
+    }
     return;
   }
   heroRoot.dataset.pageEntryStarted = 'true';
@@ -3196,7 +3205,8 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     // Home page
     '.hero-trust-badge-wrap', '#hero-desc', '#hero-actions',
     // Case study
-    '.case-kicker-tag', '.case-profile-chip-row', '.case-hero-desc'
+    '.case-kicker-tag', '.case-profile-chip-row', '.case-hero-desc',
+    '.case-hero-media', '.case-follower-transform-card', '.case-stats-hud'
   ].join(', ');
   const lightEntry = document.documentElement.dataset.theme === 'light';
   const heroLineElements = Array.from(document.querySelectorAll(heroLineSelectors));
@@ -3212,9 +3222,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     // Team page: leadership and member cards
     '.team-grid .founder-card', '.team-member-card',
     // Home page: creator reels follow the hero text reveal
-    '.carousel-viewport',
-    // Case study: media & hud
-    '.case-hero-media', '.case-follower-transform-card', '.case-stats-hud'
+    '.carousel-viewport'
   ].join(', ');
   const nextSectionElements = Array.from(document.querySelectorAll(nextSectionSelectors)).filter(
     // Below-the-fold creator cards own their theme refresh. The hero reel rail
@@ -3336,15 +3344,15 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
         y: isMobile ? 0 : 28,
         scale: isMobile ? 1 : 0.94,
         filter: (index, word) => word.classList.contains('highlight-cyan')
-          ? `blur(${isCase ? 12 : 8}px) ${glowFilter}`
-          : (isCase ? 'blur(12px)' : 'none'),
+          ? `blur(8px) ${glowFilter}`
+          : 'none',
         transformOrigin: '50% 100%',
         willChange: 'opacity, transform',
       });
       // Set the glow before the shell reveal starts; this prevents a visible
       // second-stage glow pop after the page transition has completed.
       if (glowWords.length) {
-        gsap.set(glowWords, { filter: `blur(${isCase ? 12 : 8}px) ${glowFilter}` });
+        gsap.set(glowWords, { filter: `blur(8px) ${glowFilter}` });
       }
       beginEntry();
       gsap.to(allTargetWords, {
@@ -3353,7 +3361,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
         scale: 1,
         filter: (index, word) => word.classList.contains('highlight-cyan')
           ? `blur(0px) ${glowFilter}`
-          : (isCase ? 'blur(0px)' : 'none'),
+          : 'none',
         duration: isMobile ? 0.42 : 0.65,
         stagger: isMobile ? 0.045 : 0.085, // Distinct, visible one-by-one pacing!
         ease: 'power3.out',

@@ -3843,7 +3843,15 @@ export function initHeroReelCarousel() {
     const state = mediaStates.get(video);
     if (state.priority !== 'high' || !visibleReels.has(video) || !isCarouselVisible || document.hidden) return;
     if (video.getAttribute('src') !== getThemeVideoSource(video)) return;
-    if (document.documentElement.classList.contains('intro-pending') || !video.paused || state.playAttempt) return;
+    if (document.documentElement.classList.contains('intro-pending')) return;
+    if (!video.paused) {
+      if (video.currentTime > 0.04) {
+        state.revealPlayingFrame?.();
+        return;
+      }
+    } else if (state.playAttempt) {
+      return;
+    }
     video.defaultMuted = true;
     video.muted = true;
     video.playsInline = true;
@@ -3912,15 +3920,15 @@ export function initHeroReelCarousel() {
           state.revealPending = false;
           return;
         }
-        const hasDecodedFrame = video.videoWidth > 0 && video.videoHeight > 0 &&
-          video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+        const hasDecodedFrame = (video.videoWidth > 0 && video.videoHeight > 0 &&
+          video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) || video.currentTime > 0.04;
         if (hasDecodedFrame) {
           video.closest('.video-card')?.classList.remove('reel-media-loading');
           state.pendingSource = null;
           state.revealPending = false;
           return;
         }
-        if (++frames >= 45) {
+        if (++frames >= 90) {
           state.revealPending = false;
           return;
         }
@@ -4082,7 +4090,7 @@ export function initHeroReelCarousel() {
       // Never let those stale bounds start ten concurrent mobile downloads.
       if (position.style.visibility === 'hidden' ||
           position.style.display === 'none' ||
-          Number(position.style.opacity) === 0) {
+          (position.style.opacity !== '' && Number(position.style.opacity) === 0)) {
         visibleReels.delete(video);
         return;
       }
@@ -4474,9 +4482,9 @@ export function initHeroReelCarousel() {
   };
 
   let lastCarouselMeasuredWidth = 0;
-  const onResize = () => {
+  const onResize = (force = false) => {
     const w = getViewportWidth();
-    if (lastCarouselMeasuredWidth && w === lastCarouselMeasuredWidth) return;
+    if (!force && lastCarouselMeasuredWidth && w === lastCarouselMeasuredWidth) return;
     lastCarouselMeasuredWidth = w;
     measure();
     render();
@@ -4492,14 +4500,19 @@ export function initHeroReelCarousel() {
   const stabilizeLayout = (attempt = 0) => {
     const measuredWidth = viewport.getBoundingClientRect().width;
     // Robust retry window across soft route transitions
-    if ((!measuredWidth || measuredWidth < 320) && attempt < 35) {
+    if ((!measuredWidth || measuredWidth <= 0) && attempt < 35) {
       layoutRetryId = requestAnimationFrame(() => stabilizeLayout(attempt + 1));
       return;
     }
 
-    onResize();
+    onResize(true);
     reconcileVisibleReels();
-    updateVideoPriority();
+    updateVideoPriority(true);
+
+    if (isCarouselVisible && !document.hidden && !animId) {
+      lastTime = performance.now();
+      animId = requestAnimationFrame(loop);
+    }
 
     // Re-measure across subsequent frames as DOM settles into layout
     if (attempt < 5) {

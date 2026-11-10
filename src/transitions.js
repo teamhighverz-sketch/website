@@ -518,6 +518,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         incomingContent.removeAttribute('style');
         shell.insertAdjacentElement('beforebegin', incomingContent);
         shell.remove();
+        window.__hvHeroReelRefresh?.();
         if (navbar) {
           gsap.set(navbar, { clearProps: 'all' });
         }

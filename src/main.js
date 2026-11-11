@@ -2939,19 +2939,26 @@ function restoreHomeStableState(isFromTransition = false) {
 
   // Settle background and supporting widgets. On route transitions, leave the
   // headline words blurred and ready for the word-by-word reveal!
-  const partsToSettle = [
-    '#hero-platform-icons',
-    '.platform-chip',
-    '#hero-desc',
-    '#hero-actions',
-    '.hero-trust-badge-wrap',
-    '.carousel-viewport',
-    '.hero-tag-bar',
-    '.section-trusted',
-  ];
-  if (!isFromTransition) {
-    partsToSettle.unshift('.hl-word', '.hero-headline-connector', '.hero-word-roller');
-  }
+  const partsToSettle = isFromTransition
+    ? [
+        '#hero-platform-icons',
+        '.platform-chip',
+        '.hero-tag-bar',
+        '.section-trusted',
+      ]
+    : [
+        '.hl-word',
+        '.hero-headline-connector',
+        '.hero-word-roller',
+        '#hero-platform-icons',
+        '.platform-chip',
+        '#hero-desc',
+        '#hero-actions',
+        '.hero-trust-badge-wrap',
+        '.carousel-viewport',
+        '.hero-tag-bar',
+        '.section-trusted',
+      ];
 
   const visibleHeroParts = hero.querySelectorAll(partsToSettle.join(','));
   gsap.killTweensOf(visibleHeroParts);
@@ -3142,6 +3149,63 @@ export function initPageScripts(pathname, isFromTransition = false) {
 }
 window.__hvInitPageScripts = initPageScripts;
 
+export function preparePageHeroInitialState(root = document, pathname = window.location.pathname) {
+  const normPath = pathname ? pathname.replace(/\/+$/, '') : window.location.pathname.replace(/\/+$/, '');
+  const isCase = normPath.includes('creator-') || normPath.includes('movie-');
+  if (isCase) return;
+
+  const heroHeadings = root.querySelectorAll(
+    '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title'
+  );
+  heroHeadings.forEach((heading) => {
+    splitAdscaleWords(heading);
+    heading.dataset.adscaleRevealState = 'page-entry-pending';
+    delete heading.dataset.adscaleAnimated;
+  });
+
+  const heroWords = Array.from(heroHeadings).flatMap((heading) =>
+    Array.from(heading.querySelectorAll('.adscale-reveal-word'))
+  );
+
+  const homeHeadline = root.querySelector('#hero-headline');
+  const allTargetWords = [...heroWords];
+  if (homeHeadline) {
+    const homeWords = Array.from(
+      homeHeadline.querySelectorAll('.hl-word, .hero-headline-connector, .hero-word-roller')
+    );
+    allTargetWords.push(...homeWords);
+  }
+
+  const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
+  const glowFilter = 'drop-shadow(0 0 16px rgba(0, 229, 255, 0.48))';
+  allTargetWords.forEach((word) => {
+    word.style.opacity = '0';
+    if (!isMobile) {
+      word.style.transform = 'translate3d(0, 28px, 0) scale(0.94)';
+    }
+    if (word.classList.contains('highlight-cyan')) {
+      word.style.filter = `blur(8px) ${glowFilter}`;
+    }
+  });
+
+  const supportingSelectors = [
+    '.work-hero-tag', '.work-hero-desc', '.work-hero-cta', '.work-hero-metrics-grid', '.work-metric-item',
+    '.campaign-hero-tag', '.campaign-hero-sub', '.campaign-hero-pillars',
+    '.team-hero-tag', '.team-hero-desc', '.team-metrics-grid', '.team-metric-item',
+    '.why-hero-subtitle',
+    '.hero-trust-badge-wrap', '#hero-desc', '#hero-actions',
+    '.capability-card',
+    '.why-philosophy-grid .service-card-item',
+    '.campaign-search-section', '.campaign-featured-label', '.campaign-movie-card',
+    '.team-grid .founder-card', '.team-member-card'
+  ].join(', ');
+
+  root.querySelectorAll(supportingSelectors).forEach((el) => {
+    el.style.opacity = '0';
+  });
+}
+window.__hvPreparePageHeroInitialState = preparePageHeroInitialState;
+
 export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   const normPath = pathname ? pathname.replace(/\/+$/, '') : window.location.pathname.replace(/\/+$/, '');
   const isWork = normPath.includes('work');
@@ -3157,7 +3221,11 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     return;
   }
 
-  if (isFromTransition && (heroRoot.dataset.pageEntryStarted === 'true' || isCase)) {
+  const heroHeadings = document.querySelectorAll(
+    '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title'
+  );
+
+  if (isCase) {
     heroRoot.dataset.pageEntryStarted = 'true';
     heroHeadings.forEach((heading) => {
       heading.dataset.adscaleRevealState = 'complete';
@@ -3169,11 +3237,12 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     }
     return;
   }
+
+  if (isFromTransition && heroRoot.dataset.pageEntryStarted === 'true') {
+    return;
+  }
   heroRoot.dataset.pageEntryStarted = 'true';
 
-  const heroHeadings = document.querySelectorAll(
-    '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title'
-  );
   heroHeadings.forEach((heading) => {
     splitAdscaleWords(heading);
   });

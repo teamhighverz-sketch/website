@@ -326,10 +326,6 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     // 5. Freeze current content in visual viewport (preserves exact visual frame without bottom cut-off)
     const currentScrollY = window.scrollY || window.pageYOffset || 0;
     const currentContentTop = currentContent.getBoundingClientRect().top;
-    // On mobile, the audience toggle occupies normal flow above <main>.
-    // Preserve that offset in both layers: -scrollY alone moves the outgoing
-    // page up by the toggle's height, then promotion moves the incoming down.
-    const contentFlowOffset = currentContentTop + currentScrollY;
     currentContent.classList.add('page-outgoing-frozen');
     currentContent.style.top = `${currentContentTop}px`;
 
@@ -345,52 +341,26 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     shell.className = 'page-transition-shell';
     if (isLightTransition) shell.classList.add('page-transition-shell--glass');
     shell.id = 'page-transition-shell';
-    shell.style.paddingTop = `${Math.max(0, contentFlowOffset)}px`;
+    const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
+    const capsuleWrap = document.querySelector('.home-theme-capsule-wrap');
+    const incomingTopOffset = isMobile && capsuleWrap ? capsuleWrap.offsetHeight : 0;
+    shell.style.paddingTop = `${incomingTopOffset}px`;
 
     document.documentElement.classList.add('page-transitioned');
 
-    // Pre-activate incoming hero elements so the wipe immediately reveals the live content
-    // This eliminates any blank delay during the wipe and prevents delayed secondary entrance animations
-    const heroSelectors = [
-      '.campaign-hero-tag',
-      '.campaign-hero-headline',
-      '.campaign-hero-sub',
-      '.campaign-hero-pillars',
-      '.campaign-search-section',
-      '.campaign-featured-label',
-      '.work-hero-container',
-      '.team-hero-container',
-      '.why-hero-container',
-      '.case-hero-container',
-      '.case-top-bar'
-    ].join(',');
-    incomingContent.querySelectorAll(heroSelectors).forEach((el) => {
-      el.style.opacity = '1';
-      el.style.transform = 'none';
-      el.style.animation = 'none';
-      el.style.filter = 'none';
-    });
-    const incCampaignHero = incomingContent.querySelector('.campaign-hero');
-    if (incCampaignHero) {
-      incCampaignHero.dataset.heroAnimated = 'true';
-    }
     const incCaseHero = incomingContent.querySelector('.case-hero-section');
     if (incCaseHero) {
       incCaseHero.dataset.pageEntryStarted = 'true';
       incomingContent.querySelectorAll(
-        '.case-hero-media, .case-follower-transform-card, .case-stats-hud, .case-hero-title, .case-kicker-tag, .case-profile-chip-row, .case-hero-desc, .case-top-bar'
+        '.case-hero-container, .case-top-bar, .case-hero-media, .case-follower-transform-card, .case-stats-hud, .case-hero-title, .case-kicker-tag, .case-profile-chip-row, .case-hero-desc'
       ).forEach((el) => {
         el.style.opacity = '1';
         el.style.transform = 'none';
         el.style.filter = 'none';
         el.style.animation = 'none';
       });
-    }
-
-    // Pre-split words on incoming hero headings before mounting to prevent layout shifting or clipping artifacts
-    incomingContent.querySelectorAll('.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title').forEach((heading) => {
-      window.splitAdscaleWords?.(heading);
-      if (incCaseHero && heading.classList.contains('case-hero-title')) {
+      incomingContent.querySelectorAll('.case-hero-title').forEach((heading) => {
+        window.splitAdscaleWords?.(heading);
         heading.dataset.adscaleRevealState = 'complete';
         heading.dataset.adscaleAnimated = 'true';
         heading.querySelectorAll('.adscale-reveal-word').forEach((w) => {
@@ -398,8 +368,16 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
           w.style.transform = 'none';
           w.style.filter = 'none';
         });
-      }
-    });
+      });
+    } else {
+      // Normal pages (Campaigns, Work, Team, Why-Us, Home) run entrance animations.
+      // Pre-initialize incoming hero elements into their initial entrance state (hidden/opacity: 0)
+      // before shell is mounted and made visible, so the browser never flashes them at 100% opacity.
+      incomingContent.querySelectorAll('.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title').forEach((heading) => {
+        window.splitAdscaleWords?.(heading);
+      });
+      window.__hvPreparePageHeroInitialState?.(incomingContent, targetUrl.pathname);
+    }
 
     // Pre-set metric counters in incoming content to 0 so they never flash target values before animating
     incomingContent.querySelectorAll('.work-metric-val').forEach((el) => {

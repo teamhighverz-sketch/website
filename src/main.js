@@ -1165,15 +1165,23 @@ function preloadThemeCardImages() {
   if (themeCardImagesPreloaded) return;
   themeCardImagesPreloaded = true;
   const images = [
-    '/assets/creators/image_new/image.png',
-    '/assets/creators/image_new/image%20copy.png',
-    '/assets/movie/runner.png',
-    '/assets/movie/kingofkings.png'
+    '/assets/creators/image_new/image.webp',
+    '/assets/creators/image_new/image%20copy.webp',
+    '/assets/movie/runner.webp',
+    '/assets/movie/kingofkings.webp'
   ];
-  images.forEach((src) => {
-    const img = new Image();
-    img.src = src;
-  });
+  const schedulePreload = () => {
+    images.forEach((src) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = src;
+    });
+  };
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(schedulePreload, { timeout: 3500 });
+  } else {
+    setTimeout(schedulePreload, 1800);
+  }
 }
 
 const HOME_CASE_STUDIES_DARK = {
@@ -1193,7 +1201,7 @@ const HOME_CASE_STUDIES_DARK = {
   card1: `
     <div class="creator-image-col">
       <a href="https://www.instagram.com/niv0ne/" target="_blank" rel="noopener noreferrer" class="creator-image-wrap" data-cursor="INSTAGRAM ↗" aria-label="Niv0ne Instagram Profile">
-        <img src="/assets/creators/image_new/image.png" alt="Niv0ne — Creator growth case study" class="creator-img" />
+        <img src="/assets/creators/image_new/image.webp" alt="Niv0ne — Creator growth case study" class="creator-img" loading="lazy" decoding="async" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
           <span class="badge-growth">↗ 4,900% Growth</span>
@@ -1252,7 +1260,7 @@ const HOME_CASE_STUDIES_DARK = {
   card2: `
     <div class="creator-image-col">
       <a href="https://www.instagram.com/umarpnj/" target="_blank" rel="noopener noreferrer" class="creator-image-wrap" data-cursor="INSTAGRAM ↗" aria-label="Umarpnj Instagram Profile">
-        <img src="/assets/creators/image_new/image%20copy.png" alt="Umarpnj — Creator growth case study" class="creator-img" />
+        <img src="/assets/creators/image_new/image%20copy.webp" alt="Umarpnj — Creator growth case study" class="creator-img" loading="lazy" decoding="async" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
           <span class="badge-growth">↗ From Zero</span>
@@ -1327,7 +1335,7 @@ const HOME_CASE_STUDIES_LIGHT = {
   card1: `
     <div class="creator-image-col">
       <a href="/movie-runner.html" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="Runner film case study">
-        <img src="/assets/movie/runner.png" alt="Runner film poster" class="creator-img" loading="lazy" decoding="async" />
+        <img src="/assets/movie/runner.webp" alt="Runner film poster" class="creator-img" loading="lazy" decoding="async" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
           <span class="badge-growth">Film Concept 01</span>
@@ -1381,7 +1389,7 @@ const HOME_CASE_STUDIES_LIGHT = {
   card2: `
     <div class="creator-image-col">
       <a href="/movie-kingofkings.html" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="King of Kings film case study">
-        <img src="/assets/movie/kingofkings.png" alt="King of Kings film poster" class="creator-img" loading="lazy" decoding="async" />
+        <img src="/assets/movie/kingofkings.webp" alt="King of Kings film poster" class="creator-img" loading="lazy" decoding="async" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
           <span class="badge-growth">Film Concept 02</span>
@@ -4138,10 +4146,12 @@ export function initHeroReelCarousel() {
     });
   };
 
-  // Route transitions can initialize Home while its incoming shell is still
-  // hidden. IntersectionObserver is asynchronous and Safari may not deliver a
-  // fresh callback when that shell is promoted, so explicitly reconcile the
-  // viewport and nearby cards at route/page restoration points.
+  let lastReconcileTime = 0;
+  let lastReconcileScroll = 0;
+
+  // Reconcile visible reels based on mathematical cylindrical position in viewport.
+  // Instead of forced synchronous reflows on all cards, we check which cards sit in the front arc.
+  // This avoids layout thrashing and restricts video network buffering strictly to visible cards.
   const reconcileVisibleReels = () => {
     if (document.hidden) return;
     // The SPA mounts Home in a hidden transition shell before promoting it
@@ -4158,7 +4168,19 @@ export function initHeroReelCarousel() {
       viewportRect.bottom > 0 && viewportRect.top < window.innerHeight &&
       viewportRect.right > 0 && viewportRect.left < window.innerWidth;
     isCarouselVisible = viewportIsOnscreen;
-    const margin = 80;
+    if (!viewportIsOnscreen) {
+      visibleReels.clear();
+      return;
+    }
+
+    const isMobileDevice = cachedViewportWidth <= 768;
+    // Play all cards visible on screen: on mobile all onscreen cards (absU <= 2.5),
+    // and on desktop all 7 visible cards across the front amphitheater arc (absU <= 3.5).
+    // Only the cards wrapped around the back/hidden side of the cylinder remain paused.
+    const maxVisibleU = isMobileDevice ? 2.5 : 3.5;
+    const step = stageStep || 190;
+    const total = totalWidth || (count * step);
+
     cardPositions.forEach((position, index) => {
       const video = videos[index];
       if (!video) return;
@@ -4171,34 +4193,22 @@ export function initHeroReelCarousel() {
         visibleReels.delete(video);
         return;
       }
-      const rect = position.getBoundingClientRect();
-      const nearViewport = rect.bottom > viewportRect.top - margin &&
-        rect.top < viewportRect.bottom + margin &&
-        rect.right > viewportRect.left - margin &&
-        rect.left < viewportRect.right + margin;
-      if (viewportIsOnscreen && nearViewport) visibleReels.add(video);
-      else visibleReels.delete(video);
+
+      let rawX = (index * step) - scrollPosition;
+      let x = ((rawX + total / 2) % total);
+      if (x < 0) x += total;
+      x -= total / 2;
+      const absU = Math.abs(x / step);
+
+      if (absU <= maxVisibleU) {
+        visibleReels.add(video);
+      } else {
+        visibleReels.delete(video);
+      }
     });
   };
 
-  // Let the browser report projected visibility after layout. Measuring all
-  // cards immediately after writing their 3D transforms forced synchronous
-  // layouts during scrolling and every drag update.
-  const reelByPerspective = new Map(cardPerspectives.map((card, index) => [card, videos[index]]));
-  const reelVisibilityObserver = 'IntersectionObserver' in window
-    ? new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        const video = reelByPerspective.get(entry.target);
-        if (entry.isIntersecting) visibleReels.add(video);
-        else visibleReels.delete(video);
-      });
-      updateVideoPriority();
-    }, { rootMargin: '80px', threshold: 0 })
-    : null;
-  cardPerspectives.forEach((card, index) => {
-    if (card && reelVisibilityObserver) reelVisibilityObserver.observe(card);
-    else if (videos[index]) visibleReels.add(videos[index]);
-  });
+  const reelVisibilityObserver = null;
 
   // Visible cards start first on every device. Starting all ten metadata
   // downloads here competes with their first playable frames on slow links.
@@ -4384,6 +4394,13 @@ export function initHeroReelCarousel() {
     // Pointer events may arrive faster than the display refreshes. Commit
     // their latest position only once per animation frame, alongside autoplay.
     render();
+
+    const scrollDelta = Math.abs(scrollPosition - lastReconcileScroll);
+    if ((currentTime - lastReconcileTime > 220) || scrollDelta >= 35) {
+      lastReconcileTime = currentTime;
+      lastReconcileScroll = scrollPosition;
+      updateVideoPriority();
+    }
 
     animId = requestAnimationFrame(loop);
   };

@@ -1,4 +1,18 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+
+# Explicit permissions for search crawlers to render JS & CSS properly
+User-agent: Googlebot
+Allow: /
+Allow: /assets/
+Allow: /fonts/
+Allow: /src/
+
+User-agent: Googlebot-Image
+Allow: /assets/
+
+User-agent: Bingbot
+Allow: /
 
 Sitemap: https://highverz.com/sitemap.xml

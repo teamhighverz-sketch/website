@@ -1,10 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://highverz.com/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://highverz.com/work</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://highverz.com/campaigns</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://highverz.com/team</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://highverz.com/why-us</loc><priority>0.8</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://highverz.com/creator-niv0ne</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
-  <url><loc>https://highverz.com/creator-umarpnj</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <!-- Homepage -->
+  <url>
+    <loc>https://highverz.com/</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Work & Portfolio -->
+  <url>
+    <loc>https://highverz.com/work</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Campaigns Intelligence -->
+  <url>
+    <loc>https://highverz.com/campaigns</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Why Highverz -->
+  <url>
+    <loc>https://highverz.com/why-us</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Founders & Leadership -->
+  <url>
+    <loc>https://highverz.com/team</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Creator Case Study: Niv Kochavi -->
+  <url>
+    <loc>https://highverz.com/creator-niv0ne</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Creator Case Study: Umar Punjabi -->
+  <url>
+    <loc>https://highverz.com/creator-umarpnj</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Film Amplification: Runner -->
+  <url>
+    <loc>https://highverz.com/movie-runner</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Film Amplification: King of Kings -->
+  <url>
+    <loc>https://highverz.com/movie-kingofkings</loc>
+    <lastmod>2026-11-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>

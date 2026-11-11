@@ -31,8 +31,9 @@ export function initHV3D(canvasId, containerId) {
   RectAreaLightUniformsLib.init();
 
   const isMobileScreen = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !isMobileScreen, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(isMobileScreen ? Math.min(window.devicePixelRatio, 1.15) : Math.min(window.devicePixelRatio, 1.75));
+  const isLowSpec = typeof document !== 'undefined' && document.documentElement.classList.contains('is-low-spec');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !isMobileScreen && !isLowSpec, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(isLowSpec ? 1.0 : (isMobileScreen ? Math.min(window.devicePixelRatio, 1.15) : Math.min(window.devicePixelRatio, 1.75)));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -480,7 +481,9 @@ export function initHV3D(canvasId, containerId) {
 
   const resize = () => {
     const rect = container.getBoundingClientRect();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth <= 900 ? 1.25 : 1.75));
+    const isLowSpecResize = typeof document !== 'undefined' && document.documentElement.classList.contains('is-low-spec');
+    const dprCap = isLowSpecResize ? 1.0 : (window.innerWidth <= 900 ? 1.25 : 1.75);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap));
     renderer.setSize(Math.max(1, rect.width), Math.max(1, rect.height), false);
     camera.aspect = Math.max(1, rect.width) / Math.max(1, rect.height);
     const visibleHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;

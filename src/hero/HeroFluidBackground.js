@@ -196,7 +196,8 @@ export function initHeroFluidBackground() {
     // This is a full-viewport shader with several layered noise samples. Keep
     // its backing buffer at native desktop resolution so high-DPI displays do
     // not multiply the fill-rate cost for a decorative background.
-    const pixelRatio = isMobile ? 0.65 : Math.min(window.devicePixelRatio || 1, 1);
+    const isLowSpec = document.documentElement.classList.contains('is-low-spec');
+    const pixelRatio = isLowSpec ? 0.5 : (isMobile ? 0.65 : Math.min(window.devicePixelRatio || 1, 1));
     // Resizing clears the drawing buffer, even if dimensions did not change.
     if (renderer.getPixelRatio() !== pixelRatio) renderer.setPixelRatio(pixelRatio);
     if (canvas.width !== Math.floor(width * pixelRatio) || canvas.height !== Math.floor(height * pixelRatio)) {

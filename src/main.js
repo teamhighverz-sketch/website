@@ -32,6 +32,28 @@ if (import.meta.env.DEV) {
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Dynamic Device Capability Detection
+// Identifies budget Android devices, low-memory environments (<=4GB),
+// low CPU core counts (<=4 cores), or Data Saver mode.
+export const detectLowSpecDevice = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isAndroid = /Android/i.test(ua);
+  const memory = navigator.deviceMemory || 8;
+  const cores = navigator.hardwareConcurrency || 8;
+  const saveData = navigator.connection?.saveData === true;
+  const slowNet = /2g|3g/i.test(navigator.connection?.effectiveType || '');
+  const lowRam = memory <= 4;
+  const lowCores = cores <= 4;
+
+  const isLowEnd = (isAndroid && (lowRam || lowCores)) || (lowRam && lowCores) || saveData || slowNet;
+  if (isLowEnd) {
+    document.documentElement.classList.add('is-low-spec');
+  }
+  return isLowEnd;
+};
+detectLowSpecDevice();
+
 // Capture cross-document view transition early if supported
 if ('onpagereveal' in window) {
   window.addEventListener('pagereveal', (e) => {
@@ -3577,7 +3599,8 @@ export function initHeroReelCarousel() {
   const getThemeVideoSource = (video) => {
     if (!video) return '';
     const isLight = document.documentElement.dataset.theme === 'light';
-    const mobile = window.innerWidth <= 768;
+    const isLowSpec = document.documentElement.classList.contains('is-low-spec');
+    const mobile = window.innerWidth <= 768 || isLowSpec;
     const themedSource = isLight
       ? (mobile && video.dataset.lightMobileSrc) || video.dataset.lightSrc
       : (mobile && video.dataset.darkMobileSrc) || video.dataset.darkSrc;
@@ -4174,10 +4197,12 @@ export function initHeroReelCarousel() {
     }
 
     const isMobileDevice = cachedViewportWidth <= 768;
-    // Play all cards visible on screen: on mobile all onscreen cards (absU <= 2.5),
-    // and on desktop all 7 visible cards across the front amphitheater arc (absU <= 3.5).
-    // Only the cards wrapped around the back/hidden side of the cylinder remain paused.
-    const maxVisibleU = isMobileDevice ? 2.5 : 3.5;
+    const isLowSpec = document.documentElement.classList.contains('is-low-spec');
+    // On budget Android or low-memory devices on small screens, cap active decoders to front 1-2 cards (absU <= 1.2)
+    // to strictly preserve Android hardware decoder limits (MediaCodec 2 instances) and avoid software-decode drops.
+    // On standard mobile, allow onscreen cards (absU <= 2.2).
+    // On desktop, keep all 7 visible cards across the screen playing (absU <= 3.5).
+    const maxVisibleU = (isMobileDevice && isLowSpec) ? 1.2 : (isMobileDevice ? 2.2 : 3.5);
     const step = stageStep || 190;
     const total = totalWidth || (count * step);
 

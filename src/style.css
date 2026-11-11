@@ -24450,3 +24450,31 @@ body.page-team .founder-accord-card .founder-quote strong {
 #hero #hero-headline > .hero-headline-line--dark-keyword .hero-word-roller .roller-item {
   text-align: left !important;
 }
+
+/* ==========================================================================
+   LOW-SPEC & ANDROID HARDWARE ACCELERATION TUNING
+   ========================================================================== */
+html.is-low-spec .nav-container {
+  backdrop-filter: blur(8px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(140%) !important;
+}
+
+@media (max-width: 768px) {
+  html.is-low-spec .nav-container {
+    backdrop-filter: blur(8px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(140%) !important;
+  }
+}
+
+html.is-low-spec [data-theme="light"] .nav-container {
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+html.is-low-spec .global-fluid-canvas {
+  opacity: 0.8;
+}
+
+html.is-low-spec .video-card {
+  will-change: transform;
+}

@@ -487,6 +487,14 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       window.lenis?.scrollTo(0, { immediate: true });
+      // Release video hardware decoders on outgoing DOM before removal
+      currentContent.querySelectorAll('video').forEach((vid) => {
+        try {
+          vid.pause();
+          vid.removeAttribute('src');
+          vid.load();
+        } catch (_) {}
+      });
       currentContent.remove();
       // Install the incoming route's CSS context before dispatching scripts or
       // measuring its layout. Outgoing body classes used to select the wrong
@@ -513,7 +521,15 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         backdrop.remove();
 
         // Remove old frozen content from DOM
-        currentContent.remove();
+        // Release video hardware decoders on outgoing DOM before removal
+      currentContent.querySelectorAll('video').forEach((vid) => {
+        try {
+          vid.pause();
+          vid.removeAttribute('src');
+          vid.load();
+        } catch (_) {}
+      });
+      currentContent.remove();
 
         // Promote incoming content into normal document flow
         incomingContent.removeAttribute('style');
@@ -694,8 +710,8 @@ export function initPageTransitions() {
     }
   });
 
-  // Prefetch on hover
-  document.addEventListener('mouseover', (e) => {
+  // Prefetch on hover (desktop) and touchstart (mobile)
+  const handleLinkPrefetch = (e) => {
     const link = e.target.closest('a');
     if (!link) return;
     const href = link.getAttribute('href');
@@ -706,7 +722,9 @@ export function initPageTransitions() {
         prefetchPage(url.href);
       }
     } catch (err) { }
-  }, { passive: true });
+  };
+  document.addEventListener('mouseover', handleLinkPrefetch, { passive: true });
+  document.addEventListener('touchstart', handleLinkPrefetch, { passive: true });
 
   // Handle browser back and forward
   window.addEventListener('popstate', () => {

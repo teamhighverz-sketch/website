@@ -3722,7 +3722,7 @@ export function initHeroReelCarousel() {
       video.dataset.darkPoster = video.getAttribute('poster');
     }
     const isLight = document.documentElement.dataset.theme === 'light';
-    const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`;
+    const lightPoster = video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.webp`;
     if (isLight) {
       video.setAttribute('poster', lightPoster);
     } else if (video.dataset.darkPoster) {
@@ -3801,7 +3801,7 @@ export function initHeroReelCarousel() {
     poster.setAttribute('aria-hidden', 'true');
     video.insertAdjacentElement('afterend', poster);
     const activePoster = document.documentElement.dataset.theme === 'light'
-      ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.jpg`)
+      ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${index + 1}.webp`)
       : video.dataset.darkPoster;
     if (activePoster) poster.src = activePoster;
     // Preserve a drawable frame on an already playing video. Safari can also
@@ -3877,7 +3877,7 @@ export function initHeroReelCarousel() {
     if (targetSrc && (video.getAttribute('src') !== targetSrc || needsSourceRecovery)) {
       const card = video.closest('.video-card');
       const poster = document.documentElement.dataset.theme === 'light'
-        ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${state.index + 1}.jpg`)
+        ? (video.dataset.lightPoster || `/assets/movie/posters/poster_${state.index + 1}.webp`)
         : video.dataset.darkPoster;
       const safePoster = poster || video.getAttribute('poster') || '';
       const requestId = ++state.sourceRequest;

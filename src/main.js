@@ -45,8 +45,9 @@ export const detectLowSpecDevice = () => {
   const slowNet = /2g|3g/i.test(navigator.connection?.effectiveType || '');
   const lowRam = memory <= 4;
   const lowCores = cores <= 4;
+  const budgetAndroid = isAndroid && (lowRam || cores <= 6);
 
-  const isLowEnd = (isAndroid && (lowRam || lowCores)) || (lowRam && lowCores) || saveData || slowNet;
+  const isLowEnd = budgetAndroid || (lowRam && lowCores) || saveData || slowNet;
   if (isLowEnd) {
     document.documentElement.classList.add('is-low-spec');
   }
@@ -4208,11 +4209,11 @@ export function initHeroReelCarousel() {
 
     const isMobileDevice = cachedViewportWidth <= 768;
     const isLowSpec = document.documentElement.classList.contains('is-low-spec');
-    // On budget Android or low-memory devices on small screens, cap active decoders to front 1-2 cards (absU <= 1.2)
-    // to strictly preserve Android hardware decoder limits (MediaCodec 2 instances) and avoid software-decode drops.
-    // On standard mobile, allow onscreen cards (absU <= 2.2).
-    // On desktop, keep all 7 visible cards across the screen playing (absU <= 3.5).
-    const maxVisibleU = (isMobileDevice && isLowSpec) ? 1.2 : (isMobileDevice ? 2.2 : 3.5);
+    // On mobile screens, limit active decoders to the front 1-2 cards (absU <= 1.35, or 1.15 on low-spec)
+    // to strictly preserve mobile hardware decoder limits (MediaCodec / AVFoundation: 2-3 instances)
+    // and avoid software-decode drops and thermal throttling. Cards beyond this show their crisp WebP poster.
+    // On desktop, keep visible cards across the screen playing (absU <= 3.5).
+    const maxVisibleU = isMobileDevice ? (isLowSpec ? 1.15 : 1.35) : 3.5;
     const step = stageStep || 190;
     const total = totalWidth || (count * step);
 
@@ -4325,17 +4326,22 @@ export function initHeroReelCarousel() {
 
       if (isMobileDevice) {
         // Keep five cards in the mobile rail (center + two neighbors on each
-        // side). The previous ±1 cull left only three cards visible, which
-        // made the carousel feel empty and made the infinite loop obvious.
+        // side). Guard style writes to avoid dirtying DOM styles on every RAF tick.
         if (absU > 2.5) {
-          pos.style.visibility = 'hidden';
-          pos.style.opacity = '0';
-          pos.style.pointerEvents = 'none';
+          if (pos.dataset.culled !== 'true') {
+            pos.dataset.culled = 'true';
+            pos.style.visibility = 'hidden';
+            pos.style.opacity = '0';
+            pos.style.pointerEvents = 'none';
+          }
           return;
         }
-        pos.style.visibility = 'visible';
-        pos.style.opacity = '1';
-        pos.style.pointerEvents = '';
+        if (pos.dataset.culled === 'true') {
+          pos.dataset.culled = 'false';
+          pos.style.visibility = 'visible';
+          pos.style.opacity = '1';
+          pos.style.pointerEvents = '';
+        }
 
         const norm = Math.min(1.0, absU / 2.7);
         const screenX = x * (1.0 + Math.pow(norm, 1.2) * 0.08);
@@ -4357,6 +4363,12 @@ export function initHeroReelCarousel() {
         // still reads as one intentional carousel instead of stacked tiles.
         pos.style.zIndex = String(Math.round(50 - Math.min(2.5, absU) * 10));
         return;
+      }
+
+      if (pos.dataset.culled === 'true') {
+        pos.dataset.culled = 'false';
+        pos.style.visibility = 'visible';
+        pos.style.pointerEvents = '';
       }
 
       // Desktop full rendering:

@@ -24405,22 +24405,27 @@ body.page-team .founder-accord-card .founder-quote strong {
     .case-hud-card,
     .case-follower-transform-card,
     .breakdown-card) {
-    -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
-    backdrop-filter: blur(12px) saturate(125%) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(120%) !important;
+    backdrop-filter: blur(6px) saturate(120%) !important;
   }
 
   :is(.domain-chip,
     .work-filter-chip,
     .comp-badge,
     .work-creator-tag-item) {
-    -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
-    backdrop-filter: blur(8px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(5px) saturate(115%) !important;
+    backdrop-filter: blur(5px) saturate(115%) !important;
+  }
+
+  .reel-view-count {
+    -webkit-backdrop-filter: blur(4px) !important;
+    backdrop-filter: blur(4px) !important;
   }
 
   [data-theme="light"] #growth-system .growth-widget,
   [data-theme="light"] #growth-system .widget-visual {
-    -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
-    backdrop-filter: blur(12px) saturate(125%) !important;
+    -webkit-backdrop-filter: blur(6px) saturate(120%) !important;
+    backdrop-filter: blur(6px) saturate(120%) !important;
   }
 }
 
@@ -24489,6 +24494,66 @@ html.is-low-spec .global-fluid-canvas {
 
 html.is-low-spec .video-card {
   will-change: transform;
+}
+
+html.is-low-spec .reel-view-count {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(13, 19, 28, 0.88) !important;
+}
+
+html.is-low-spec :is(.founder-accord-card,
+  .pillar-card,
+  .accord-stat,
+  .founder-quote,
+  .service-card-item,
+  .comp-card,
+  .work-creator-card,
+  .work-creator-stat-box,
+  .team-metric-item,
+  .testi-card,
+  .workflow-card,
+  .capability-card,
+  .growth-widget,
+  .process-col-card,
+  .standard-card,
+  .case-hud-card,
+  .case-follower-transform-card,
+  .breakdown-card,
+  .domain-chip,
+  .work-filter-chip,
+  .comp-badge,
+  .work-creator-tag-item) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgba(13, 19, 28, 0.94) !important;
+}
+
+html.is-low-spec[data-theme="light"] :is(.founder-accord-card,
+  .pillar-card,
+  .accord-stat,
+  .founder-quote,
+  .service-card-item,
+  .comp-card,
+  .work-creator-card,
+  .work-creator-stat-box,
+  .team-metric-item,
+  .testi-card,
+  .workflow-card,
+  .capability-card,
+  .growth-widget,
+  .process-col-card,
+  .standard-card,
+  .case-hud-card,
+  .case-follower-transform-card,
+  .breakdown-card,
+  .domain-chip,
+  .work-filter-chip,
+  .comp-badge,
+  .work-creator-tag-item) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgba(255, 255, 255, 0.96) !important;
 }
 
 /* ==========================================================================

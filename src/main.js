@@ -6761,6 +6761,7 @@ function initInstagramReelsPlayer() {
 
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.target.closest('.ig-sound-toggle-btn')) return;
 
     isDragging = false;
     isHorizontalDrag = false;
@@ -6971,19 +6972,19 @@ function initInstagramReelsPlayer() {
       activeAudioVideo = video;
       updateSoundUI(false);
 
-      if (video.paused) {
-        const attempt = video.play();
-        if (attempt?.catch) {
-          attempt.catch((err) => {
-            console.warn('Playback with audio rejected:', err);
-            video.muted = true;
-            video.defaultMuted = true;
-            video.dataset.reelAudioEnabled = 'false';
-            if (activeAudioVideo === video) activeAudioVideo = null;
-            updateSoundUI(true);
-            video.play()?.catch?.(() => {});
-          });
-        }
+      // In WebKit / mobile browsers, calling video.play() inside the user click/tap
+      // gesture is required to promote muted autoplay into an unmuted playback session
+      const attempt = video.play();
+      if (attempt?.catch) {
+        attempt.catch((err) => {
+          console.warn('Playback with audio rejected:', err);
+          video.muted = true;
+          video.defaultMuted = true;
+          video.dataset.reelAudioEnabled = 'false';
+          if (activeAudioVideo === video) activeAudioVideo = null;
+          updateSoundUI(true);
+          video.play()?.catch?.(() => {});
+        });
       }
     };
 

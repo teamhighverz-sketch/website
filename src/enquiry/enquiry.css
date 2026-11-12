@@ -53,13 +53,15 @@ body.enquiry-modal-open .admin-leads-close {
   touch-action: pan-y;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.35s ease;
+  visibility: hidden;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s ease, backdrop-filter 0.35s ease;
 }
 
 .enquiry-modal-backdrop.is-active,
 #enquiry-modal-backdrop.is-active {
   opacity: 1 !important;
   pointer-events: auto !important;
+  visibility: visible !important;
 }
 
 /* Modal Window */
@@ -896,12 +898,14 @@ body.enquiry-modal-open .admin-leads-close {
   padding: 1.5rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .admin-leads-overlay.is-active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 .admin-leads-panel {

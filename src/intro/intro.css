@@ -229,10 +229,21 @@ body.intro-active .navbar {
 
 .hv-reveal-sheen {
   z-index: 4;
-  background: linear-gradient(112deg, transparent 28%, rgba(255, 255, 255, 0.76) 48%, rgba(137, 247, 255, 0.18) 54%, transparent 72%);
-  background-size: 220% 100%;
-  opacity: 0;
+  overflow: hidden;
   mix-blend-mode: screen;
+}
+
+.hv-reveal-sheen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(112deg, transparent 28%, rgba(255, 255, 255, 0.76) 48%, rgba(137, 247, 255, 0.18) 54%, transparent 72%);
+  opacity: 0;
+  transform: translate3d(-50%, 0, 0);
+  will-change: transform, opacity;
   animation: hv-logo-glass-sheen 5.8s cubic-bezier(0.22, 1, 0.36, 1) 0.65s infinite;
 }
 
@@ -241,7 +252,7 @@ body.intro-active .navbar {
   0%,
   52% {
     opacity: 0;
-    background-position: 140% 0;
+    transform: translate3d(-50%, 0, 0);
   }
 
   60% {
@@ -251,7 +262,7 @@ body.intro-active .navbar {
   76%,
   100% {
     opacity: 0;
-    background-position: -80% 0;
+    transform: translate3d(70%, 0, 0);
   }
 }
 
@@ -278,11 +289,14 @@ body.intro-active .navbar {
 
 [data-theme="light"] .hv-reveal-sheen {
   mix-blend-mode: overlay !important;
+}
+
+[data-theme="light"] .hv-reveal-sheen::before {
   background: linear-gradient(112deg, transparent 20%, rgba(255, 255, 255, 0.92) 46%, rgba(56, 189, 248, 0.6) 55%, transparent 75%) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hv-reveal-sheen {
+  .hv-reveal-sheen::before {
     animation: none;
     opacity: 0.16;
   }
@@ -296,7 +310,7 @@ body.intro-active .navbar {
     width: min(74vw, 300px);
   }
 
-  .hv-reveal-sheen {
+  .hv-reveal-sheen::before {
     animation-duration: 7.5s;
     opacity: 0.7;
   }

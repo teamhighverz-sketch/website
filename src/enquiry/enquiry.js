@@ -102,6 +102,7 @@ function dismissEnquiryModal(resumeScroll = true) {
 
   backdrop.classList.remove('is-active');
   backdrop.setAttribute('aria-hidden', 'true');
+  backdrop.setAttribute('inert', '');
   document.body.classList.remove('enquiry-modal-open');
   if (resumeScroll && window.lenis) window.lenis.start();
 }
@@ -197,7 +198,7 @@ function injectEnquiryModal() {
   if (document.getElementById('enquiry-modal-backdrop')) return;
 
   const modalHtml = `
-    <div class="enquiry-modal-backdrop" id="enquiry-modal-backdrop" aria-hidden="true" role="dialog" aria-labelledby="enquiry-modal-title">
+    <div class="enquiry-modal-backdrop" id="enquiry-modal-backdrop" aria-hidden="true" inert role="dialog" aria-labelledby="enquiry-modal-title">
       <div class="enquiry-modal-window simple-enquiry-window" data-lenis-prevent>
         <button type="button" class="enquiry-modal-close" id="enquiry-modal-close" aria-label="Close Enquiry Modal">✕</button>
 
@@ -337,7 +338,7 @@ function injectAdminLeadsModal() {
   if (document.getElementById('admin-leads-overlay')) return;
 
   const adminHtml = `
-    <div class="admin-leads-overlay" id="admin-leads-overlay" aria-hidden="true" role="dialog">
+    <div class="admin-leads-overlay" id="admin-leads-overlay" aria-hidden="true" inert role="dialog">
       <div class="admin-leads-panel">
         <button type="button" class="admin-leads-close" id="admin-leads-close">✕</button>
 
@@ -885,6 +886,7 @@ export function openEnquiryModal() {
   if (window.lenis) window.lenis.stop();
   backdrop.classList.add('is-active');
   backdrop.setAttribute('aria-hidden', 'false');
+  backdrop.removeAttribute('inert');
   document.body.classList.add('enquiry-modal-open');
 
   // Deactivate any lingering custom cursor hover states
@@ -908,6 +910,7 @@ function bindAdminEvents() {
   const closeAdmin = () => {
     overlay.classList.remove('is-active');
     overlay.setAttribute('aria-hidden', 'true');
+    overlay.setAttribute('inert', '');
     document.body.classList.remove('enquiry-modal-open');
     if (window.lenis) window.lenis.start();
   };
@@ -1051,6 +1054,7 @@ export function openAdminLeadsDashboard() {
   if (window.lenis) window.lenis.stop();
   overlay.classList.add('is-active');
   overlay.setAttribute('aria-hidden', 'false');
+  overlay.removeAttribute('inert');
   document.body.classList.add('enquiry-modal-open');
 }
 

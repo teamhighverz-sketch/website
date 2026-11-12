@@ -94,7 +94,7 @@ export function updateCapsuleSwitchers(theme) {
       const isActive = val === current;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.removeAttribute('aria-selected');
     });
   });
 }

@@ -20,6 +20,7 @@ import { initHeroWordRoller, prepareHeroWordRoller } from './hero/HeroWordRoller
 import { inject as injectAnalytics } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 import { initScatterGrid } from './scatterGrid.js';
+import { versionReelSource } from './media/reelSource.js';
 
 // React Grab is a development-only picker for sharing precise UI context with
 // an agent. It is framework-agnostic at runtime, so it can inspect this
@@ -3615,7 +3616,7 @@ export function initHeroReelCarousel() {
     const themedSource = isLight
       ? (mobile && video.dataset.lightMobileSrc) || video.dataset.lightSrc
       : (mobile && video.dataset.darkMobileSrc) || video.dataset.darkSrc;
-    return themedSource || (mobile && video.dataset.mobileSrc) || video.dataset.src || video.getAttribute('src') || '';
+    return versionReelSource(themedSource || (mobile && video.dataset.mobileSrc) || video.dataset.src || video.getAttribute('src') || '');
   };
 
   // Strict Intro Isolation: Never render or animate the carousel during the loading screen!
@@ -3966,8 +3967,10 @@ export function initHeroReelCarousel() {
     if (!video.paused) {
       if (video.currentTime > 0.04) {
         state.revealPlayingFrame?.();
-        return;
       }
+      // `play()` may resolve before the first frame advances. Reissuing it on
+      // every carousel update needlessly churns WebKit's media pipeline.
+      return;
     } else if (state.playAttempt) {
       return;
     }
@@ -4145,9 +4148,10 @@ export function initHeroReelCarousel() {
   const visibleReels = new Set();
   const pauseVideo = (video) => {
     if (!video) return;
+    const state = mediaStates.get(video);
+    if (state?.priority === 'paused' && video.paused && !state.playAttempt && !state.playRetryTimer) return;
     // A pending load must not start autoplay after the rail leaves the screen.
     video.autoplay = false;
-    const state = mediaStates.get(video);
     if (!video.paused || state?.playAttempt) video.pause();
     // Pausing a decoded reel does not invalidate its frame. Covering it here
     // left Safari showing the fallback poster indefinitely on later visits.
@@ -6471,6 +6475,15 @@ function initInstagramReelsPlayer() {
   const originalCards = Array.from(rail.querySelectorAll('.ig-reel-card'));
   if (!originalCards.length) return;
 
+  // The HTML uses stable filenames. Switch both originals and loop clones to
+  // the current media revision before the clones inherit their sources.
+  originalCards.forEach((card) => {
+    const video = card.querySelector('.ig-reel-video');
+    if (!video) return;
+    const source = versionReelSource(video.getAttribute('src'));
+    if (source && video.getAttribute('src') !== source) video.setAttribute('src', source);
+  });
+
   // Add 2 sets of clones so even on 4K ultrawide screens the carousel is seamless and never runs out of cards
   for (let k = 0; k < 2; k++) {
     originalCards.forEach((card) => {
@@ -6519,6 +6532,7 @@ function initInstagramReelsPlayer() {
   // the visual fallback until the browser actually emits `playing`, and a
   // bounded reload gives transient range/network failures a second chance.
   const recoveryTimers = new WeakMap();
+  const pendingPlayback = new WeakSet();
   const scheduleVideoRecovery = (video, delay = 450) => {
     if (!video || !video.isConnected || recoveryTimers.has(video)) return;
     const attempts = Number(video.dataset.reelRecoveryAttempts || 0);
@@ -6542,6 +6556,7 @@ function initInstagramReelsPlayer() {
 
   const attemptVideoPlay = (video) => {
     if (!video || !video.isConnected) return;
+    if (pendingPlayback.has(video)) return;
 
     const card = video.closest('.ig-reel-card');
     const poster = card?.querySelector('.ig-reel-poster');
@@ -6566,18 +6581,12 @@ function initInstagramReelsPlayer() {
     if (video.preload !== 'auto') video.preload = 'auto';
 
     const attempt = video.play();
-    if (attempt?.catch) {
-      attempt.catch((err) => {
-        if (err.name !== 'AbortError') {
-          // If browser blocked unmuted autoplay, fall back to muted
-          if (!video.muted) {
-            video.muted = true;
-            video.defaultMuted = true;
-            video.dataset.reelAudioEnabled = 'false';
-            video.play()?.catch?.(() => {});
-          }
-        }
-      });
+    if (attempt?.then) {
+      pendingPlayback.add(video);
+      attempt.catch(() => {
+        // The explicit sound button owns unmuted-play failures. A background
+        // autoplay retry must never silently mute a reel the user selected.
+      }).finally(() => pendingPlayback.delete(video));
     }
   };
 
@@ -6666,7 +6675,7 @@ function initInstagramReelsPlayer() {
     }
 
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
-    const hasActiveAudio = activeAudioVideo && !activeAudioVideo.paused && activeAudioVideo.dataset.reelAudioEnabled === 'true';
+    const hasActiveAudio = activeAudioVideo?.isConnected && activeAudioVideo.dataset.reelAudioEnabled === 'true';
 
     allReelCards.forEach((card) => {
       const video = card.querySelector('.ig-reel-video');
@@ -6695,7 +6704,7 @@ function initInstagramReelsPlayer() {
 
     if (!loopWidth && isVisible) measure();
 
-    const isAudioActive = activeAudioVideo && !activeAudioVideo.paused && !activeAudioVideo.muted && activeAudioVideo.dataset.reelAudioEnabled === 'true';
+    const isAudioActive = activeAudioVideo?.isConnected && !activeAudioVideo.muted && activeAudioVideo.dataset.reelAudioEnabled === 'true';
 
     if (!reduceMotion && isVisible && !document.hidden && loopWidth) {
       if (isDragging) {
@@ -6970,6 +6979,9 @@ function initInstagramReelsPlayer() {
       video.muted = false;
       video.defaultMuted = false;
       activeAudioVideo = video;
+      // Stop the marquee immediately, including while Safari is still
+      // resolving the unmuted play promise for this user gesture.
+      dragVelocity = 0;
       updateSoundUI(false);
 
       // In WebKit / mobile browsers, calling video.play() inside the user click/tap
@@ -6977,6 +6989,7 @@ function initInstagramReelsPlayer() {
       const attempt = video.play();
       if (attempt?.catch) {
         attempt.catch((err) => {
+          if (err.name === 'AbortError') return;
           console.warn('Playback with audio rejected:', err);
           video.muted = true;
           video.defaultMuted = true;

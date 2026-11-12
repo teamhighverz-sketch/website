@@ -1,5 +1,5 @@
-// Highverz High-Performance Static Asset & Media Service Worker (v6)
-const CACHE_NAME = 'highverz-cache-v6';
+// Highverz High-Performance Static Asset & Media Service Worker (v7)
+const CACHE_NAME = 'highverz-cache-v7';
 const FONT_CACHE_NAME = 'highverz-fonts-v1';
 
 const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|webp|avif|svg|woff2?|css|js|json)$/i;
@@ -101,8 +101,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Static Assets (Images, WebP, Local Fonts, CSS, JS): Cache-First with background revalidation
+  // 4. Static assets: check images against the network first because these
+  // files keep their names across deployments. Keep cache-first behavior for
+  // content-hashed scripts, styles, and fonts.
   if (STATIC_EXTENSIONS.test(url.pathname) || url.pathname.startsWith('/assets/') || url.pathname.startsWith('/fonts/')) {
+    if (/\.(?:png|jpg|jpeg|webp|avif|svg)$/i.test(url.pathname)) {
+      event.respondWith(
+        fetch(request).then((response) => {
+          if (response?.ok) {
+            const clone = response.clone();
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)));
+          }
+          return response;
+        }).catch(() => caches.match(request))
+      );
+      return;
+    }
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;

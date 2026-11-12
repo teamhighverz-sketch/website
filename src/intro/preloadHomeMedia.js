@@ -3,6 +3,8 @@
 // Keep the intro from holding the first screen while large reel files buffer.
 // Keep the loader tied to real asset readiness, with a short upper bound so a
 // failed/slow connection never traps the visitor behind the intro.
+import { versionReelSource } from '../media/reelSource.js';
+
 export const HOME_MEDIA_TIMEOUT = 1200;
 
 // The carousel keeps both creator and cinema sources on each video element.
@@ -15,16 +17,16 @@ function getThemeVideoSource(video) {
   const isLight = document.documentElement?.dataset?.theme === 'light';
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   if (isLight) {
-    return (isMobile && video.dataset.lightMobileSrc) ||
+    return versionReelSource((isMobile && video.dataset.lightMobileSrc) ||
       video.dataset.lightSrc ||
       video.dataset.src ||
-      video.getAttribute('src') || '';
+      video.getAttribute('src') || '');
   }
-  return (isMobile && video.dataset.darkMobileSrc) ||
+  return versionReelSource((isMobile && video.dataset.darkMobileSrc) ||
     video.dataset.darkSrc ||
     video.dataset.mobileSrc ||
     video.dataset.src ||
-    video.getAttribute('src') || '';
+    video.getAttribute('src') || '');
 }
 
 export function preloadHomeMedia(onProgress = () => {}) {

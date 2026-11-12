@@ -6546,10 +6546,13 @@ function initInstagramReelsPlayer() {
     const card = video.closest('.ig-reel-card');
     const poster = card?.querySelector('.ig-reel-poster');
 
-    // If already playing smoothly, maintain playing state and ensure poster is hidden
+    // If already playing smoothly, maintain playing state and ensure poster stays hidden
     if (!video.paused && video.currentTime > 0) {
-      card?.classList.add('is-playing');
-      if (poster) poster.style.opacity = '0';
+      card?.classList.add('is-playing', 'has-loaded');
+      if (poster) {
+        poster.style.opacity = '0';
+        poster.style.visibility = 'hidden';
+      }
       return;
     }
 
@@ -6560,7 +6563,7 @@ function initInstagramReelsPlayer() {
     video.playsInline = true;
     video.loop = true;
     video.dataset.reelWantPlayback = 'true';
-    video.preload = 'auto';
+    if (video.preload !== 'auto') video.preload = 'auto';
 
     const attempt = video.play();
     if (attempt?.catch) {
@@ -6578,16 +6581,14 @@ function initInstagramReelsPlayer() {
     }
   };
 
-  // Bind video events to cleanly toggle is-playing
+  // Bind video events to cleanly toggle is-playing and hide poster permanently on load
   videos.forEach((video) => {
     const card = video.closest('.ig-reel-card');
+    const poster = card?.querySelector('.ig-reel-poster');
     video.defaultMuted = true;
     video.muted = true;
     video.loop = true;
     video.playsInline = true;
-    // Let the player decide which cards are active. Leaving autoplay on every
-    // original card starts all five source files before the viewport logic can
-    // pause the offscreen ones (particularly expensive on Umar's reels).
     video.autoplay = false;
     video.removeAttribute('autoplay');
     video.setAttribute('playsinline', '');
@@ -6596,12 +6597,31 @@ function initInstagramReelsPlayer() {
     video.dataset.reelSource = video.getAttribute('src') || '';
     video.dataset.reelWantPlayback = 'false';
     video.dataset.reelAudioEnabled = 'false';
-    video.addEventListener('playing', () => {
+    
+    const onPlaying = () => {
       video.dataset.reelRecoveryAttempts = '0';
       video.classList.remove('is-reel-loading');
-      card?.classList.add('is-playing');
+      card?.classList.add('is-playing', 'has-loaded');
+      if (poster) {
+        poster.style.opacity = '0';
+        poster.style.visibility = 'hidden';
+      }
+    };
+
+    video.addEventListener('playing', onPlaying);
+    video.addEventListener('loadeddata', () => {
+      card?.classList.add('has-loaded');
+      if (poster) {
+        poster.style.opacity = '0';
+        poster.style.visibility = 'hidden';
+      }
     });
-    video.addEventListener('pause', () => card?.classList.remove('is-playing'));
+    video.addEventListener('pause', () => {
+      // Only remove playing class if it was reset to start; never flash poster over active reel
+      if (video.currentTime === 0) {
+        card?.classList.remove('is-playing');
+      }
+    });
     video.addEventListener('error', () => {
       card?.classList.remove('is-playing');
       video.classList.add('is-reel-loading');
@@ -6641,72 +6661,31 @@ function initInstagramReelsPlayer() {
       videos.forEach((video) => {
         video.dataset.reelWantPlayback = 'false';
         try { video.pause(); } catch (_) { }
-        video.closest('.ig-reel-card')?.classList.remove('is-playing');
       });
       return;
     }
 
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
-    const isMobile = isMobileScreen();
+    const hasActiveAudio = activeAudioVideo && !activeAudioVideo.paused && activeAudioVideo.dataset.reelAudioEnabled === 'true';
 
-    if (isMobile) {
-      // Mobile: if a reel was unmuted by the user, keep that reel playing and in focus
-      const hasActiveAudio = activeAudioVideo && !activeAudioVideo.paused && activeAudioVideo.dataset.reelAudioEnabled === 'true';
+    allReelCards.forEach((card) => {
+      const video = card.querySelector('.ig-reel-video');
+      if (!video) return;
 
-      const viewportCenter = window.innerWidth / 2;
-      let closestCard = null;
-      let minDistance = Infinity;
+      const isCurrentAudio = video === activeAudioVideo && hasActiveAudio;
+      const rect = card.getBoundingClientRect();
+      // On both mobile and desktop: play cards visible within the screen bounds
+      const isVisibleOnScreen = rect.right > 15 && rect.left < viewportWidth - 15;
 
-      allReelCards.forEach((card) => {
-        const rect = card.getBoundingClientRect();
-        if (rect.right > 0 && rect.left < window.innerWidth) {
-          const cardCenter = rect.left + rect.width / 2;
-          const distance = Math.abs(cardCenter - viewportCenter);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestCard = card;
-          }
+      if (isCurrentAudio || isVisibleOnScreen) {
+        attemptVideoPlay(video);
+      } else {
+        if (video !== activeAudioVideo || !hasActiveAudio) {
+          video.dataset.reelWantPlayback = 'false';
+          try { video.pause(); } catch (_) { }
         }
-      });
-
-      if (!closestCard && allReelCards.length) {
-        closestCard = allReelCards[0];
       }
-
-      allReelCards.forEach((card) => {
-        const video = card.querySelector('.ig-reel-video');
-        if (!video) return;
-        const isCurrentAudio = video === activeAudioVideo && hasActiveAudio;
-
-        if (isCurrentAudio || (!hasActiveAudio && card === closestCard)) {
-          attemptVideoPlay(video);
-        } else {
-          if (video.dataset.reelAudioEnabled !== 'true') {
-            video.dataset.reelWantPlayback = 'false';
-            try { video.pause(); } catch (_) { }
-            card.classList.remove('is-playing');
-          }
-        }
-      });
-    } else {
-      // Desktop: only play the cards visible on screen (prevents browser hardware decoder limit)
-      allReelCards.forEach((card) => {
-        const video = card.querySelector('.ig-reel-video');
-        if (!video) return;
-        const rect = card.getBoundingClientRect();
-        const isVisibleOnScreen = rect.right > 20 && rect.left < viewportWidth - 20;
-
-        if (isVisibleOnScreen) {
-          attemptVideoPlay(video);
-        } else {
-          if (video !== activeAudioVideo || video.paused) {
-            video.dataset.reelWantPlayback = 'false';
-            try { video.pause(); } catch (_) { }
-            card.classList.remove('is-playing');
-          }
-        }
-      });
-    }
+    });
   };
 
   const tick = (time) => {
@@ -6949,13 +6928,23 @@ function initInstagramReelsPlayer() {
     };
 
     const markPlaying = () => {
-      card.classList.add('is-playing');
-      if (poster) poster.style.opacity = '0';
+      card.classList.add('is-playing', 'has-loaded');
+      if (poster) {
+        poster.style.opacity = '0';
+        poster.style.visibility = 'hidden';
+      }
       updateSoundUI(video.muted);
     };
 
     video.addEventListener('play', markPlaying);
     video.addEventListener('playing', markPlaying);
+    video.addEventListener('loadeddata', () => {
+      card.classList.add('has-loaded');
+      if (poster) {
+        poster.style.opacity = '0';
+        poster.style.visibility = 'hidden';
+      }
+    });
     video.addEventListener('timeupdate', () => {
       if (video.currentTime > 0.05) {
         markPlaying();
@@ -6965,7 +6954,11 @@ function initInstagramReelsPlayer() {
     if (!video.paused && video.currentTime > 0) {
       markPlaying();
     }
-    video.addEventListener('pause', () => card.classList.remove('is-playing'));
+    video.addEventListener('pause', () => {
+      if (video.currentTime === 0) {
+        card.classList.remove('is-playing');
+      }
+    });
 
     const playWithSound = () => {
       muteAllOtherVideos(video);

@@ -13128,8 +13128,10 @@ html.js .floating-badge-item {
   transition: opacity 0.4s ease;
 }
 
-.ig-reel-card.is-playing .ig-reel-poster {
-  opacity: 0;
+.ig-reel-card.is-playing .ig-reel-poster,
+.ig-reel-card.has-loaded .ig-reel-poster {
+  opacity: 0 !important;
+  visibility: hidden;
   pointer-events: none;
 }
 

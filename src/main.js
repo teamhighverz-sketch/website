@@ -6206,13 +6206,22 @@ function initFaqAccordion() {
   items.forEach((item) => {
     const summary = item.querySelector('.faq-summary');
     const body = item.querySelector('.faq-body');
+    const answer = item.querySelector('.faq-answer');
     if (!summary || !body) return;
 
     if (!item.classList.contains('is-open')) {
       body.style.height = '0px';
+      if (answer) {
+        answer.style.opacity = '0';
+        answer.style.transform = 'translateY(-6px)';
+      }
       summary.setAttribute('aria-expanded', 'false');
     } else {
       body.style.height = 'auto';
+      if (answer) {
+        answer.style.opacity = '1';
+        answer.style.transform = 'translateY(0)';
+      }
       summary.setAttribute('aria-expanded', 'true');
     }
   });
@@ -6220,6 +6229,7 @@ function initFaqAccordion() {
   const toggleItem = (item) => {
     const summary = item.querySelector('.faq-summary');
     const body = item.querySelector('.faq-body');
+    const answer = item.querySelector('.faq-answer');
     if (!summary || !body) return;
 
     const isCurrentlyOpen = item.classList.contains('is-open');
@@ -6230,22 +6240,28 @@ function initFaqAccordion() {
         other.classList.remove('is-open');
         const otherBtn = other.querySelector('.faq-summary');
         const otherBody = other.querySelector('.faq-body');
+        const otherAnswer = other.querySelector('.faq-answer');
         if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
+        if (otherAnswer) {
+          gsap.killTweensOf(otherAnswer);
+          gsap.to(otherAnswer, {
+            opacity: 0,
+            y: -6,
+            duration: 0.18,
+            ease: 'power2.in',
+          });
+        }
         if (otherBody) {
           gsap.killTweensOf(otherBody);
-          gsap.fromTo(
-            otherBody,
-            { height: otherBody.offsetHeight },
-            {
-              height: 0,
-              duration: 0.35,
-              ease: 'power2.inOut',
-              onComplete: () => {
-                otherBody.style.height = '0px';
-                if (window.ScrollTrigger) ScrollTrigger.refresh();
-              },
-            }
-          );
+          gsap.to(otherBody, {
+            height: 0,
+            duration: 0.32,
+            ease: 'power2.inOut',
+            onComplete: () => {
+              otherBody.style.height = '0px';
+              if (window.ScrollTrigger) ScrollTrigger.refresh();
+            },
+          });
         }
       }
     });
@@ -6253,50 +6269,64 @@ function initFaqAccordion() {
     if (isCurrentlyOpen) {
       item.classList.remove('is-open');
       summary.setAttribute('aria-expanded', 'false');
+      if (answer) {
+        gsap.killTweensOf(answer);
+        gsap.to(answer, {
+          opacity: 0,
+          y: -6,
+          duration: 0.18,
+          ease: 'power2.in',
+        });
+      }
       gsap.killTweensOf(body);
-      gsap.fromTo(
-        body,
-        { height: body.offsetHeight },
-        {
-          height: 0,
-          duration: 0.35,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            body.style.height = '0px';
-            if (window.ScrollTrigger) ScrollTrigger.refresh();
-          },
-        }
-      );
+      gsap.to(body, {
+        height: 0,
+        duration: 0.32,
+        ease: 'power2.inOut',
+        onComplete: () => {
+          body.style.height = '0px';
+          if (window.ScrollTrigger) ScrollTrigger.refresh();
+        },
+      });
     } else {
       item.classList.add('is-open');
       summary.setAttribute('aria-expanded', 'true');
       gsap.killTweensOf(body);
+      if (answer) gsap.killTweensOf(answer);
 
       // Measure target natural height accurately
-      const answer = body.querySelector('.faq-answer');
-      let targetHeight = 0;
-      if (answer) {
-        targetHeight = answer.offsetHeight;
-      }
-      if (!targetHeight || targetHeight < 20) {
-        body.style.height = 'auto';
-        targetHeight = body.scrollHeight || 100;
-        body.style.height = '0px';
-      }
+      const currentHeight = body.offsetHeight;
+      body.style.height = 'auto';
+      const targetHeight = body.scrollHeight || 100;
+      body.style.height = currentHeight + 'px';
 
       gsap.fromTo(
         body,
-        { height: 0 },
+        { height: currentHeight },
         {
           height: targetHeight,
-          duration: 0.42,
-          ease: 'power3.out',
+          duration: 0.38,
+          ease: 'power2.out',
           onComplete: () => {
             body.style.height = 'auto';
             if (window.ScrollTrigger) ScrollTrigger.refresh();
           },
         }
       );
+
+      if (answer) {
+        gsap.fromTo(
+          answer,
+          { opacity: 0, y: -8 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.32,
+            delay: 0.06,
+            ease: 'power2.out',
+          }
+        );
+      }
     }
   };
 

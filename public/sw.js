@@ -1,8 +1,15 @@
-// Highverz High-Performance Static Asset & Media Service Worker (v5)
-const CACHE_NAME = 'highverz-cache-v5';
+// Highverz High-Performance Static Asset & Media Service Worker (v6)
+const CACHE_NAME = 'highverz-cache-v6';
+const FONT_CACHE_NAME = 'highverz-fonts-v1';
 
 const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|webp|avif|svg|woff2?|css|js|json)$/i;
 const VIDEO_EXTENSIONS = /\.(?:mp4|webm|mov)$/i;
+const FONT_HOSTS = [
+  'api.fontshare.com',
+  'cdn.fontshare.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com'
+];
 
 const PRECACHE_ASSETS = [
   '/',
@@ -30,7 +37,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys
-          .filter((k) => k !== CACHE_NAME)
+          .filter((k) => k !== CACHE_NAME && k !== FONT_CACHE_NAME)
           .map((k) => caches.delete(k))
       );
     }).then(() => self.clients.claim())
@@ -54,7 +61,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. HTML Document Navigations: Stale-While-Revalidate for 0ms loads + offline resilience
+  // 2. Webfonts & Font CDNs (Fontshare & Google Fonts):
+  // Cache-First with persistent disk cache for 0ms repeat loads and offline resilience.
+  // Preserves exact original typography, ligatures, and italic cuts without DOM manipulation.
+  if (FONT_HOSTS.includes(url.hostname)) {
+    event.respondWith(
+      caches.open(FONT_CACHE_NAME).then((cache) => {
+        return cache.match(request).then((cached) => {
+          if (cached) return cached;
+          return fetch(request).then((response) => {
+            if (response && (response.status === 200 || response.type === 'opaque')) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          }).catch(() => cached);
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. HTML Document Navigations: Stale-While-Revalidate for 0ms loads + offline resilience
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       fetch(request)
@@ -74,7 +101,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Static Assets (Images, WebP, Fonts, CSS, JS): Cache-First with background revalidation
+  // 4. Static Assets (Images, WebP, Local Fonts, CSS, JS): Cache-First with background revalidation
   if (STATIC_EXTENSIONS.test(url.pathname) || url.pathname.startsWith('/assets/') || url.pathname.startsWith('/fonts/')) {
     event.respondWith(
       caches.match(request).then((cached) => {

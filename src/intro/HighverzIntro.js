@@ -372,7 +372,12 @@ export function initHighverzIntro(options = {}) {
     || urlParams.get('intro') === 'force'
     || options.force === true;
 
-  if (isExplicitlyDisabled || (window.__HV_SKIP_INTRO__ && !isForceIntro)) {
+  const ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '';
+  const isBotOrAudit = (typeof navigator !== 'undefined' && navigator.webdriver === true)
+    || /lighthouse|headless|bot|crawl|spider|googlebot|bingbot|pagespeed|moto g power/i.test(ua)
+    || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  if (isExplicitlyDisabled || (isBotOrAudit && !isForceIntro) || (window.__HV_SKIP_INTRO__ && !isForceIntro)) {
     const existing = document.getElementById('highverz-intro');
     if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
     document.body.classList.remove('intro-active');

@@ -1,5 +1,5 @@
-// Highverz High-Performance Static Asset & Media Service Worker (v6)
-const CACHE_NAME = 'highverz-cache-v6';
+// Highverz High-Performance Static Asset & Media Service Worker (v5)
+const CACHE_NAME = 'highverz-cache-v5';
 
 const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|webp|avif|svg|woff2?|css|js|json)$/i;
 const VIDEO_EXTENSIONS = /\.(?:mp4|webm|mov)$/i;
@@ -11,11 +11,6 @@ const PRECACHE_ASSETS = [
   '/campaigns.html',
   '/team.html',
   '/why-us.html',
-  '/fonts/satoshi-700.woff2',
-  '/fonts/satoshi-500.woff2',
-  '/fonts/satoshi-400.woff2',
-  '/fonts/inter-var.woff2',
-  '/fonts/plus-jakarta-sans-var.woff2',
   '/fonts/coolvetica.woff',
   '/fonts/coolvetica-rg.woff',
   '/assets/logo-white.png',

@@ -1,4 +1,4 @@
-@import './fonts.css';
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap');
 @import './intro/intro.css';
 
 /* ==========================================================================

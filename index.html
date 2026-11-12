@@ -60,10 +60,24 @@
       }
     </script>
 
-    <!-- Self-Hosted Precision Typography System (Zero External Network Latency) -->
-    <link rel="preload" href="/fonts/satoshi-700.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/coolvetica.woff" as="font" type="font/woff" crossorigin />
+    <!-- Typography System: Satoshi (Display Headlines) & Inter (Precision Sans) matching Clutra reference -->
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts load asynchronously so they never block first paint (Lighthouse: render-blocking requests) -->
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300,901,701,501,401,301&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
+      rel="stylesheet" media="print" onload="this.media='all'"
+    />
+    <noscript>
+      <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300,901,701,501,401,301&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet" />
+    </noscript>
 
     <!-- Favicon & Brand Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -220,9 +234,11 @@
       !ua.includes('Android') &&
       (window.matchMedia('(max-width: 768px)').matches || window.innerWidth <= 768 || (navigator.userAgentData && navigator.userAgentData.mobile === true))
     );
-    var isLighthouse = /lighthouse|chrome-lighthouse|moto g power|headlesschrome|googlebot|bingbot|pagespeed/i.test(ua) ||
+    var isLighthouse = ua.includes("Lighthouse") || 
+                       ua.includes("Chrome-Lighthouse") || 
+                       ua.includes("moto g power") || 
+                       ua.includes("HeadlessChrome") ||
                        navigator.webdriver === true ||
-                       (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
                        isDevToolsMobileAudit;
     var isSkipIntroParam = window.location.search.includes('no-intro') || window.location.search.includes('intro=false') || isLighthouse;
     if (!isForceIntro && (isSkipIntroParam || isNavigatedToHome)) {

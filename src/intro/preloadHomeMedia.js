@@ -3,7 +3,7 @@
 // Keep the intro from holding the first screen while large reel files buffer.
 // Keep the loader tied to real asset readiness, with a short upper bound so a
 // failed/slow connection never traps the visitor behind the intro.
-export const HOME_MEDIA_TIMEOUT = 1200;
+export const HOME_MEDIA_TIMEOUT = 3360;
 
 // The carousel keeps both creator and cinema sources on each video element.
 // Resolve the source for the active theme here as well so the loading screen
@@ -28,15 +28,6 @@ function getThemeVideoSource(video) {
 }
 
 export function preloadHomeMedia(onProgress = () => {}) {
-  // If running in automated audit, bot, or reduced motion, complete instantly
-  const isBotOrAudit = typeof navigator !== 'undefined' && (
-    navigator.webdriver === true ||
-    /lighthouse|headless|bot|crawl|spider|googlebot|bingbot|pagespeed|moto g power/i.test(navigator.userAgent || '') ||
-    (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  );
-  if (isBotOrAudit) {
-    return Promise.resolve([]);
-  }
   // Only warm images that belong to the initial Home hero. Other sections
   // remain lazy and must not extend the branded loading screen.
   const images = [...document.querySelectorAll('#hero img')];
@@ -121,21 +112,13 @@ export function preloadHomeMedia(onProgress = () => {}) {
     });
   }
 
-  const essentialTasks = images.map(image => imageTask(image, image.currentSrc || image.src));
-  essentialTasks.push(...posters.map(source => imageTask(new Image(), source)));
-
-  const videoWaiters = targetVideos.map(video => waitFor(video, ['loadeddata', 'canplay'], () => (
+  const tasks = images.map(image => imageTask(image, image.currentSrc || image.src));
+  tasks.push(...posters.map(source => imageTask(new Image(), source)));
+  tasks.push(...targetVideos.map(video => waitFor(video, ['loadeddata', 'canplay'], () => (
     video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0
-  ), () => {}, getThemeVideoSource(video)));
+  ), () => {}, getThemeVideoSource(video))));
 
-  // Posters guarantee immediate crisp visuals. Allow videos up to 350ms to buffer
-  // before lifting the curtain; any remaining videos stream seamlessly in the background.
-  const videoRace = Promise.race([
-    Promise.all(videoWaiters),
-    new Promise(resolve => setTimeout(resolve, 350))
-  ]);
-
-  return Promise.all([...essentialTasks, videoRace]).then(() => {
+  return Promise.all(tasks).then(() => {
     window.__hvHomeMediaResult = results;
     window.dispatchEvent(new CustomEvent('hv:home-media-ready', { detail: results }));
     return results;

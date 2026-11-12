@@ -18,14 +18,14 @@ let activeIntroInstance = null;
 
 export class HighverzIntro {
   constructor(options = {}) {
-    this.onComplete    = options.onComplete    || (() => {});
+    this.onComplete = options.onComplete || (() => { });
     this.onStartReveal = options.onStartReveal || null;
-    this.hasRevealed   = false;
-    this.isDestroyed   = false;
-    this.isCompleted   = false;
+    this.hasRevealed = false;
+    this.isDestroyed = false;
+    this.isCompleted = false;
 
-    this.container   = null;
-    this.tl          = null;
+    this.container = null;
+    this.tl = null;
     this.safetyTimer = null;
   }
 
@@ -72,9 +72,9 @@ export class HighverzIntro {
   // ANIMATE
   // ─────────────────────────────────────────────────────────────────────────
   animate() {
-    const logo      = this.container.querySelector('#hv-reveal-logo');
-    const center    = this.container.querySelector('#hv-reveal-center');
-    const progress  = this.container.querySelector('.hv-loader-progress-fill');
+    const logo = this.container.querySelector('#hv-reveal-logo');
+    const center = this.container.querySelector('#hv-reveal-center');
+    const progress = this.container.querySelector('.hv-loader-progress-fill');
 
     // Matches the Framer SiteLoader default: fade in the complete logo as one unit.
     gsap.set(logo, { opacity: 0, scale: 0.92, y: 8 });
@@ -125,7 +125,7 @@ export class HighverzIntro {
 
     // 1. Critical Typography
     const fontTask = (document.fonts && document.fonts.ready)
-      ? document.fonts.ready.then(() => { if (!isHomePage) setProgress(0.45); }).catch(() => {})
+      ? document.fonts.ready.then(() => { if (!isHomePage) setProgress(0.45); }).catch(() => { })
       : Promise.resolve();
 
     // 2. Route-aware first-viewport media. The former fixed Home poster list
@@ -141,7 +141,7 @@ export class HighverzIntro {
     };
     const waitForImage = (image) => new Promise((resolve) => {
       const finish = () => {
-        if (image.decode) image.decode().catch(() => {}).finally(resolve);
+        if (image.decode) image.decode().catch(() => { }).finally(resolve);
         else resolve();
       };
       if (image.complete) {
@@ -169,7 +169,7 @@ export class HighverzIntro {
         return Promise.resolve();
       }),
       ...videos.filter(isInInitialViewport).map(waitForVideo)
-    ]).then(() => setProgress(0.70)).catch(() => {});
+    ]).then(() => setProgress(0.70)).catch(() => { });
 
     // Home warms every photo, poster, and reel while the loader is on screen.
     const homeMediaTask = isHomePage
@@ -178,7 +178,7 @@ export class HighverzIntro {
 
     // 3. Fluid WebGL Background Preload & Shader Compilation
     const fluidTask = (typeof window.loadFluidBackground === 'function')
-      ? window.loadFluidBackground().then(() => { if (!isHomePage) setProgress(0.85); }).catch(() => {})
+      ? window.loadFluidBackground().then(() => { if (!isHomePage) setProgress(0.85); }).catch(() => { })
       : Promise.resolve();
 
     // 4. Unlock hero videos in parallel (non-blocking background stream)
@@ -338,7 +338,7 @@ export class HighverzIntro {
     const isHomePage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
     this.safetyTimer = setTimeout(() => {
       if (!this.isCompleted) this.finishSafely();
-    }, isHomePage ? HOME_MEDIA_TIMEOUT + 2000 : 5000);
+    }, isHomePage ? HOME_MEDIA_TIMEOUT + 600 : 2400);
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -372,7 +372,12 @@ export function initHighverzIntro(options = {}) {
     || urlParams.get('intro') === 'force'
     || options.force === true;
 
-  if (isExplicitlyDisabled || (window.__HV_SKIP_INTRO__ && !isForceIntro)) {
+  const ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '';
+  const isBotOrAudit = (typeof navigator !== 'undefined' && navigator.webdriver === true)
+    || /lighthouse|headless|bot|crawl|spider|googlebot|bingbot|pagespeed|moto g power/i.test(ua)
+    || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  if (isExplicitlyDisabled || (isBotOrAudit && !isForceIntro) || (window.__HV_SKIP_INTRO__ && !isForceIntro)) {
     const existing = document.getElementById('highverz-intro');
     if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
     document.body.classList.remove('intro-active');

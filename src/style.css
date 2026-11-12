@@ -1970,11 +1970,16 @@ body.mobile-menu-active .work-creator-card {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  /* Keep italic highlight overhang without turning it into a word-sized gap. */
-  padding-right: 0.04em;
-  padding-left: 0.02em;
-  margin-right: 0.04em;
+  /* Safe padding buffers: full slant and ascender/descender clearance with zero glyph clipping */
+  padding-top: 0.08em;
+  padding-bottom: 0.08em;
+  padding-left: 0.05em;
+  padding-right: 0.22em;
+  margin-top: -0.08em;
+  margin-bottom: -0.08em;
+  margin-right: 0;
   overflow: visible;
+  box-sizing: content-box;
   animation: adscaleShimmer 4.5s ease-in-out infinite;
   display: inline-block;
 }
@@ -2027,7 +2032,7 @@ body.mobile-menu-active .work-creator-card {
   display: inline-grid !important;
   grid-template-columns: 1fr !important;
   grid-template-rows: 1fr !important;
-  height: 1.08em !important;
+  height: 1.28em !important;
   min-width: 3.55em !important;
   vertical-align: baseline !important;
   align-items: center !important;
@@ -2036,8 +2041,8 @@ body.mobile-menu-active .work-creator-card {
   overflow: hidden !important;
   position: relative !important;
   background: transparent !important;
-  padding: 0 !important;
-  margin: 0 0 0 -0.08em !important;
+  padding: 0 0.12em 0 0 !important;
+  margin: -0.08em 0 -0.08em -0.06em !important;
   cursor: pointer !important;
   isolation: isolate !important;
   contain: layout paint !important;
@@ -2094,8 +2099,8 @@ body.mobile-menu-active .work-creator-card {
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
-  padding: 0.15em 0.22em 0.22em 0.06em !important;
-  margin: -0.15em -0.22em -0.22em -0.06em !important;
+  padding: 0.06em 0.22em 0.08em 0.05em !important;
+  margin: 0 !important;
   overflow: visible !important;
   animation: none !important;
   will-change: transform, opacity !important;
@@ -2378,14 +2383,14 @@ body.mobile-menu-active .work-creator-card {
 
 .adscale-reveal-word.highlight-cyan:not(:last-child),
 .highlight-cyan .adscale-reveal-word:not(:last-child) {
-  padding-right: 0.04em !important;
-  margin-right: -0.16em !important;
+  padding-right: 0.16em !important;
+  margin-right: 0.04em !important;
 }
 
 .adscale-reveal-word.highlight-cyan:last-child,
 .highlight-cyan .adscale-reveal-word:last-child {
   padding-right: 0.22em !important;
-  margin-right: -0.22em !important;
+  margin-right: 0 !important;
 }
 
 [data-theme="light"] .adscale-reveal-word.highlight-cyan,
@@ -10095,10 +10100,13 @@ html.js .floating-badge-item {
   animation: cyanTextSheen 5s ease-in-out infinite;
   display: inline-block;
   white-space: nowrap;
-  padding-bottom: 0;
-  margin-bottom: 0;
-  padding-right: 0.04em;
-  padding-left: 0.02em;
+  padding-top: 0.08em;
+  padding-bottom: 0.08em;
+  padding-right: 0.22em;
+  padding-left: 0.05em;
+  margin-top: -0.08em;
+  margin-bottom: -0.08em;
+  margin-right: 0;
   overflow: visible;
 }
 
@@ -12836,10 +12844,13 @@ html.js .floating-badge-item {
   filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.4));
   animation: cyanTextSheen 5s ease-in-out infinite;
   display: inline-block;
-  padding-bottom: 0;
-  margin-bottom: 0;
-  padding-right: 0.04em;
-  padding-left: 0.02em;
+  padding-top: 0.08em;
+  padding-bottom: 0.08em;
+  padding-right: 0.22em;
+  padding-left: 0.05em;
+  margin-top: -0.08em;
+  margin-bottom: -0.08em;
+  margin-right: 0;
   overflow: visible;
 }
 
@@ -14685,10 +14696,13 @@ html.js .floating-badge-item {
   animation: cyanTextSheen 5s ease-in-out infinite;
   display: inline-block;
   white-space: nowrap;
-  padding-bottom: 0;
-  margin-bottom: 0;
-  padding-right: 0.04em;
-  padding-left: 0.02em;
+  padding-top: 0.08em;
+  padding-bottom: 0.08em;
+  padding-right: 0.22em;
+  padding-left: 0.05em;
+  margin-top: -0.08em;
+  margin-bottom: -0.08em;
+  margin-right: 0;
   overflow: visible;
 }
 
@@ -20128,7 +20142,7 @@ body::after {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.015) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2),
-  inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: all 0.25s ease;
@@ -20139,7 +20153,7 @@ body::after {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.1) 0%, rgba(0, 229, 255, 0.02) 100%);
   border-color: rgba(0, 229, 255, 0.35);
   box-shadow: 0 4px 14px rgba(0, 229, 255, 0.18),
-  inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
 }
 
@@ -20199,7 +20213,7 @@ body::after {
 [data-theme="light"] .section-cta::before {
   opacity: 0.12;
   background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-  linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
 }
 
 [data-theme="light"] .section-cta::after {
@@ -20270,7 +20284,7 @@ body::after {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.78) 100%);
   border: 1px solid rgba(14, 165, 233, 0.18);
   box-shadow: 0 2px 8px rgba(14, 165, 233, 0.08),
-  inset 0 1px 1px 0 #FFFFFF;
+    inset 0 1px 1px 0 #FFFFFF;
 }
 
 [data-theme="light"] .footer-social-links a:hover,
@@ -20279,7 +20293,7 @@ body::after {
   background: linear-gradient(180deg, #FFFFFF 0%, rgba(224, 242, 254, 0.92) 100%);
   border-color: rgba(14, 165, 233, 0.48);
   box-shadow: 0 6px 18px -2px rgba(14, 165, 233, 0.25),
-  inset 0 1px 1px 0 #FFFFFF;
+    inset 0 1px 1px 0 #FFFFFF;
   transform: translateY(-2px);
 }
 
@@ -20376,6 +20390,7 @@ body::after {
 /* At narrow desktop widths the columns leave too little room for a readable
    scatter mark. Give it a full row beneath the links instead of overlapping. */
 @media (min-width: 901px) {
+
   .footer.footer-scatter-stacked .footer-watermark-logo,
   [data-theme="light"] .footer.footer-scatter-stacked .footer-watermark-logo {
     position: relative;
@@ -20456,11 +20471,11 @@ body::after {
 [data-theme="light"] .hero-trust-number {
   color: #008fa8 !important;
   background-image: linear-gradient(105deg,
-    #008fa8 0%,
-    #00bad2 38%,
-    #ffffff 50%,
-    #00bad2 62%,
-    #008fa8 100%) !important;
+      #008fa8 0%,
+      #00bad2 38%,
+      #ffffff 50%,
+      #00bad2 62%,
+      #008fa8 100%) !important;
   background-size: 200% 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
@@ -20518,10 +20533,10 @@ body::after {
   border-color: rgba(255, 255, 255, 0.09);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 100%);
   box-shadow: 0 32px 84px -10px rgba(0, 0, 0, 0.7),
-  0 12px 36px -6px rgba(0, 0, 0, 0.4),
-  inset 0 1.5px 0 0 rgba(255, 255, 255, 0.16),
-  inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
-  inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+    0 12px 36px -6px rgba(0, 0, 0, 0.4),
+    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* ==========================================================================
@@ -22200,7 +22215,7 @@ html.theme-switching #hero .hero-word-roller::after {
   .work-creator-card,
   .work-creator-stat-box) {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.018) 54%, rgba(255, 255, 255, 0.04)) padding-box,
-  linear-gradient(145deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.14) 48%, rgba(255, 255, 255, 0.36)) border-box !important;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.14) 48%, rgba(255, 255, 255, 0.36)) border-box !important;
   border: 1px solid transparent !important;
   -webkit-backdrop-filter: blur(26px) saturate(175%) !important;
   backdrop-filter: blur(26px) saturate(175%) !important;
@@ -22369,18 +22384,18 @@ html.theme-switching #hero .hero-word-roller::after {
 /* Restore the original softer treatment on the two light-theme film concept cards. */
 [data-theme="light"] .section-creators.is-movie-showcase .creator-card {
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.72) 0%, rgba(246, 250, 254, 0.42) 50%, rgba(234, 243, 252, 0.58) 100%) padding-box,
-  linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(212, 224, 238, 0.62) 15%, rgba(168, 185, 206, 0.25) 48%, rgba(206, 222, 238, 0.45) 82%, rgba(255, 255, 255, 0.96) 100%) border-box !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(212, 224, 238, 0.62) 15%, rgba(168, 185, 206, 0.25) 48%, rgba(206, 222, 238, 0.45) 82%, rgba(255, 255, 255, 0.96) 100%) border-box !important;
   border: 1px solid transparent !important;
   border-radius: 40px !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) contrast(102%) !important;
   backdrop-filter: blur(28px) saturate(190%) contrast(102%) !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.015),
-  0 6px 16px -3px rgba(15, 23, 42, 0.035),
-  0 16px 36px -6px rgba(15, 23, 42, 0.05),
-  0 32px 64px -10px rgba(15, 23, 42, 0.06),
-  inset 0 1.5px 1.5px 0 #fff,
-  inset 0 -1px 1px 0 rgba(255, 255, 255, 0.45),
-  inset 1px 1px 0 0 rgba(255, 255, 255, 0.75) !important;
+    0 6px 16px -3px rgba(15, 23, 42, 0.035),
+    0 16px 36px -6px rgba(15, 23, 42, 0.05),
+    0 32px 64px -10px rgba(15, 23, 42, 0.06),
+    inset 0 1.5px 1.5px 0 #fff,
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.45),
+    inset 1px 1px 0 0 rgba(255, 255, 255, 0.75) !important;
 }
 
 [data-theme="light"] .section-creators.is-movie-showcase .creator-card::before,
@@ -22392,14 +22407,14 @@ html.theme-switching #hero .hero-word-roller::after {
 [data-theme="light"] .section-creators.is-movie-showcase .creator-card:hover {
   transform: translateY(-8px) !important;
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 252, 255, 0.65) 50%, rgba(238, 246, 255, 0.78) 100%) padding-box,
-  linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.9) 25%, rgba(14, 165, 233, 0.4) 75%, #fff) border-box !important;
+    linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.9) 25%, rgba(14, 165, 233, 0.4) 75%, #fff) border-box !important;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02),
-  0 12px 28px -4px rgba(15, 23, 42, 0.05),
-  0 28px 56px -8px rgba(15, 23, 42, 0.07),
-  0 48px 90px -12px rgba(14, 165, 233, 0.12),
-  inset 0 2px 2px 0 #fff,
-  inset 0 -1px 1px 0 rgba(255, 255, 255, 0.6),
-  inset 1px 1px 0 0 rgba(255, 255, 255, 0.95) !important;
+    0 12px 28px -4px rgba(15, 23, 42, 0.05),
+    0 28px 56px -8px rgba(15, 23, 42, 0.07),
+    0 48px 90px -12px rgba(14, 165, 233, 0.12),
+    inset 0 2px 2px 0 #fff,
+    inset 0 -1px 1px 0 rgba(255, 255, 255, 0.6),
+    inset 1px 1px 0 0 rgba(255, 255, 255, 0.95) !important;
 }
 
 /* Restore the Home creator carousel to db66ea3's glass-card presentation. */
@@ -23633,20 +23648,20 @@ html.theme-switching #hero .hero-word-roller::after {
   [data-theme="light"] body.page-work .workflow-card {
     border-color: rgba(49, 91, 110, 0.22) !important;
     box-shadow: 0 0 0 1px rgba(53, 97, 117, 0.1),
-    -5px 0 16px rgba(55, 103, 128, 0.075),
-    5px 0 16px rgba(55, 103, 128, 0.075),
-    0 12px 26px rgba(38, 66, 82, 0.11),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+      -5px 0 16px rgba(55, 103, 128, 0.075),
+      5px 0 16px rgba(55, 103, 128, 0.075),
+      0 12px 26px rgba(38, 66, 82, 0.11),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
   }
 
   [data-theme="light"] body.page-work .capability-card:hover,
   [data-theme="light"] body.page-work .workflow-card:hover {
     transform: none !important;
     box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2),
-    -6px 0 18px rgba(14, 165, 233, 0.1),
-    6px 0 18px rgba(14, 165, 233, 0.1),
-    0 14px 30px rgba(38, 66, 82, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+      -6px 0 18px rgba(14, 165, 233, 0.1),
+      6px 0 18px rgba(14, 165, 233, 0.1),
+      0 14px 30px rgba(38, 66, 82, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
   }
 
   /* Retain the animated highlight in the light theme; the illustrations keep
@@ -23715,9 +23730,9 @@ html.theme-switching #hero .hero-word-roller::after {
     -webkit-backdrop-filter: blur(20px) saturate(135%) !important;
     backdrop-filter: blur(20px) saturate(135%) !important;
     box-shadow: 0 10px 26px rgba(24, 39, 50, 0.09),
-    0 1px 3px rgba(24, 39, 50, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    inset 0 -1px 0 rgba(35, 54, 67, 0.055) !important;
+      0 1px 3px rgba(24, 39, 50, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      inset 0 -1px 0 rgba(35, 54, 67, 0.055) !important;
   }
 
   [data-theme="light"] :is(.domain-chip,
@@ -23729,7 +23744,7 @@ html.theme-switching #hero .hero-word-roller::after {
     -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
     backdrop-filter: blur(16px) saturate(130%) !important;
     box-shadow: 0 4px 12px rgba(24, 39, 50, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+      inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
   }
 
   [data-theme="light"] :is(.founder-accord-card,
@@ -24323,7 +24338,7 @@ body.page-team .founder-accord-card .founder-quote strong {
     border-color: rgba(20, 100, 119, 0.42);
     background: rgba(222, 244, 250, 0.76);
     box-shadow: 0 5px 14px rgba(28, 70, 88, 0.11),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   [data-theme="light"] body.page-why-us .comp-mobile-values .is-highverz>span {
@@ -24340,7 +24355,7 @@ body.page-team .founder-accord-card .founder-quote strong {
     border-color: rgba(35, 199, 216, 0.48);
     background: rgba(14, 75, 86, 0.46);
     box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(145, 239, 248, 0.12);
+      inset 0 1px 0 rgba(145, 239, 248, 0.12);
   }
 
   [data-theme="dark"] body.page-why-us .comp-mobile-values .is-highverz>span {
@@ -24371,8 +24386,8 @@ body.page-team .founder-accord-card .founder-quote strong {
    stacked on screen. Large backdrop blurs are particularly expensive in
    Safari and on mid-range Android GPUs. */
 @media (max-width: 768px) {
-  :is(
-    .founder-accord-card,
+
+  :is(.founder-accord-card,
     .pillar-card,
     .accord-stat,
     .founder-quote,
@@ -24389,18 +24404,15 @@ body.page-team .founder-accord-card .founder-quote strong {
     .standard-card,
     .case-hud-card,
     .case-follower-transform-card,
-    .breakdown-card
-  ) {
+    .breakdown-card) {
     -webkit-backdrop-filter: blur(12px) saturate(125%) !important;
     backdrop-filter: blur(12px) saturate(125%) !important;
   }
 
-  :is(
-    .domain-chip,
+  :is(.domain-chip,
     .work-filter-chip,
     .comp-badge,
-    .work-creator-tag-item
-  ) {
+    .work-creator-tag-item) {
     -webkit-backdrop-filter: blur(8px) saturate(120%) !important;
     backdrop-filter: blur(8px) saturate(120%) !important;
   }
@@ -24420,7 +24432,7 @@ body.page-team .founder-accord-card .founder-quote strong {
   text-align: center;
 }
 
-#hero #hero-headline > .hero-headline-line--dark-keyword {
+#hero #hero-headline>.hero-headline-line--dark-keyword {
   display: flex !important;
   align-items: baseline;
   justify-content: center;
@@ -24432,11 +24444,11 @@ body.page-team .founder-accord-card .founder-quote strong {
   white-space: nowrap;
 }
 
-#hero #hero-headline > .hero-headline-line--dark-keyword > .hl-word {
+#hero #hero-headline>.hero-headline-line--dark-keyword>.hl-word {
   margin-right: 0 !important;
 }
 
-#hero #hero-headline > .hero-headline-line--dark-keyword .hero-word-roller {
+#hero #hero-headline>.hero-headline-line--dark-keyword .hero-word-roller {
   width: max-content !important;
   min-width: 0 !important;
   grid-template-columns: max-content !important;
@@ -24447,7 +24459,7 @@ body.page-team .founder-accord-card .founder-quote strong {
   flex: 0 0 auto;
 }
 
-#hero #hero-headline > .hero-headline-line--dark-keyword .hero-word-roller .roller-item {
+#hero #hero-headline>.hero-headline-line--dark-keyword .hero-word-roller .roller-item {
   text-align: left !important;
 }
 
@@ -24477,4 +24489,40 @@ html.is-low-spec .global-fluid-canvas {
 
 html.is-low-spec .video-card {
   will-change: transform;
+}
+
+/* ==========================================================================
+   UNIVERSAL TEXT-CLIP SAFETY & ZERO-OVERLAP OVERRIDES
+   Ensures highlight wrappers never double-clip words and letters never collide.
+   ========================================================================== */
+.highlight-cyan:has(.adscale-reveal-word),
+[data-theme="light"] .highlight-cyan:has(.adscale-reveal-word),
+.why-hero-title .highlight-cyan:has(.adscale-reveal-word),
+.work-hero-title .highlight-cyan:has(.adscale-reveal-word),
+.case-hero-title .highlight-cyan:has(.adscale-reveal-word),
+.team-hero-title .highlight-cyan:has(.adscale-reveal-word),
+.workflow-section h2 .highlight-cyan:has(.adscale-reveal-word),
+.comp-main-title .highlight-cyan:has(.adscale-reveal-word),
+.founders-title .highlight-cyan:has(.adscale-reveal-word),
+.pillars-title .highlight-cyan:has(.adscale-reveal-word),
+.cta-main-title .highlight-cyan:has(.adscale-reveal-word) {
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: initial !important;
+  filter: none !important;
+  animation: none !important;
+  display: inline !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Ensure no negative margins pull adjacent words into each other */
+.workflow-section h2 .highlight-cyan .adscale-reveal-word:not(:last-child),
+.workflow-section h2 .adscale-reveal-word.highlight-cyan:not(:last-child) {
+  padding-right: 0.16em !important;
+  margin-right: 0.04em !important;
 }

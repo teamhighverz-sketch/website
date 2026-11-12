@@ -49,7 +49,7 @@ const htmlCache = new Map();
 // Keep the Why Us hero copy canonical during HTML handoffs. A prefetched
 // document can outlive a content edit, and overlapping outgoing/incoming DOM
 // should never leave two subtitle variants visible during a transition.
-const WHY_US_SUBTITLE = 'See how Highverz Creative Agency compares to traditional agencies and freelancers.';
+const WHY_US_SUBTITLE = 'See how Highverz compares to traditional agencies and freelancers.';
 
 function normalizeWhyUsSubtitle(root) {
   if (!root) return;

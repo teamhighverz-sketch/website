@@ -2,7 +2,7 @@
 @import './intro/intro.css';
 
 /* ==========================================================================
-   HIGHVERZ — LUXURY CREATIVE AGENCY DESIGN SYSTEM
+   HIGHVERZ — LUXURY CONTENT DISTRIBUTION DESIGN SYSTEM
    Exact Match to Highverz Reference Art Direction & Official Brand Assets
    Palette: Dark Foundation (#07090B, #0D1114) | Off-White (#F5F4EF) | Cyan (#00E5FF, #18C7D8)
    Typography: Satoshi (Headlines) & Inter (Precision Sans)
@@ -13289,6 +13289,21 @@ html.js .floating-badge-item {
   border-color: var(--accent-cyan);
   transform: scale(1.1);
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+}
+
+.ig-sound-toggle-btn.is-unmuted {
+  background: var(--accent-cyan) !important;
+  color: #000000 !important;
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.65) !important;
+}
+
+.ig-sound-toggle-btn.is-unmuted .sound-icon-muted {
+  display: none !important;
+}
+
+.ig-sound-toggle-btn.is-unmuted .sound-icon-unmuted {
+  display: block !important;
 }
 
 .ig-reel-audio-track {

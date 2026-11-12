@@ -6541,6 +6541,17 @@ function initInstagramReelsPlayer() {
 
   const attemptVideoPlay = (video) => {
     if (!video || !video.isConnected) return;
+
+    const card = video.closest('.ig-reel-card');
+    const poster = card?.querySelector('.ig-reel-poster');
+
+    // If already playing smoothly, maintain playing state and ensure poster is hidden
+    if (!video.paused && video.currentTime > 0) {
+      card?.classList.add('is-playing');
+      if (poster) poster.style.opacity = '0';
+      return;
+    }
+
     if (video.dataset.reelAudioEnabled !== 'true') {
       video.defaultMuted = true;
       video.muted = true;
@@ -6550,13 +6561,18 @@ function initInstagramReelsPlayer() {
     video.dataset.reelWantPlayback = 'true';
     video.preload = 'auto';
 
-    if (video.readyState === 0) video.load();
     const attempt = video.play();
     if (attempt?.catch) {
-      attempt.catch(() => {
-        // Muted autoplay can still be rejected during a route/visibility
-        // transition. Retry through the same bounded recovery path.
-        scheduleVideoRecovery(video, 300);
+      attempt.catch((err) => {
+        if (err.name !== 'AbortError') {
+          // If browser blocked unmuted autoplay, fall back to muted
+          if (!video.muted) {
+            video.muted = true;
+            video.defaultMuted = true;
+            video.dataset.reelAudioEnabled = 'false';
+            video.play()?.catch?.(() => {});
+          }
+        }
       });
     }
   };
@@ -6657,16 +6673,16 @@ function initInstagramReelsPlayer() {
         if (card === closestCard) {
           attemptVideoPlay(video);
         } else {
-          video.dataset.reelWantPlayback = 'false';
-          video.dataset.reelAudioEnabled = 'false';
-          try { video.pause(); } catch (_) { }
-          card.classList.remove('is-playing');
+          // If this card was explicitly unmuted by the user, don't kill its audio
+          if (video.dataset.reelAudioEnabled !== 'true') {
+            video.dataset.reelWantPlayback = 'false';
+            try { video.pause(); } catch (_) { }
+            card.classList.remove('is-playing');
+          }
         }
       });
     } else {
-      // Desktop: only warm cards near the viewport. Playing every original
-      // plus two clone sets at once can saturate the browser's media pipeline,
-      // especially on the larger Umar source files.
+      // Desktop: play cards near the viewport
       const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
       allReelCards.forEach((card) => {
         const video = card.querySelector('.ig-reel-video');
@@ -6676,11 +6692,12 @@ function initInstagramReelsPlayer() {
         if (isNearViewport) {
           attemptVideoPlay(video);
         } else {
-          video.dataset.reelWantPlayback = 'false';
-          video.dataset.reelAudioEnabled = 'false';
-          video.preload = 'metadata';
-          try { video.pause(); } catch (_) { }
-          card.classList.remove('is-playing');
+          if (video.dataset.reelAudioEnabled !== 'true') {
+            video.dataset.reelWantPlayback = 'false';
+            video.preload = 'metadata';
+            try { video.pause(); } catch (_) { }
+            card.classList.remove('is-playing');
+          }
         }
       });
     }
@@ -6893,6 +6910,7 @@ function initInstagramReelsPlayer() {
 
     const updateSoundUI = (isMuted) => {
       if (!soundBtn) return;
+      soundBtn.classList.toggle('is-unmuted', !isMuted);
       const mutedIcon = soundBtn.querySelector('.sound-icon-muted');
       const unmutedIcon = soundBtn.querySelector('.sound-icon-unmuted');
       if (mutedIcon) mutedIcon.style.display = isMuted ? 'block' : 'none';
@@ -6901,19 +6919,21 @@ function initInstagramReelsPlayer() {
       soundBtn.setAttribute('aria-label', isMuted ? 'Unmute Audio' : 'Mute Audio');
     };
 
-    const updateOtherSoundButtons = (mutedVideo) => {
+    const muteAllOtherVideos = (currentVideo) => {
       videos.forEach((otherVideo) => {
-        if (otherVideo === mutedVideo) return;
+        if (otherVideo === currentVideo) return;
         otherVideo.muted = true;
+        otherVideo.defaultMuted = true;
         otherVideo.dataset.reelAudioEnabled = 'false';
-        const otherButton = otherVideo.closest('.ig-reel-card')?.querySelector('.ig-sound-toggle-btn');
-        if (otherButton) {
-          const mutedIcon = otherButton.querySelector('.sound-icon-muted');
-          const unmutedIcon = otherButton.querySelector('.sound-icon-unmuted');
+        const otherBtn = otherVideo.closest('.ig-reel-card')?.querySelector('.ig-sound-toggle-btn');
+        if (otherBtn) {
+          otherBtn.classList.remove('is-unmuted');
+          const mutedIcon = otherBtn.querySelector('.sound-icon-muted');
+          const unmutedIcon = otherBtn.querySelector('.sound-icon-unmuted');
           if (mutedIcon) mutedIcon.style.display = 'block';
           if (unmutedIcon) unmutedIcon.style.display = 'none';
-          otherButton.setAttribute('title', 'Unmute Audio');
-          otherButton.setAttribute('aria-label', 'Unmute audio');
+          otherBtn.setAttribute('title', 'Unmute Audio');
+          otherBtn.setAttribute('aria-label', 'Unmute audio');
         }
       });
     };
@@ -6926,53 +6946,65 @@ function initInstagramReelsPlayer() {
 
     video.addEventListener('play', markPlaying);
     video.addEventListener('playing', markPlaying);
+    video.addEventListener('timeupdate', () => {
+      if (video.currentTime > 0.05) {
+        markPlaying();
+      }
+      if (progressFill && video.duration) progressFill.style.width = `${(video.currentTime / video.duration) * 100}%`;
+    });
     if (!video.paused && video.currentTime > 0) {
       markPlaying();
     }
     video.addEventListener('pause', () => card.classList.remove('is-playing'));
-    video.addEventListener('timeupdate', () => {
-      if (progressFill && video.duration) progressFill.style.width = `${(video.currentTime / video.duration) * 100}%`;
-    });
 
     const playWithSound = () => {
-      updateOtherSoundButtons(video);
+      muteAllOtherVideos(video);
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
       video.preload = 'auto';
+      video.volume = 1.0;
       video.muted = false;
+      video.defaultMuted = false;
       const attempt = video.play();
       if (attempt?.catch) {
-        attempt.catch(() => {
+        attempt.catch((err) => {
+          console.warn('Playback with audio rejected:', err);
           video.muted = true;
+          video.defaultMuted = true;
           video.dataset.reelAudioEnabled = 'false';
           updateSoundUI(true);
-          const retry = video.play();
-          retry?.catch?.(() => scheduleVideoRecovery(video, 300));
+          video.play()?.catch?.(() => {});
         });
       }
+      updateSoundUI(false);
     };
 
     if (soundBtn) {
       soundBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         event.preventDefault();
-        if (video.muted) playWithSound();
-        else {
+        if (video.muted) {
+          playWithSound();
+        } else {
           video.muted = true;
+          video.defaultMuted = true;
           video.dataset.reelAudioEnabled = 'false';
+          updateSoundUI(true);
         }
-        updateSoundUI(video.muted);
       });
     }
     updateSoundUI(video.muted);
 
     card.setAttribute('tabindex', '0');
     const togglePlayback = () => {
-      if (video.paused) attemptVideoPlay(video);
-      else {
+      if (video.paused) {
+        attemptVideoPlay(video);
+      } else {
         video.dataset.reelWantPlayback = 'false';
         video.dataset.reelAudioEnabled = 'false';
         video.pause();
+        card.classList.remove('is-playing');
+        updateSoundUI(true);
       }
     };
     card.addEventListener('click', (event) => {
@@ -7007,6 +7039,7 @@ function initInstagramReelsPlayer() {
     });
     videos.forEach((video) => { try { video.pause(); } catch (_) { } });
   };
+  window.__hvCaseReelsRefresh = initInstagramReelsPlayer;
 
   if (typeof gsap !== 'undefined') {
     gsap.fromTo('.breakdown-card',

@@ -536,6 +536,7 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         shell.insertAdjacentElement('beforebegin', incomingContent);
         shell.remove();
         window.__hvHeroReelRefresh?.();
+        window.__hvCaseReelsRefresh?.();
         if (navbar) {
           gsap.set(navbar, { clearProps: 'all' });
         }

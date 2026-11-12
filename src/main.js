@@ -6512,6 +6512,7 @@ function initInstagramReelsPlayer() {
   let activePointerId = null;
   let suppressClick = false;
   let lastPlaybackCheck = 0;
+  let activeAudioVideo = null;
   const autoSpeed = 38; // px/sec
 
   // Keep failed/slow media from leaving an empty card behind. The poster is
@@ -6639,14 +6640,19 @@ function initInstagramReelsPlayer() {
     if (!shouldPlay || !isVisible || document.hidden) {
       videos.forEach((video) => {
         video.dataset.reelWantPlayback = 'false';
-        video.dataset.reelAudioEnabled = 'false';
         try { video.pause(); } catch (_) { }
         video.closest('.ig-reel-card')?.classList.remove('is-playing');
       });
       return;
     }
 
-    if (isMobileScreen()) {
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
+    const isMobile = isMobileScreen();
+
+    if (isMobile) {
+      // Mobile: if a reel was unmuted by the user, keep that reel playing and in focus
+      const hasActiveAudio = activeAudioVideo && !activeAudioVideo.paused && activeAudioVideo.dataset.reelAudioEnabled === 'true';
+
       const viewportCenter = window.innerWidth / 2;
       let closestCard = null;
       let minDistance = Infinity;
@@ -6670,10 +6676,11 @@ function initInstagramReelsPlayer() {
       allReelCards.forEach((card) => {
         const video = card.querySelector('.ig-reel-video');
         if (!video) return;
-        if (card === closestCard) {
+        const isCurrentAudio = video === activeAudioVideo && hasActiveAudio;
+
+        if (isCurrentAudio || (!hasActiveAudio && card === closestCard)) {
           attemptVideoPlay(video);
         } else {
-          // If this card was explicitly unmuted by the user, don't kill its audio
           if (video.dataset.reelAudioEnabled !== 'true') {
             video.dataset.reelWantPlayback = 'false';
             try { video.pause(); } catch (_) { }
@@ -6682,19 +6689,18 @@ function initInstagramReelsPlayer() {
         }
       });
     } else {
-      // Desktop: play cards near the viewport
-      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1280;
+      // Desktop: only play the cards visible on screen (prevents browser hardware decoder limit)
       allReelCards.forEach((card) => {
         const video = card.querySelector('.ig-reel-video');
         if (!video) return;
         const rect = card.getBoundingClientRect();
-        const isNearViewport = rect.right > -viewportWidth * 0.35 && rect.left < viewportWidth * 1.35;
-        if (isNearViewport) {
+        const isVisibleOnScreen = rect.right > 20 && rect.left < viewportWidth - 20;
+
+        if (isVisibleOnScreen) {
           attemptVideoPlay(video);
         } else {
-          if (video.dataset.reelAudioEnabled !== 'true') {
+          if (video !== activeAudioVideo || video.paused) {
             video.dataset.reelWantPlayback = 'false';
-            video.preload = 'metadata';
             try { video.pause(); } catch (_) { }
             card.classList.remove('is-playing');
           }
@@ -6710,9 +6716,13 @@ function initInstagramReelsPlayer() {
 
     if (!loopWidth && isVisible) measure();
 
+    const isAudioActive = activeAudioVideo && !activeAudioVideo.paused && !activeAudioVideo.muted && activeAudioVideo.dataset.reelAudioEnabled === 'true';
+
     if (!reduceMotion && isVisible && !document.hidden && loopWidth) {
       if (isDragging) {
         // Dragging directly updates offset and renders in pointermove
+      } else if (isAudioActive) {
+        // Pause auto-marquee while user is actively listening to an unmuted reel so it doesn't scroll off-screen
       } else {
         // Inertia decay glide
         if (Math.abs(dragVelocity) > 1.0) {
@@ -6965,30 +6975,36 @@ function initInstagramReelsPlayer() {
       video.volume = 1.0;
       video.muted = false;
       video.defaultMuted = false;
-      const attempt = video.play();
-      if (attempt?.catch) {
-        attempt.catch((err) => {
-          console.warn('Playback with audio rejected:', err);
-          video.muted = true;
-          video.defaultMuted = true;
-          video.dataset.reelAudioEnabled = 'false';
-          updateSoundUI(true);
-          video.play()?.catch?.(() => {});
-        });
-      }
+      activeAudioVideo = video;
       updateSoundUI(false);
+
+      if (video.paused) {
+        const attempt = video.play();
+        if (attempt?.catch) {
+          attempt.catch((err) => {
+            console.warn('Playback with audio rejected:', err);
+            video.muted = true;
+            video.defaultMuted = true;
+            video.dataset.reelAudioEnabled = 'false';
+            if (activeAudioVideo === video) activeAudioVideo = null;
+            updateSoundUI(true);
+            video.play()?.catch?.(() => {});
+          });
+        }
+      }
     };
 
     if (soundBtn) {
       soundBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         event.preventDefault();
-        if (video.muted) {
+        if (video.muted || video.dataset.reelAudioEnabled !== 'true') {
           playWithSound();
         } else {
           video.muted = true;
           video.defaultMuted = true;
           video.dataset.reelAudioEnabled = 'false';
+          if (activeAudioVideo === video) activeAudioVideo = null;
           updateSoundUI(true);
         }
       });
@@ -7002,6 +7018,7 @@ function initInstagramReelsPlayer() {
       } else {
         video.dataset.reelWantPlayback = 'false';
         video.dataset.reelAudioEnabled = 'false';
+        if (activeAudioVideo === video) activeAudioVideo = null;
         video.pause();
         card.classList.remove('is-playing');
         updateSoundUI(true);
@@ -7037,6 +7054,7 @@ function initInstagramReelsPlayer() {
     unlockEvents.forEach((evt) => {
       window.removeEventListener(evt, unlockOnInteraction);
     });
+    activeAudioVideo = null;
     videos.forEach((video) => { try { video.pause(); } catch (_) { } });
   };
   window.__hvCaseReelsRefresh = initInstagramReelsPlayer;

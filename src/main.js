@@ -6557,6 +6557,9 @@ function initInstagramReelsPlayer() {
   const attemptVideoPlay = (video) => {
     if (!video || !video.isConnected) return;
     if (pendingPlayback.has(video)) return;
+    // The sound button owns this play request. A muted autoplay request made
+    // during the same gesture can race WebKit's audible play promotion.
+    if (video === activeAudioVideo && video.dataset.reelAudioEnabled === 'true') return;
 
     const card = video.closest('.ig-reel-card');
     const poster = card?.querySelector('.ig-reel-poster');
@@ -6667,6 +6670,16 @@ function initInstagramReelsPlayer() {
 
   const setPlayback = (shouldPlay) => {
     if (!shouldPlay || !isVisible || document.hidden) {
+      if (activeAudioVideo) {
+        const audioButton = activeAudioVideo.closest('.ig-reel-card')?.querySelector('.ig-sound-toggle-btn');
+        activeAudioVideo.muted = true;
+        activeAudioVideo.defaultMuted = true;
+        activeAudioVideo.dataset.reelAudioEnabled = 'false';
+        audioButton?.classList.remove('is-unmuted');
+        audioButton?.setAttribute('title', 'Unmute Audio');
+        audioButton?.setAttribute('aria-label', 'Unmute Audio');
+        activeAudioVideo = null;
+      }
       videos.forEach((video) => {
         video.dataset.reelWantPlayback = 'false';
         try { video.pause(); } catch (_) { }
@@ -6748,7 +6761,10 @@ function initInstagramReelsPlayer() {
   observer.observe(section);
 
   const unlockEvents = ['pointerdown', 'touchstart', 'scroll', 'wheel', 'click', 'keydown', 'pointerup'];
-  const unlockOnInteraction = () => {
+  const unlockOnInteraction = (event) => {
+    // Do not start a competing muted autoplay on the sound button's
+    // pointerdown; its click must own the audible play request in Safari.
+    if (event.target instanceof Element && event.target.closest('.ig-sound-toggle-btn')) return;
     if (isVisible && !document.hidden) {
       setPlayback(true);
     }
@@ -6971,32 +6987,30 @@ function initInstagramReelsPlayer() {
     });
 
     const playWithSound = () => {
-      muteAllOtherVideos(video);
+      // Safari requires both unmuting and play() to happen directly in the
+      // tap/click task. Do these before touching the other carousel videos.
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
-      video.preload = 'auto';
-      video.volume = 1.0;
+      video.volume = 1;
       video.muted = false;
       video.defaultMuted = false;
       activeAudioVideo = video;
       // Stop the marquee immediately, including while Safari is still
       // resolving the unmuted play promise for this user gesture.
       dragVelocity = 0;
-      updateSoundUI(false);
-
-      // In WebKit / mobile browsers, calling video.play() inside the user click/tap
-      // gesture is required to promote muted autoplay into an unmuted playback session
       const attempt = video.play();
+      muteAllOtherVideos(video);
+      updateSoundUI(false);
       if (attempt?.catch) {
         attempt.catch((err) => {
-          if (err.name === 'AbortError') return;
+          // A later tap or navigation may have superseded this request.
+          if (activeAudioVideo !== video || video.dataset.reelAudioEnabled !== 'true') return;
           console.warn('Playback with audio rejected:', err);
           video.muted = true;
           video.defaultMuted = true;
           video.dataset.reelAudioEnabled = 'false';
-          if (activeAudioVideo === video) activeAudioVideo = null;
+          activeAudioVideo = null;
           updateSoundUI(true);
-          video.play()?.catch?.(() => {});
         });
       }
     };
@@ -7026,6 +7040,8 @@ function initInstagramReelsPlayer() {
         video.dataset.reelWantPlayback = 'false';
         video.dataset.reelAudioEnabled = 'false';
         if (activeAudioVideo === video) activeAudioVideo = null;
+        video.muted = true;
+        video.defaultMuted = true;
         video.pause();
         card.classList.remove('is-playing');
         updateSoundUI(true);

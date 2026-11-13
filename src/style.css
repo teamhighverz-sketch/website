@@ -24483,7 +24483,7 @@ body.page-team .founder-accord-card .founder-quote strong {
 
 #hero #hero-headline>.hero-headline-line--dark-keyword {
   display: flex !important;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   gap: 0.16em;
   width: max-content;
@@ -24504,12 +24504,14 @@ body.page-team .founder-accord-card .founder-quote strong {
   justify-items: center !important;
   text-align: center !important;
   margin: 0 !important;
-  top: 0.16em !important;
+  height: 1.15em !important;
+  top: 0 !important;
   flex: 0 0 auto;
 }
 
 #hero #hero-headline>.hero-headline-line--dark-keyword .hero-word-roller .roller-item {
   text-align: center !important;
+  padding: 0 0.22em 0 0.05em !important;
 }
 
 /* The mobile audience capsule precedes the hero in normal flow. Fade the
@@ -24517,8 +24519,9 @@ body.page-team .founder-accord-card .founder-quote strong {
    consistent while it passes over both backgrounds. */
 @media (max-width: 768px) {
   [data-theme="dark"] #hero.hero-section::before {
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 7rem);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 7rem);
+    top: -7rem;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6rem);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 6rem);
   }
 
   [data-theme="dark"] body.dark-theme .navbar .nav-container,

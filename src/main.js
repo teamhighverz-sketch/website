@@ -6583,6 +6583,12 @@ function initInstagramReelsPlayer() {
     recoveryTimers.set(video, timer);
   };
 
+  const cancelVideoRecovery = (video) => {
+    const timer = recoveryTimers.get(video);
+    if (timer) window.clearTimeout(timer);
+    recoveryTimers.delete(video);
+  };
+
   const attemptVideoPlay = (video) => {
     if (!video || !video.isConnected) return;
     if (pendingPlayback.has(video)) return;
@@ -7016,13 +7022,17 @@ function initInstagramReelsPlayer() {
     });
 
     const playWithSound = () => {
-      // Safari requires both unmuting and play() to happen directly in the
-      // tap/click task. Do these before touching the other carousel videos.
+      // A muted autoplay does not necessarily authorize audible playback in
+      // WebKit. Start a fresh play request in the sound button's user gesture.
+      // This also cancels any pending muted autoplay/recovery request that
+      // could pause or reload the reel just after it has been unmuted.
+      cancelVideoRecovery(video);
+      video.pause();
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
       video.volume = 1;
-      video.muted = false;
       video.defaultMuted = false;
+      video.muted = false;
       activeAudioVideo = video;
       // Stop the marquee immediately, including while Safari is still
       // resolving the unmuted play promise for this user gesture.

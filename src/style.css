@@ -24501,15 +24501,30 @@ body.page-team .founder-accord-card .founder-quote strong {
   width: max-content !important;
   min-width: 0 !important;
   grid-template-columns: max-content !important;
-  justify-items: start !important;
-  text-align: left !important;
+  justify-items: center !important;
+  text-align: center !important;
   margin: 0 !important;
-  top: 0.12em !important;
+  top: 0.16em !important;
   flex: 0 0 auto;
 }
 
 #hero #hero-headline>.hero-headline-line--dark-keyword .hero-word-roller .roller-item {
-  text-align: left !important;
+  text-align: center !important;
+}
+
+/* The mobile audience capsule precedes the hero in normal flow. Fade the
+   hero's glow in from that boundary and keep the floating nav's glass tint
+   consistent while it passes over both backgrounds. */
+@media (max-width: 768px) {
+  [data-theme="dark"] #hero.hero-section::before {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 7rem);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 7rem);
+  }
+
+  [data-theme="dark"] body.dark-theme .navbar .nav-container,
+  [data-theme="dark"] body.dark-theme .navbar.scrolled .nav-container {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)), rgba(8, 12, 17, 0.88) !important;
+  }
 }
 
 /* ==========================================================================

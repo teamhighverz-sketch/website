@@ -265,6 +265,10 @@ function initCustomCursor() {
   let isMagnetic = false;
   let clickScale = 1;
   let magneticTarget = null;
+  let cursorFrame = 0;
+  const wakeCursor = () => {
+    if (!cursorFrame && !document.hidden) cursorFrame = requestAnimationFrame(renderPhysicsCursor);
+  };
 
   // Expose global cursor restoration hook for transitions
   window.__hvEnsureCursorActive = function () {
@@ -281,6 +285,7 @@ function initCustomCursor() {
       magneticTarget.style.transform = '';
       magneticTarget = null;
     }
+    wakeCursor();
   };
 
   // Mouse move tracking
@@ -304,17 +309,29 @@ function initCustomCursor() {
       glowX = mouseX;
       glowY = mouseY;
     }
+    wakeCursor();
   }, { passive: true });
 
   // Mouse down / up tactile compression
   window.addEventListener('mousedown', () => {
     clickScale = 0.82;
     if (cursorRing) cursorRing.classList.add('is-clicking');
+    wakeCursor();
   });
 
   window.addEventListener('mouseup', () => {
     clickScale = 1.08;
     if (cursorRing) cursorRing.classList.remove('is-clicking');
+    wakeCursor();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && cursorFrame) {
+      cancelAnimationFrame(cursorFrame);
+      cursorFrame = 0;
+    } else if (!document.hidden && hasMouseMoved) {
+      wakeCursor();
+    }
   });
 
   // Window bounds handling
@@ -330,6 +347,8 @@ function initCustomCursor() {
 
   // 60/120fps precision physics render loop
   function renderPhysicsCursor() {
+    cursorFrame = 0;
+    if (document.hidden) return;
     // 1. Instant zero-latency lead pinpoint core
     dotX = mouseX;
     dotY = mouseY;
@@ -381,9 +400,14 @@ function initCustomCursor() {
       cursorGlow.style.transform = `translate3d(${glowX}px, ${glowY}px, 0) scale(${1 + movement})`;
     }
 
-    requestAnimationFrame(renderPhysicsCursor);
+    // Stop submitting identical paints after the spring settles. Pointer,
+    // click, and magnetic events wake the same physics loop immediately.
+    if (isMagnetic || Math.abs(ringX - targetRingX) > 0.02 ||
+      Math.abs(ringY - targetRingY) > 0.02 ||
+      Math.abs(glowX - targetRingX) > 0.02 ||
+      Math.abs(glowY - targetRingY) > 0.02 ||
+      Math.abs(clickScale - 1) > 0.002) wakeCursor();
   }
-  requestAnimationFrame(renderPhysicsCursor);
 
   // 7. Interactive Magnetic & Hover Binding
   function bindMagneticHoverElements() {
@@ -401,6 +425,7 @@ function initCustomCursor() {
         isMagnetic = true;
         magneticTarget = el;
         if (cursorRing) cursorRing.classList.add('is-magnetic');
+        wakeCursor();
       });
 
       el.addEventListener('mouseleave', () => {
@@ -410,6 +435,7 @@ function initCustomCursor() {
           magneticTarget = null;
         }
         if (cursorRing) cursorRing.classList.remove('is-magnetic');
+        wakeCursor();
       });
     });
 
@@ -4357,7 +4383,7 @@ export function initHeroReelCarousel() {
         const baselineY = Math.pow(norm, 1.4) * 3;
 
         pos.style.transform = `translate3d(calc(-50% + ${screenX.toFixed(1)}px), calc(-50% + ${baselineY.toFixed(1)}px), 0)`;
-        pos.style.opacity = '1';
+        if (pos.style.opacity !== '1') pos.style.opacity = '1';
 
         const perspectiveEl = cardPerspectives[index];
         if (perspectiveEl) {
@@ -4365,7 +4391,8 @@ export function initHeroReelCarousel() {
         }
         // Keep the center card in front of its neighbors so the denser rail
         // still reads as one intentional carousel instead of stacked tiles.
-        pos.style.zIndex = String(Math.round(50 - Math.min(2.5, absU) * 10));
+        const zIndex = String(Math.round(50 - Math.min(2.5, absU) * 10));
+        if (pos.style.zIndex !== zIndex) pos.style.zIndex = zIndex;
         return;
       }
 
@@ -4392,17 +4419,19 @@ export function initHeroReelCarousel() {
       const baselineY = Math.pow(norm, 1.6) * 10;
       const opacity = absU > 4.65 ? Math.max(0, 1 - (absU - 4.65) / 0.32) : 1;
 
-      pos.style.display = 'block';
+      if (pos.style.display !== 'block') pos.style.display = 'block';
       pos.style.transform = `translate3d(calc(-50% + ${screenX.toFixed(1)}px), calc(-50% + ${baselineY.toFixed(1)}px), 0)`;
-      pos.style.filter = '';
-      pos.style.opacity = opacity.toFixed(3);
+      if (pos.style.filter) pos.style.filter = '';
+      const nextOpacity = opacity.toFixed(3);
+      if (pos.style.opacity !== nextOpacity) pos.style.opacity = nextOpacity;
 
       const perspectiveEl = cardPerspectives[index];
       if (perspectiveEl) {
         perspectiveEl.style.transform = `translate3d(0, 0, ${translateZ.toFixed(1)}px) rotateY(${rotationY.toFixed(2)}deg) rotateZ(${rotationZ.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
       }
       // Fisheye amphitheater layering: enlarged foreground corner cards sit cleanly in front
-      pos.style.zIndex = String(Math.round(20 + Math.min(4.0, absU) * 20));
+      const zIndex = String(Math.round(20 + Math.min(4.0, absU) * 20));
+      if (pos.style.zIndex !== zIndex) pos.style.zIndex = zIndex;
     });
   };
 
@@ -7155,11 +7184,20 @@ function fitFooterScatterMark(watermark) {
 // Keeps the large Highverz mark intact at rest, then gently breaks its pixels
 // away from the pointer and lets them settle back into the logo.
 export function initFooterScatterGrid() {
+  const watermark = document.querySelector('.footer-watermark-logo');
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const base = isLight ? [90, 160, 210] : [210, 230, 250];
+  const accent = isLight ? [14, 165, 233] : [0, 229, 255];
+  const current = window.__hvFooterScatterCleanup;
+  if (watermark && current?.container === watermark && current.updateColors) {
+    fitFooterScatterMark(watermark);
+    current.updateColors(base, accent);
+    return;
+  }
   if (typeof window.__hvFooterScatterCleanup === 'function') {
     try { window.__hvFooterScatterCleanup(); } catch (_) { }
     window.__hvFooterScatterCleanup = null;
   }
-  const watermark = document.querySelector('.footer-watermark-logo');
   if (!watermark) return;
   fitFooterScatterMark(watermark);
   if (!window.__hvFooterScatterResizeBound) {
@@ -7171,7 +7209,6 @@ export function initFooterScatterGrid() {
       observer.observe(row);
     }
   }
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   // Enhanced reactive scatter physics: Sky Blue in light mode, Electric Cyan in dark mode
   window.__hvFooterScatterCleanup = initScatterGrid(watermark, {
     // The footer wordmark includes a narrow rocket-to-letter join. Use a finer
@@ -7184,8 +7221,8 @@ export function initFooterScatterGrid() {
     stiffness: 0.035,
     damping: 0.86,
     bleed: 15,
-    base: isLight ? [90, 160, 210] : [210, 230, 250],
-    accent: isLight ? [14, 165, 233] : [0, 229, 255]
+    base,
+    accent
   });
 }
 window.__hvInitFooterScatterGrid = initFooterScatterGrid;

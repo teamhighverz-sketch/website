@@ -113,6 +113,22 @@ export function initScatterGrid(container, options = {}) {
       try {
         const data = mctx.getImageData(0, 0, width, height).data;
 
+        // The mask is tested repeatedly while finding a grid spacing that
+        // fits maxDots. Sum opaque pixels once so each cell check is constant
+        // time; the same alpha threshold and cell bounds are retained.
+        const stride = width + 1;
+        const ink = new Uint32Array(stride * (height + 1));
+        for (let py = 0; py < height; py++) {
+          let rowTotal = 0;
+          const row = (py + 1) * stride;
+          const above = py * stride;
+          const alphaRow = py * width * 4 + 3;
+          for (let px = 0; px < width; px++) {
+            rowTotal += data[alphaRow + px * 4] > 50 ? 1 : 0;
+            ink[row + px + 1] = ink[above + px + 1] + rowTotal;
+          }
+        }
+
         // Sample the actual logo densely enough to retain the rocket window,
         // fins and flame.
         const minStep = Math.max(1, Math.min(dotSize + dotGap, boxW / 320));
@@ -126,13 +142,8 @@ export function initScatterGrid(container, options = {}) {
           const y0 = Math.max(0, Math.floor(y - s / 2));
           const x1 = Math.min(width, Math.ceil(x + s / 2));
           const y1 = Math.min(height, Math.ceil(y + s / 2));
-          for (let py = y0; py < y1; py++) {
-            let px = (py * width + x0) * 4 + 3;
-            for (let ix = x0; ix < x1; ix++, px += 4) {
-              if (data[px] > 50) return true;
-            }
-          }
-          return false;
+          return ink[y1 * stride + x1] - ink[y0 * stride + x1] -
+            ink[y1 * stride + x0] + ink[y0 * stride + x0] > 0;
         };
 
         const countAt = (s) => {
@@ -213,7 +224,10 @@ export function initScatterGrid(container, options = {}) {
         }
       }
     } else if (existingImg) {
+      let imageReady = false;
       const onLoad = () => {
+        if (imageReady) return;
+        imageReady = true;
         build();
         paint();
       };
@@ -402,8 +416,9 @@ export function initScatterGrid(container, options = {}) {
   });
   resizeObserver.observe(container);
 
-  return () => {
+  const cleanup = () => {
     if (raf) cancelAnimationFrame(raf);
+    clearTimeout(resizeTimer);
     visibilityObserver?.disconnect();
     resizeObserver.disconnect();
     window.removeEventListener("pointermove", handlePointerMove);
@@ -417,4 +432,11 @@ export function initScatterGrid(container, options = {}) {
       existingImg.style.opacity = '';
     }
   };
+  // A theme swap changes only the dot palette, not the logo mask or physics.
+  cleanup.container = container;
+  cleanup.updateColors = (nextBase, nextAccent) => {
+    ramp = buildRamp(nextBase, nextAccent);
+    paint();
+  };
+  return cleanup;
 }

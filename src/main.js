@@ -6534,6 +6534,8 @@ function initInstagramReelsPlayer() {
   const allReelCards = Array.from(rail.querySelectorAll('.ig-reel-card'));
   const videos = allReelCards.map((card) => card.querySelector('.ig-reel-video')).filter(Boolean);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isWebKitBrowser = /iP(hone|ad|od)/.test(navigator.userAgent)
+    || (/Safari/.test(navigator.userAgent) && !/(Chrome|Chromium|CriOS|Edg|OPR|FxiOS)/.test(navigator.userAgent));
   let offset = 0;
   let loopWidth = 0;
   let lastTime = 0;
@@ -6737,7 +6739,12 @@ function initInstagramReelsPlayer() {
       // On both mobile and desktop: play cards visible within the screen bounds
       const isVisibleOnScreen = rect.right > 15 && rect.left < viewportWidth - 15;
 
-      if (isCurrentAudio || isVisibleOnScreen) {
+      // Safari has a small active-video budget. When a visitor asks to hear
+      // one reel, do not restart every visible muted reel on the next tick.
+      if (isWebKitBrowser && hasActiveAudio && !isCurrentAudio) {
+        video.dataset.reelWantPlayback = 'false';
+        if (!video.paused) video.pause();
+      } else if (isCurrentAudio || isVisibleOnScreen) {
         attemptVideoPlay(video);
       } else {
         if (video !== activeAudioVideo || !hasActiveAudio) {
@@ -7037,6 +7044,13 @@ function initInstagramReelsPlayer() {
       // resolving the unmuted play promise for this user gesture.
       dragVelocity = 0;
       muteAllOtherVideos(video);
+      // Stop the other decoders before promoting this reel to audible
+      // playback. Keep the play() call inside the original tap/click task.
+      if (isWebKitBrowser) {
+        videos.forEach((otherVideo) => {
+          if (otherVideo !== video && !otherVideo.paused) otherVideo.pause();
+        });
+      }
       video.defaultMuted = false;
       video.muted = false;
       // Request playback in the same trusted gesture even if the reel was
@@ -7053,6 +7067,7 @@ function initInstagramReelsPlayer() {
           video.dataset.reelAudioEnabled = 'false';
           activeAudioVideo = null;
           updateSoundUI(true);
+          setPlayback(true);
         });
       }
     };
@@ -7069,6 +7084,7 @@ function initInstagramReelsPlayer() {
           video.dataset.reelAudioEnabled = 'false';
           if (activeAudioVideo === video) activeAudioVideo = null;
           updateSoundUI(true);
+          setPlayback(true);
         }
       });
     }

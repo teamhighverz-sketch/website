@@ -6524,7 +6524,7 @@ function initInstagramReelsPlayer() {
       // until they approach the viewport instead of starting another full
       // set of autoplay downloads during page initialization.
       clone.querySelectorAll('.ig-reel-video').forEach((video) => {
-        video.preload = 'none';
+        video.preload = 'metadata';
         video.removeAttribute('autoplay');
       });
       rail.appendChild(clone);
@@ -6739,11 +6739,13 @@ function initInstagramReelsPlayer() {
       // On both mobile and desktop: play cards visible within the screen bounds
       const isVisibleOnScreen = rect.right > 15 && rect.left < viewportWidth - 15;
 
-      // Safari has a small active-video budget. When a visitor asks to hear
-      // one reel, do not restart every visible muted reel on the next tick.
-      if (isWebKitBrowser && hasActiveAudio && !isCurrentAudio) {
+      // When a visitor asks to hear one reel, pause all other reels across all browsers
+      // to dedicate full hardware decoder and audio session capacity to the selected reel.
+      if (hasActiveAudio && !isCurrentAudio) {
         video.dataset.reelWantPlayback = 'false';
-        if (!video.paused) video.pause();
+        if (!video.paused) {
+          try { video.pause(); } catch (_) { }
+        }
       } else if (isCurrentAudio || isVisibleOnScreen) {
         attemptVideoPlay(video);
       } else {
@@ -7032,45 +7034,50 @@ function initInstagramReelsPlayer() {
     });
 
     const playWithSound = () => {
-      // Use this same video element for picture and sound. Never reload or
-      // seek it when unmuting: native media playback keeps audio and frames
-      // on one clock, and reloading here would restart the reel and lose the
-      // Safari user-activation window.
       cancelVideoRecovery(video);
-      video.preload = 'auto';
+      if (video.preload !== 'auto') video.preload = 'auto';
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
       video.dataset.reelAudioPlaybackFailed = 'false';
       activeAudioVideo = video;
       dragVelocity = 0;
+
+      // 1. Mute and update sound UI for all other videos
+      muteAllOtherVideos(video);
+
+      // 2. Pause competing decoders across ALL browsers so 100% of audio and
+      // hardware decoder capacity is dedicated to this selected reel.
+      videos.forEach((otherVideo) => {
+        if (otherVideo === video) return;
+        otherVideo.dataset.reelWantPlayback = 'false';
+        try {
+          if (!otherVideo.paused) otherVideo.pause();
+        } catch (_) {}
+      });
+
+      // 3. Unmute target video
       video.removeAttribute('muted');
       video.defaultMuted = false;
       video.muted = false;
       video.volume = 1;
-
-      // Make the request synchronously in the button's trusted pointer/click
-      // event. If the reel is still buffering, this promise stays pending while
-      // its video and audio tracks load and start together at the same frame.
-      const attempt = video.play();
       updateSoundUI(false);
-      muteAllOtherVideos(video);
 
-      // Pause competing Safari decoders only after the selected reel has
-      // received its audible play request.
-      if (isWebKitBrowser) {
-        videos.forEach((otherVideo) => {
-          if (otherVideo === video) return;
-          otherVideo.dataset.reelWantPlayback = 'false';
-          otherVideo.pause();
-        });
-      }
+      // 4. Request audible playback synchronously in user gesture
+      const attempt = video.play();
 
       if (attempt?.catch) {
         attempt.catch((err) => {
+          // CRITICAL: Ignore AbortError!
+          // If the play promise was aborted because playback was already active,
+          // looped, or interrupted by browser decoder switching, do NOT mute!
+          if (err.name === 'AbortError') {
+            return;
+          }
+
           if (activeAudioVideo !== video || video.dataset.reelAudioEnabled !== 'true') return;
-          // Do not silently fall back to muted playback: that looks like an
-          // audio success while the user hears nothing. Preserve the current
-          // frame and expose the button as a retry if the browser rejects it.
+          // If the video is actually playing and unmuted, do not force mute
+          if (!video.paused && !video.muted) return;
+
           console.warn('Audible reel playback was rejected; tap sound to retry:', err);
           video.dataset.reelAudioPlaybackFailed = 'true';
           video.muted = true;
@@ -7084,10 +7091,11 @@ function initInstagramReelsPlayer() {
     };
 
     if (soundBtn) {
-      let lastWebKitPointerToggle = 0;
       const toggleSound = (event) => {
-        event.stopPropagation();
-        event.preventDefault();
+        if (event) {
+          event.stopPropagation();
+          event.preventDefault();
+        }
         if (video.muted || video.dataset.reelAudioEnabled !== 'true' || video.dataset.reelAudioPlaybackFailed === 'true') {
           playWithSound();
         } else {
@@ -7101,25 +7109,7 @@ function initInstagramReelsPlayer() {
         }
       };
 
-      if (isWebKitBrowser && 'PointerEvent' in window) {
-        // Begin audible playback directly from the physical tap event. This
-        // keeps WebKit's transient user activation attached to play(), even
-        // when its synthesized click is delayed by carousel/touch handling.
-        soundBtn.addEventListener('pointerup', (event) => {
-          lastWebKitPointerToggle = performance.now();
-          toggleSound(event);
-        });
-        soundBtn.addEventListener('click', (event) => {
-          if (performance.now() - lastWebKitPointerToggle < 900) {
-            event.preventDefault();
-            event.stopPropagation();
-            return;
-          }
-          toggleSound(event);
-        });
-      } else {
-        soundBtn.addEventListener('click', toggleSound);
-      }
+      soundBtn.addEventListener('click', toggleSound);
     }
     updateSoundUI(video.muted);
 

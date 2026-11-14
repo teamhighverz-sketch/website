@@ -20206,8 +20206,9 @@ body::after {
   transform: translateY(-1px);
 }
 
+/* Keep the footer portal trigger in the DOM for its existing click handler; Shift + L remains available. */
 .admin-leads-trigger {
-  display: inline-flex;
+  display: none !important;
   align-items: center;
   gap: 0.35rem;
   padding: 0.26rem 0.7rem;

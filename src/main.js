@@ -931,7 +931,7 @@ function initMobileNav(navbar) {
             <span class="btn-arrow-icon">↗</span>
           </a>
           <div class="mobile-nav-footer-meta">
-            <a href="mailto:contact@highverz.com" class="mobile-nav-email">contact@highverz.com</a>
+            <a href="mailto:business@highverz.com" class="mobile-nav-email">business@highverz.com</a>
             <span class="mobile-nav-location">Dubai & Worldwide</span>
           </div>
         </div>
@@ -6534,8 +6534,6 @@ function initInstagramReelsPlayer() {
   const allReelCards = Array.from(rail.querySelectorAll('.ig-reel-card'));
   const videos = allReelCards.map((card) => card.querySelector('.ig-reel-video')).filter(Boolean);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isWebKitBrowser = /iP(hone|ad|od)/.test(navigator.userAgent)
-    || (/Safari/.test(navigator.userAgent) && !/(Chrome|Chromium|CriOS|Edg|OPR|FxiOS)/.test(navigator.userAgent));
   let offset = 0;
   let loopWidth = 0;
   let lastTime = 0;
@@ -7098,9 +7096,7 @@ function initInstagramReelsPlayer() {
     };
 
     const toggleSound = (event) => {
-      if (event) {
-        event.stopPropagation();
-      }
+      if (event) event.stopPropagation();
       if (video.muted || video.dataset.reelAudioEnabled !== 'true' || video.dataset.reelAudioPlaybackFailed === 'true') {
         playWithSound();
       } else {
@@ -7114,21 +7110,55 @@ function initInstagramReelsPlayer() {
       }
     };
 
+    // iOS Safari is most reliable when audible play() is issued directly from
+    // the trusted pointerup. Keep click as a keyboard/legacy fallback and
+    // ignore its synthesized follow-up so a single tap never toggles twice.
+    let lastPointerToggleAt = Number.NEGATIVE_INFINITY;
+    const onAudioPointerUp = (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      lastPointerToggleAt = performance.now();
+      toggleSound(event);
+    };
+    const onAudioClick = (event) => {
+      if (event.detail !== 0 && performance.now() - lastPointerToggleAt < 800) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      toggleSound(event);
+    };
+
     if (soundBtn) {
-      soundBtn.addEventListener('click', toggleSound);
+      soundBtn.addEventListener('pointerup', onAudioPointerUp);
+      soundBtn.addEventListener('click', onAudioClick);
     }
     updateSoundUI(video.muted);
 
     card.setAttribute('tabindex', '0');
-    // On mobile touch screens, tapping anywhere on the reel card toggles audio.
-    // This provides an intuitive Instagram/TikTok-like tap-to-unmute experience
-    // and eliminates missed taps on mobile.
-    card.addEventListener('click', (event) => {
-      if (suppressClick || event.target.closest('a')) return;
+    // Tapping the reel body also toggles audio. Ignore pointer releases after
+    // carousel drags or vertical page swipes; let the click path cover keyboard.
+    const onCardPointerUp = (event) => {
+      if (event.target.closest('.ig-sound-toggle-btn, a')) return;
+      if (suppressClick || isDragging || isVerticalScroll) return;
+      if (Math.abs(event.clientX - startX) > 8 || Math.abs(event.clientY - startY) > 8) return;
+      lastPointerToggleAt = performance.now();
+      // Let the pointerup bubble to the carousel's window listener so it can
+      // release pointer tracking after a tap; the synthesized click is deduped.
+      toggleSound();
+    };
+    const onCardClick = (event) => {
+      if (suppressClick || event.target.closest('.ig-sound-toggle-btn, a')) return;
+      if (event.detail !== 0 && performance.now() - lastPointerToggleAt < 800) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       toggleSound(event);
-    });
+    };
+    card.addEventListener('pointerup', onCardPointerUp);
+    card.addEventListener('click', onCardClick);
     card.addEventListener('keydown', (event) => {
-      if ((event.key === ' ' || event.key === 'Enter') && !event.target.closest('a')) {
+      if ((event.key === ' ' || event.key === 'Enter') && !event.target.closest('a, .ig-sound-toggle-btn')) {
         event.preventDefault();
         toggleSound(event);
       }

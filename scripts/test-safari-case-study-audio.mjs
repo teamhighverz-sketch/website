@@ -45,7 +45,10 @@ try {
     const result = await request(`/session/${id}/execute/sync`, {
       method: 'POST',
       body: JSON.stringify({
-        script: `const v = document.querySelector('.case-reels-section .ig-reel-video'); return {muted:v?.muted, paused:v?.paused, currentTime:v?.currentTime, readyState:v?.readyState, audioTracks:v?.audioTracks?.length ?? 'unsupported'};`,
+        // Inspect the exact video whose sound button WebDriver clicked. The
+        // carousel contains loop clones, so querying the first video in the
+        // section can report a different reel and give a false failure.
+        script: `const b = document.querySelector('.case-reels-section .ig-sound-toggle-btn'); const c = b?.closest('.ig-reel-card'); const v = c?.querySelector('.ig-reel-video'); return {src:v?.currentSrc || v?.src, muted:v?.muted, defaultMuted:v?.defaultMuted, mutedAttribute:v?.hasAttribute('muted'), paused:v?.paused, currentTime:v?.currentTime, readyState:v?.readyState, networkState:v?.networkState, mediaError:v?.error ? {code:v.error.code, message:v.error.message} : null, soundButtonUnmuted:b?.classList.contains('is-unmuted'), audioTracks:v?.audioTracks?.length ?? 'unsupported'};`,
         args: [],
       }),
     });

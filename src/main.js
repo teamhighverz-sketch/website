@@ -7032,53 +7032,66 @@ function initInstagramReelsPlayer() {
     });
 
     const playWithSound = () => {
-      // Keep the existing media playback alive. Pausing first makes mobile
-      // WebKit treat this as a new audible autoplay request, which can reject
-      // even though the sound button was tapped by the user.
+      // Use this same video element for picture and sound. Never reload or
+      // seek it when unmuting: native media playback keeps audio and frames
+      // on one clock, and reloading here would restart the reel and lose the
+      // Safari user-activation window.
       cancelVideoRecovery(video);
+      video.preload = 'auto';
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
-      video.volume = 1;
+      video.dataset.reelAudioPlaybackFailed = 'false';
       activeAudioVideo = video;
-      // Stop the marquee immediately, including while Safari is still
-      // resolving the unmuted play promise for this user gesture.
       dragVelocity = 0;
-      muteAllOtherVideos(video);
-      // Stop the other decoders before promoting this reel to audible
-      // playback. Keep the play() call inside the original tap/click task.
-      if (isWebKitBrowser) {
-        videos.forEach((otherVideo) => {
-          if (otherVideo !== video && !otherVideo.paused) otherVideo.pause();
-        });
-      }
+      video.removeAttribute('muted');
       video.defaultMuted = false;
       video.muted = false;
-      // Request playback in the same trusted gesture even if the reel was
-      // already running: WebKit may pause when a muted video becomes audible.
+      video.volume = 1;
+
+      // Make the request synchronously in the button's trusted pointer/click
+      // event. If the reel is still buffering, this promise stays pending while
+      // its video and audio tracks load and start together at the same frame.
       const attempt = video.play();
       updateSoundUI(false);
+      muteAllOtherVideos(video);
+
+      // Pause competing Safari decoders only after the selected reel has
+      // received its audible play request.
+      if (isWebKitBrowser) {
+        videos.forEach((otherVideo) => {
+          if (otherVideo === video) return;
+          otherVideo.dataset.reelWantPlayback = 'false';
+          otherVideo.pause();
+        });
+      }
+
       if (attempt?.catch) {
         attempt.catch((err) => {
-          // A later tap or navigation may have superseded this request.
           if (activeAudioVideo !== video || video.dataset.reelAudioEnabled !== 'true') return;
-          console.warn('Playback with audio rejected:', err);
+          // Do not silently fall back to muted playback: that looks like an
+          // audio success while the user hears nothing. Preserve the current
+          // frame and expose the button as a retry if the browser rejects it.
+          console.warn('Audible reel playback was rejected; tap sound to retry:', err);
+          video.dataset.reelAudioPlaybackFailed = 'true';
           video.muted = true;
           video.defaultMuted = true;
+          video.setAttribute('muted', '');
           video.dataset.reelAudioEnabled = 'false';
           activeAudioVideo = null;
           updateSoundUI(true);
-          setPlayback(true);
         });
       }
     };
 
     if (soundBtn) {
-      soundBtn.addEventListener('click', (event) => {
+      let lastWebKitPointerToggle = 0;
+      const toggleSound = (event) => {
         event.stopPropagation();
         event.preventDefault();
-        if (video.muted || video.dataset.reelAudioEnabled !== 'true') {
+        if (video.muted || video.dataset.reelAudioEnabled !== 'true' || video.dataset.reelAudioPlaybackFailed === 'true') {
           playWithSound();
         } else {
+          video.setAttribute('muted', '');
           video.muted = true;
           video.defaultMuted = true;
           video.dataset.reelAudioEnabled = 'false';
@@ -7086,7 +7099,27 @@ function initInstagramReelsPlayer() {
           updateSoundUI(true);
           setPlayback(true);
         }
-      });
+      };
+
+      if (isWebKitBrowser && 'PointerEvent' in window) {
+        // Begin audible playback directly from the physical tap event. This
+        // keeps WebKit's transient user activation attached to play(), even
+        // when its synthesized click is delayed by carousel/touch handling.
+        soundBtn.addEventListener('pointerup', (event) => {
+          lastWebKitPointerToggle = performance.now();
+          toggleSound(event);
+        });
+        soundBtn.addEventListener('click', (event) => {
+          if (performance.now() - lastWebKitPointerToggle < 900) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          toggleSound(event);
+        });
+      } else {
+        soundBtn.addEventListener('click', toggleSound);
+      }
     }
     updateSoundUI(video.muted);
 

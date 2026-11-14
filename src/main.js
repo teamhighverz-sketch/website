@@ -3143,6 +3143,7 @@ function disposePageRuntime() {
     '__hvWorkflowCleanup',
     '__hvProcessCleanup',
     '__hvCaseReelsCleanup',
+    '__hvCaseReelsRefresh',
     '__hvFaqCleanup',
     '__hvFooterScatterCleanup',
   ].forEach((key) => {
@@ -3219,10 +3220,16 @@ window.__hvInitPageScripts = initPageScripts;
 export function preparePageHeroInitialState(root = document, pathname = window.location.pathname) {
   const normPath = pathname ? pathname.replace(/\/+$/, '') : window.location.pathname.replace(/\/+$/, '');
   const isCase = normPath.includes('creator-') || normPath.includes('movie-');
-  if (isCase) return;
+  const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
+  // Case-study pages keep their established desktop entrance. On phones,
+  // prepare the hero before the route shell is shown so its staged reveal
+  // never flashes fully visible first.
+  if (isCase && !isMobile) return;
 
   const heroHeadings = root.querySelectorAll(
-    '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title'
+    isCase
+      ? '.case-hero-title'
+      : '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title'
   );
   heroHeadings.forEach((heading) => {
     splitAdscaleWords(heading);
@@ -3243,7 +3250,6 @@ export function preparePageHeroInitialState(root = document, pathname = window.l
     allTargetWords.push(...homeWords);
   }
 
-  const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
   const glowFilter = 'drop-shadow(0 0 16px rgba(0, 229, 255, 0.48))';
   allTargetWords.forEach((word) => {
     word.style.opacity = '0';
@@ -3255,7 +3261,11 @@ export function preparePageHeroInitialState(root = document, pathname = window.l
     }
   });
 
-  const supportingSelectors = [
+  const caseSupportingSelectors = [
+    '.case-top-bar', '.case-kicker-tag', '.case-profile-chip-row', '.case-hero-desc',
+    '.case-hero-media', '.case-follower-transform-card', '.case-hud-card'
+  ].join(', ');
+  const supportingSelectors = isCase ? caseSupportingSelectors : [
     '.work-hero-tag', '.work-hero-desc', '.work-hero-cta', '.work-hero-metrics-grid', '.work-metric-item',
     '.campaign-hero-tag', '.campaign-hero-sub', '.campaign-hero-pillars',
     '.team-hero-tag', '.team-hero-desc', '.team-metrics-grid', '.team-metric-item',
@@ -3280,6 +3290,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   const isWhy = normPath.includes('why-us');
   const isCampaigns = normPath.includes('campaigns');
   const isCase = normPath.includes('creator-') || normPath.includes('movie-');
+  const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
 
   // Own each dedicated hero once. A transition resets this to guarantee entrance executes
   const heroRoot = document.querySelector('.hero-section, .work-hero-section, .team-hero-section, .why-hero-section, .campaign-hero, .case-hero-section');
@@ -3292,7 +3303,7 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title'
   );
 
-  if (isCase) {
+  if (isCase && !isMobile) {
     heroRoot.dataset.pageEntryStarted = 'true';
     heroHeadings.forEach((heading) => {
       heading.dataset.adscaleRevealState = 'complete';
@@ -3341,11 +3352,24 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     // Home page
     '.hero-trust-badge-wrap', '#hero-desc', '#hero-actions',
     // Case study
-    '.case-kicker-tag', '.case-profile-chip-row', '.case-hero-desc',
-    '.case-hero-media', '.case-follower-transform-card', '.case-stats-hud'
+    '.case-top-bar', '.case-kicker-tag', '.case-profile-chip-row', '.case-hero-desc',
+    '.case-hero-media', '.case-follower-transform-card', '.case-hud-card'
   ].join(', ');
   const lightEntry = document.documentElement.dataset.theme === 'light';
   const heroLineElements = Array.from(document.querySelectorAll(heroLineSelectors));
+  if (isCase && isMobile) {
+    // Use a single, mobile-only sequence for the case-study hero. The top
+    // breadcrumb and poster lead, followed by the word-split title and details.
+    // Reveal metric cards individually so the four case pages share the same
+    // clear, ordered entrance instead of starting their hero parts together.
+    const caseRevealOrder = [
+      '.case-top-bar', '.case-hero-media', '.case-kicker-tag',
+      '.case-profile-chip-row', '.case-hero-desc', '.case-follower-transform-card',
+      '.case-hud-card'
+    ];
+    const orderFor = (element) => caseRevealOrder.findIndex((selector) => element.matches(selector));
+    heroLineElements.sort((a, b) => orderFor(a) - orderFor(b));
+  }
 
   // 2. Next section individual cards and supporting components
   const nextSectionSelectors = [
@@ -3444,6 +3468,68 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     // Release the pre-paint suppression so GSAP has full unhindered control
     finishPageEntry();
 
+    if (isCase && isMobile) {
+      const glowFilter = 'drop-shadow(0 0 12px rgba(0, 229, 255, 0.36))';
+      heroHeadings.forEach((heading) => { heading.dataset.adscaleRevealState = 'running'; });
+      gsap.killTweensOf([...heroLineElements, ...allTargetWords]);
+      gsap.set(heroLineElements, { opacity: 0, y: 0, filter: 'none', willChange: 'opacity' });
+      gsap.set(allTargetWords, {
+        opacity: 0,
+        y: 0,
+        scale: 1,
+        filter: (index, word) => word.classList.contains('highlight-cyan')
+          ? `blur(6px) ${glowFilter}`
+          : 'none',
+        willChange: 'opacity, filter',
+      });
+
+      let cursor = 0;
+      const sequence = gsap.timeline({
+        onComplete: () => {
+          heroHeadings.forEach((heading) => {
+            heading.dataset.adscaleRevealState = 'complete';
+            heading.dataset.adscaleAnimated = 'true';
+          });
+          gsap.set([...heroHeadings, ...heroLineElements, ...allTargetWords], {
+            clearProps: 'opacity,transform,filter,willChange'
+          });
+          finishPageEntry();
+          window.__hvSetTransitionState?.('IDLE');
+        }
+      });
+
+      const elementRevealDuration = 0.20;
+      const elementRevealGap = 0.035;
+      heroLineElements.forEach((element) => {
+        // Keep each reveal short and optical: no layout-affecting movement on
+        // mobile, just a clean fade that follows the visual/source order.
+        sequence.to(element, {
+          opacity: 1,
+          duration: elementRevealDuration,
+          ease: 'power2.out',
+          clearProps: 'willChange',
+        }, cursor);
+        cursor += elementRevealDuration + elementRevealGap;
+
+        if (element.matches('.case-kicker-tag') && allTargetWords.length) {
+          cursor += 0.02;
+          sequence.to(allTargetWords, {
+            opacity: 1,
+            filter: (index, word) => word.classList.contains('highlight-cyan')
+              ? `blur(0px) ${glowFilter}`
+              : 'none',
+            duration: 0.30,
+            stagger: 0.075,
+            ease: 'power3.out',
+            clearProps: 'filter,transform,willChange',
+          }, cursor);
+          cursor += 0.30 + Math.max(0, allTargetWords.length - 1) * 0.075 + 0.08;
+        }
+      });
+
+      return;
+    }
+
     let pendingEntries = 1;
     const beginEntry = () => { pendingEntries += 1; };
     const completeEntry = () => {
@@ -3463,7 +3549,6 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
       gsap.set(heroHeadings, { opacity: 1, y: 0, filter: 'none' });
     }
 
-    const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
     const campaignMobile = isCampaigns && isMobile;
     const glowFilter = 'drop-shadow(0 0 16px rgba(0, 229, 255, 0.48))';
     const glowWords = allTargetWords.filter((word) => word.classList.contains('highlight-cyan'));
@@ -7186,7 +7271,17 @@ function initInstagramReelsPlayer() {
     activeAudioVideo = null;
     videos.forEach((video) => { try { video.pause(); } catch (_) { } });
   };
-  window.__hvCaseReelsRefresh = initInstagramReelsPlayer;
+  // The route transition calls this after promoting the incoming shell into
+  // normal document flow. Re-measure the existing rail there, but do not
+  // initialize a second player instance: re-running the initializer used to
+  // attach a second set of pointer/click handlers to each sound control. The
+  // two handlers toggled audio on and immediately back off only on SPA entry;
+  // a hard refresh initialized the controls once and therefore worked.
+  window.__hvCaseReelsRefresh = () => {
+    if (!section.isConnected || !rail.isConnected) return;
+    measure();
+    setPlayback(isVisible && !document.hidden);
+  };
 
   if (typeof gsap !== 'undefined') {
     gsap.fromTo('.breakdown-card',

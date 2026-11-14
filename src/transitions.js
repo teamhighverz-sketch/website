@@ -349,10 +349,15 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     document.documentElement.classList.add('page-transitioned');
 
     const incCaseHero = incomingContent.querySelector('.case-hero-section');
-    if (incCaseHero) {
+    if (incCaseHero && isMobile) {
+      // Mobile case studies get the same prepared, staged entrance as the
+      // other routes. Prepare before the shell is shown to avoid a full-content
+      // flash; the page initializer starts the sequence at the route handoff.
+      window.__hvPreparePageHeroInitialState?.(incomingContent, targetUrl.pathname);
+    } else if (incCaseHero) {
       incCaseHero.dataset.pageEntryStarted = 'true';
       incomingContent.querySelectorAll(
-        '.case-hero-container, .case-top-bar, .case-hero-media, .case-follower-transform-card, .case-stats-hud, .case-hero-title, .case-kicker-tag, .case-profile-chip-row, .case-hero-desc'
+        '.case-hero-container, .case-top-bar, .case-hero-media, .case-follower-transform-card, .case-hud-grid, .case-hero-title, .case-kicker-tag, .case-profile-chip-row, .case-hero-desc'
       ).forEach((el) => {
         el.style.opacity = '1';
         el.style.transform = 'none';

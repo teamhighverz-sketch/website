@@ -1235,7 +1235,7 @@ function renderDistributionCalculator(movie) {
           <p class="modal-calc-subtext">
             ${escapeHtml(movie.title)} ${outcomeText} Put even 1% of that production budget into Highverz and the opening weekend looks completely different.
           </p>
-          <a href="index.html#contact" class="modal-hero-btn-primary" style="margin-top:0.75rem; width:fit-content; text-decoration:none;" data-cursor="ACTION">
+          <a href="/#contact" class="modal-hero-btn-primary" style="margin-top:0.75rem; width:fit-content; text-decoration:none;" data-cursor="ACTION">
             <span>Get Your Playbook</span>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           </a>

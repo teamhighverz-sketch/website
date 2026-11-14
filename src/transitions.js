@@ -635,8 +635,8 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
 export function initPageTransitions() {
   // Pre-cache all dedicated non-Home pages in memory so transition starts in 0ms without waiting for fetch
   const targetRoutes = [
-    '/index.html', '/work.html', '/campaigns.html', '/team.html', '/why-us.html',
-    '/creator-niv0ne.html', '/creator-umarpnj.html', '/movie-runner.html', '/movie-kingofkings.html'
+    '/', '/work', '/campaigns', '/team', '/why-us',
+    '/creator-niv0ne', '/creator-umarpnj', '/movie-runner', '/movie-kingofkings'
   ];
   setTimeout(() => {
     targetRoutes.forEach(r => {

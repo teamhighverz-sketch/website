@@ -1,5 +1,5 @@
-// Highverz High-Performance Static Asset & Media Service Worker (v7)
-const CACHE_NAME = 'highverz-cache-v7';
+// Highverz High-Performance Static Asset & Media Service Worker (v8)
+const CACHE_NAME = 'highverz-cache-v8';
 const FONT_CACHE_NAME = 'highverz-fonts-v1';
 
 const STATIC_EXTENSIONS = /\.(?:png|jpg|jpeg|webp|avif|svg|woff2?|css|js|json)$/i;
@@ -13,11 +13,10 @@ const FONT_HOSTS = [
 
 const PRECACHE_ASSETS = [
   '/',
-  '/index.html',
-  '/work.html',
-  '/campaigns.html',
-  '/team.html',
-  '/why-us.html',
+  '/work',
+  '/campaigns',
+  '/team',
+  '/why-us',
   '/fonts/coolvetica.woff',
   '/fonts/coolvetica-rg.woff',
   '/assets/logo-white.png',
@@ -94,7 +93,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           return caches.match(request).then((cached) => {
-            return cached || caches.match('/index.html');
+            return cached || caches.match('/');
           });
         })
     );

@@ -1,7 +1,36 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
+const cleanPages = new Set([
+  'work', 'campaigns', 'team', 'why-us',
+  'creator-niv0ne', 'creator-umarpnj', 'movie-runner', 'movie-kingofkings',
+]);
+
 export default defineConfig({
+  plugins: [{
+    name: 'local-clean-page-urls',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url || '/', 'http://localhost');
+        if (url.pathname === '/index.html' && req.headers.accept?.includes('text/html')) {
+          res.statusCode = 308;
+          res.setHeader('Location', `/${url.search}`);
+          res.end();
+          return;
+        }
+        const page = url.pathname.slice(1).replace(/\.html$/, '');
+        if (!cleanPages.has(page)) return next();
+        if (url.pathname.endsWith('.html') && req.headers.accept?.includes('text/html')) {
+          res.statusCode = 308;
+          res.setHeader('Location', `/${page}${url.search}`);
+          res.end();
+          return;
+        }
+        if (url.pathname === `/${page}`) req.url = `/${page}.html${url.search}`;
+        next();
+      });
+    },
+  }],
   build: {
     rollupOptions: {
       input: {

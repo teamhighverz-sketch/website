@@ -615,8 +615,7 @@ function initNavbar() {
         if (!href) return;
         const normHref = href.split('#')[0].split('?')[0].replace(/\/+$/, '') || '/';
         const isMatch = normHref === normTarget ||
-          (normHref.endsWith('.html') && normTarget.endsWith(normHref)) ||
-          (normHref !== '/' && normTarget.includes(normHref.replace('.html', '')));
+          (normHref !== '/' && normTarget.includes(normHref));
         if (isMatch) {
           link.classList.add('active');
           if (link.classList.contains('nav-link')) {
@@ -739,7 +738,7 @@ function initNavbar() {
       let targetEl = null;
       if (href.startsWith('#')) {
         targetEl = document.querySelector(href);
-      } else if (href === '/index.html' && (window.location.pathname === '/' || window.location.pathname.endsWith('index.html'))) {
+      } else if (href === '/' && (window.location.pathname === '/' || window.location.pathname.endsWith('index.html'))) {
         targetEl = document.getElementById('hero');
       }
 
@@ -804,7 +803,7 @@ function initNavbar() {
   const isHomepage = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
   if (isHomepage && 'IntersectionObserver' in window) {
     const sectionSelectors = [
-      { id: 'hero', linkSelector: '.nav-link[href="/index.html"]' }
+      { id: 'hero', linkSelector: '.nav-link[href="/"]' }
     ];
 
     const observer = new IntersectionObserver((entries) => {
@@ -881,9 +880,9 @@ function initMobileNav(navbar) {
 
     const pathname = window.location.pathname;
     const isHome = isHomeRoute(pathname);
-    const isWork = pathname.includes('work.html');
-    const isCampaigns = pathname.includes('campaigns.html');
-    const isTeam = pathname.includes('team.html');
+    const isWork = pathname.includes('/work');
+    const isCampaigns = pathname.includes('/campaigns');
+    const isTeam = pathname.includes('/team');
     const isWhyUs = pathname.includes('why-us');
 
     overlay.innerHTML = `
@@ -896,31 +895,31 @@ function initMobileNav(navbar) {
         </div>
         <ul class="mobile-nav-list">
           <li class="mobile-nav-item">
-            <a href="/index.html" class="mobile-nav-link ${isHome ? 'active' : ''}">
+            <a href="/" class="mobile-nav-link ${isHome ? 'active' : ''}">
               <span class="mobile-nav-num">01</span>
               <span class="mobile-nav-text">Home</span>
             </a>
           </li>
           <li class="mobile-nav-item">
-            <a href="/work.html" class="mobile-nav-link ${isWork ? 'active' : ''}">
+            <a href="/work" class="mobile-nav-link ${isWork ? 'active' : ''}">
               <span class="mobile-nav-num">02</span>
               <span class="mobile-nav-text">Work</span>
             </a>
           </li>
           <li class="mobile-nav-item">
-            <a href="/campaigns.html" class="mobile-nav-link ${isCampaigns ? 'active' : ''}">
+            <a href="/campaigns" class="mobile-nav-link ${isCampaigns ? 'active' : ''}">
               <span class="mobile-nav-num">03</span>
               <span class="mobile-nav-text">Campaigns</span>
             </a>
           </li>
           <li class="mobile-nav-item">
-            <a href="/team.html" class="mobile-nav-link ${isTeam ? 'active' : ''}">
+            <a href="/team" class="mobile-nav-link ${isTeam ? 'active' : ''}">
               <span class="mobile-nav-num">04</span>
               <span class="mobile-nav-text">Team</span>
             </a>
           </li>
           <li class="mobile-nav-item">
-            <a href="/why-us.html" class="mobile-nav-link ${isWhyUs ? 'active' : ''}">
+            <a href="/why-us" class="mobile-nav-link ${isWhyUs ? 'active' : ''}">
               <span class="mobile-nav-num">05</span>
               <span class="mobile-nav-text">Why Us</span>
             </a>
@@ -1252,7 +1251,7 @@ const HOME_CASE_STUDIES_DARK = {
     <p class="creators-intro">Two creator journeys. One repeatable clipping system built to turn long-form content into short-form reach at scale.</p>
   `,
   more: `
-    <a href="/work.html#work" class="creators-more-link" data-cursor="ALL CREATORS ↗">
+    <a href="/work#work" class="creators-more-link" data-cursor="ALL CREATORS ↗">
       <span class="creators-more-text">and many more</span>
       <svg class="creators-more-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M7 17L17 7M17 7H7M17 7V17" />
@@ -1311,7 +1310,7 @@ const HOME_CASE_STUDIES_DARK = {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           <span>Organic Growth</span>
         </div>
-        <a href="/creator-niv0ne.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+        <a href="/creator-niv0ne" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
           <span>View case studies</span>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
         </a>
@@ -1370,7 +1369,7 @@ const HOME_CASE_STUDIES_DARK = {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           <span>Strategic Clipping</span>
         </div>
-        <a href="/creator-umarpnj.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+        <a href="/creator-umarpnj" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
           <span>View case studies</span>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
         </a>
@@ -1386,7 +1385,7 @@ const HOME_CASE_STUDIES_LIGHT = {
     <p class="creators-intro">Turning the most engaging film moments into short-form clips built to capture attention, drive views, and reach new audiences across feeds.</p>
   `,
   more: `
-    <a href="/campaigns.html" class="creators-more-link" data-cursor="ALL FILMS ↗" aria-label="Explore more film campaign case studies">
+    <a href="/campaigns" class="creators-more-link" data-cursor="ALL FILMS ↗" aria-label="Explore more film campaign case studies">
       <span class="creators-more-text">and more film concepts</span>
       <svg class="creators-more-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M7 17L17 7M17 7H7M17 7V17" />
@@ -1395,7 +1394,7 @@ const HOME_CASE_STUDIES_LIGHT = {
   `,
   card1: `
     <div class="creator-image-col">
-      <a href="/movie-runner.html" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="Runner film case study">
+      <a href="/movie-runner" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="Runner film case study">
         <img src="/assets/movie/runner.webp" alt="Runner film poster" class="creator-img" loading="lazy" decoding="async" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
@@ -1440,7 +1439,7 @@ const HOME_CASE_STUDIES_LIGHT = {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           <span>Multi-Platform</span>
         </div>
-        <a href="/movie-runner.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+        <a href="/movie-runner" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
           <span>Explore Concept</span>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
         </a>
@@ -1449,7 +1448,7 @@ const HOME_CASE_STUDIES_LIGHT = {
   `,
   card2: `
     <div class="creator-image-col">
-      <a href="/movie-kingofkings.html" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="King of Kings film case study">
+      <a href="/movie-kingofkings" class="creator-image-wrap" data-cursor="FILM CASE STUDY ↗" aria-label="King of Kings film case study">
         <img src="/assets/movie/kingofkings.webp" alt="King of Kings film poster" class="creator-img" loading="lazy" decoding="async" />
         <div class="creator-image-gradient"></div>
         <div class="creator-badge-overlay">
@@ -1494,7 +1493,7 @@ const HOME_CASE_STUDIES_LIGHT = {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           <span>Multi-Platform</span>
         </div>
-        <a href="/movie-kingofkings.html" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
+        <a href="/movie-kingofkings" class="meta-chip view-detail-chip" data-cursor="CASE STUDY ↗">
           <span>Explore Concept</span>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
         </a>
@@ -6564,6 +6563,9 @@ function initInstagramReelsPlayer() {
   const pendingPlayback = new WeakSet();
   const scheduleVideoRecovery = (video, delay = 450) => {
     if (!video || !video.isConnected || recoveryTimers.has(video)) return;
+    // Reloading an audible reel would discard the playback started by the
+    // user's tap. Only muted background playback may recover automatically.
+    if (video === activeAudioVideo && video.dataset.reelAudioEnabled === 'true') return;
     const attempts = Number(video.dataset.reelRecoveryAttempts || 0);
     if (attempts >= 3) return;
 
@@ -6571,6 +6573,7 @@ function initInstagramReelsPlayer() {
     const timer = window.setTimeout(() => {
       recoveryTimers.delete(video);
       if (!video.isConnected) return;
+      if (video === activeAudioVideo && video.dataset.reelAudioEnabled === 'true') return;
 
       video.classList.remove('is-reel-loading');
       video.load();
@@ -7022,23 +7025,23 @@ function initInstagramReelsPlayer() {
     });
 
     const playWithSound = () => {
-      // A muted autoplay does not necessarily authorize audible playback in
-      // WebKit. Start a fresh play request in the sound button's user gesture.
-      // This also cancels any pending muted autoplay/recovery request that
-      // could pause or reload the reel just after it has been unmuted.
+      // Keep the existing media playback alive. Pausing first makes mobile
+      // WebKit treat this as a new audible autoplay request, which can reject
+      // even though the sound button was tapped by the user.
       cancelVideoRecovery(video);
-      video.pause();
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
       video.volume = 1;
-      video.defaultMuted = false;
-      video.muted = false;
       activeAudioVideo = video;
       // Stop the marquee immediately, including while Safari is still
       // resolving the unmuted play promise for this user gesture.
       dragVelocity = 0;
-      const attempt = video.play();
       muteAllOtherVideos(video);
+      video.defaultMuted = false;
+      video.muted = false;
+      // Request playback in the same trusted gesture even if the reel was
+      // already running: WebKit may pause when a muted video becomes audible.
+      const attempt = video.play();
       updateSoundUI(false);
       if (attempt?.catch) {
         attempt.catch((err) => {

@@ -389,6 +389,16 @@ export function initScatterGrid(container, options = {}) {
     pointerY = -9999;
   };
 
+  // Touch pointers do not reliably fire pointerleave on iOS Safari. Without
+  // clearing the last position, the logo keeps repelling dots after a tap.
+  const handlePointerEnd = (e) => {
+    if (e.pointerType !== 'mouse') handlePointerLeave();
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!e.touches.length) handlePointerLeave();
+  };
+
   const handlePointerDown = (e) => {
     wakeUpIfNeeded();
     if (!isIntersecting) return;
@@ -404,6 +414,10 @@ export function initScatterGrid(container, options = {}) {
   // Track on window so overlaying footer content (links, copyright, text) does not block scatter reactivity
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
   window.addEventListener("pointerdown", handlePointerDown, { passive: true });
+  window.addEventListener("pointerup", handlePointerEnd, { passive: true });
+  window.addEventListener("pointercancel", handlePointerEnd, { passive: true });
+  window.addEventListener("touchend", handleTouchEnd, { passive: true });
+  window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
   window.addEventListener("pointerleave", handlePointerLeave, { passive: true });
   window.addEventListener("scroll", handlePointerLeave, { passive: true });
 
@@ -423,6 +437,10 @@ export function initScatterGrid(container, options = {}) {
     resizeObserver.disconnect();
     window.removeEventListener("pointermove", handlePointerMove);
     window.removeEventListener("pointerdown", handlePointerDown);
+    window.removeEventListener("pointerup", handlePointerEnd);
+    window.removeEventListener("pointercancel", handlePointerEnd);
+    window.removeEventListener("touchend", handleTouchEnd);
+    window.removeEventListener("touchcancel", handleTouchEnd);
     window.removeEventListener("pointerleave", handlePointerLeave);
     window.removeEventListener("scroll", handlePointerLeave);
     if (canvas && canvas.parentNode) {

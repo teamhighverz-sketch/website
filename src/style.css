@@ -24672,3 +24672,29 @@ html.is-low-spec[data-theme="light"] :is(.founder-accord-card,
   padding-right: 0.16em !important;
   margin-right: 0.04em !important;
 }
+
+/* Keep case-study headings and eyebrow labels on the same type system as Home. */
+body.case-study-page :is(
+  .case-hero-title,
+  .case-section-title,
+  .breakdown-title,
+  .breakdown-card-title,
+  .ig-reel-title,
+  .ig-case-cta-banner h3
+) {
+  font-family: var(--font-display) !important;
+  font-synthesis: none;
+}
+
+body.case-study-page :is(
+  .case-kicker-tag,
+  .case-section-tag,
+  .breakdown-tag,
+  .ig-reel-tag,
+  .case-trans-label,
+  .case-hud-label,
+  .case-niche-chip
+) {
+  font-family: var(--font-tag, 'Space Grotesk', sans-serif) !important;
+  font-synthesis: none;
+}

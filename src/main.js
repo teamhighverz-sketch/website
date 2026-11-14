@@ -3221,10 +3221,6 @@ export function preparePageHeroInitialState(root = document, pathname = window.l
   const normPath = pathname ? pathname.replace(/\/+$/, '') : window.location.pathname.replace(/\/+$/, '');
   const isCase = normPath.includes('creator-') || normPath.includes('movie-');
   const isMobile = window.innerWidth <= 768 || window.matchMedia('(max-width: 768px)').matches;
-  // Case-study pages keep their established desktop entrance. On phones,
-  // prepare the hero before the route shell is shown so its staged reveal
-  // never flashes fully visible first.
-  if (isCase && !isMobile) return;
 
   const heroHeadings = root.querySelectorAll(
     isCase
@@ -3303,19 +3299,6 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
     '.work-hero-title, .campaign-hero-headline, .why-hero-title, .team-hero-title, .case-hero-title'
   );
 
-  if (isCase && !isMobile) {
-    heroRoot.dataset.pageEntryStarted = 'true';
-    heroHeadings.forEach((heading) => {
-      heading.dataset.adscaleRevealState = 'complete';
-      heading.dataset.adscaleAnimated = 'true';
-    });
-    finishPageEntry();
-    if (window.__hvSetTransitionState) {
-      window.__hvSetTransitionState('IDLE');
-    }
-    return;
-  }
-
   if (isFromTransition && heroRoot.dataset.pageEntryStarted === 'true') {
     return;
   }
@@ -3357,10 +3340,10 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
   ].join(', ');
   const lightEntry = document.documentElement.dataset.theme === 'light';
   const heroLineElements = Array.from(document.querySelectorAll(heroLineSelectors));
-  if (isCase && isMobile) {
-    // Use a single, mobile-only sequence for the case-study hero. The top
+  if (isCase) {
+    // Keep the case-study hero reveal consistent on desktop and mobile. The
     // breadcrumb and poster lead, followed by the word-split title and details.
-    // Reveal metric cards individually so the four case pages share the same
+    // Reveal metric cards individually so all four case pages share the same
     // clear, ordered entrance instead of starting their hero parts together.
     const caseRevealOrder = [
       '.case-top-bar', '.case-hero-media', '.case-kicker-tag',
@@ -3498,11 +3481,11 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
         }
       });
 
-      const elementRevealDuration = 0.20;
-      const elementRevealGap = 0.035;
+      const elementRevealDuration = isMobile ? 0.20 : 0.28;
+      const elementRevealGap = isMobile ? 0.035 : 0.055;
       heroLineElements.forEach((element) => {
-        // Keep each reveal short and optical: no layout-affecting movement on
-        // mobile, just a clean fade that follows the visual/source order.
+        // Keep each reveal optical with no layout-affecting movement; only
+        // opacity changes, in visual/source order, to avoid shifting the page.
         sequence.to(element, {
           opacity: 1,
           duration: elementRevealDuration,
@@ -3518,12 +3501,14 @@ export function triggerPageHeroEntrance(pathname, isFromTransition = false) {
             filter: (index, word) => word.classList.contains('highlight-cyan')
               ? `blur(0px) ${glowFilter}`
               : 'none',
-            duration: 0.30,
-            stagger: 0.075,
+            duration: isMobile ? 0.30 : 0.38,
+            stagger: isMobile ? 0.075 : 0.09,
             ease: 'power3.out',
             clearProps: 'filter,transform,willChange',
           }, cursor);
-          cursor += 0.30 + Math.max(0, allTargetWords.length - 1) * 0.075 + 0.08;
+          const titleDuration = isMobile ? 0.30 : 0.38;
+          const titleStagger = isMobile ? 0.075 : 0.09;
+          cursor += titleDuration + Math.max(0, allTargetWords.length - 1) * titleStagger + 0.08;
         }
       });
 

@@ -349,31 +349,11 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     document.documentElement.classList.add('page-transitioned');
 
     const incCaseHero = incomingContent.querySelector('.case-hero-section');
-    if (incCaseHero && isMobile) {
-      // Mobile case studies get the same prepared, staged entrance as the
-      // other routes. Prepare before the shell is shown to avoid a full-content
-      // flash; the page initializer starts the sequence at the route handoff.
+    if (incCaseHero) {
+      // Case studies use the same staged hero entrance on desktop and mobile.
+      // Prepare before the shell is shown so the content cannot flash fully
+      // visible; the page initializer starts the sequence at the route handoff.
       window.__hvPreparePageHeroInitialState?.(incomingContent, targetUrl.pathname);
-    } else if (incCaseHero) {
-      incCaseHero.dataset.pageEntryStarted = 'true';
-      incomingContent.querySelectorAll(
-        '.case-hero-container, .case-top-bar, .case-hero-media, .case-follower-transform-card, .case-hud-grid, .case-hero-title, .case-kicker-tag, .case-profile-chip-row, .case-hero-desc'
-      ).forEach((el) => {
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-        el.style.filter = 'none';
-        el.style.animation = 'none';
-      });
-      incomingContent.querySelectorAll('.case-hero-title').forEach((heading) => {
-        window.splitAdscaleWords?.(heading);
-        heading.dataset.adscaleRevealState = 'complete';
-        heading.dataset.adscaleAnimated = 'true';
-        heading.querySelectorAll('.adscale-reveal-word').forEach((w) => {
-          w.style.opacity = '1';
-          w.style.transform = 'none';
-          w.style.filter = 'none';
-        });
-      });
     } else {
       // Normal pages (Campaigns, Work, Team, Why-Us, Home) run entrance animations.
       // Pre-initialize incoming hero elements into their initial entrance state (hidden/opacity: 0)

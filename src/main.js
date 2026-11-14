@@ -6809,9 +6809,10 @@ function initInstagramReelsPlayer() {
 
   const unlockEvents = ['pointerdown', 'touchstart', 'scroll', 'wheel', 'click', 'keydown', 'pointerup'];
   const unlockOnInteraction = (event) => {
-    // Do not start a competing muted autoplay on the sound button's
-    // pointerdown; its click must own the audible play request in Safari.
-    if (event.target instanceof Element && event.target.closest('.ig-sound-toggle-btn')) return;
+    // If the interaction happened inside the case-study reels section,
+    // let the card / sound button own the gesture directly without starting
+    // a competing background autoplay request.
+    if (event.target instanceof Element && event.target.closest('.case-reels-section')) return;
     if (isVisible && !document.hidden) {
       setPlayback(true);
     }
@@ -7036,34 +7037,39 @@ function initInstagramReelsPlayer() {
     const playWithSound = () => {
       cancelVideoRecovery(video);
       if (video.preload !== 'auto') video.preload = 'auto';
+
+      // 1. Immediately configure the active video element first
+      video.removeAttribute('muted');
+      video.defaultMuted = false;
+      video.muted = false;
+      video.volume = 1;
       video.dataset.reelWantPlayback = 'true';
       video.dataset.reelAudioEnabled = 'true';
       video.dataset.reelAudioPlaybackFailed = 'false';
       activeAudioVideo = video;
       dragVelocity = 0;
 
-      // 1. Mute and update sound UI for all other videos
-      muteAllOtherVideos(video);
-
-      // 2. Pause competing decoders across ALL browsers so 100% of audio and
-      // hardware decoder capacity is dedicated to this selected reel.
-      videos.forEach((otherVideo) => {
-        if (otherVideo === video) return;
-        otherVideo.dataset.reelWantPlayback = 'false';
-        try {
-          if (!otherVideo.paused) otherVideo.pause();
-        } catch (_) {}
-      });
-
-      // 3. Unmute target video
-      video.removeAttribute('muted');
-      video.defaultMuted = false;
-      video.muted = false;
-      video.volume = 1;
+      // 2. Request audible playback synchronously in the user gesture FIRST!
+      // In Safari on iOS, calling play() immediately ensures the entire
+      // transient user activation window is preserved without being consumed
+      // by calls to other media elements.
+      const attempt = video.play();
       updateSoundUI(false);
 
-      // 4. Request audible playback synchronously in user gesture
-      const attempt = video.play();
+      // 3. Mute and update sound UI for all other cards
+      muteAllOtherVideos(video);
+
+      // 4. In a microtask, pause other competing decoders across all browsers
+      // so pausing other elements does not race or abort this play() promise.
+      queueMicrotask(() => {
+        videos.forEach((otherVideo) => {
+          if (otherVideo === video) return;
+          otherVideo.dataset.reelWantPlayback = 'false';
+          try {
+            if (!otherVideo.paused) otherVideo.pause();
+          } catch (_) {}
+        });
+      });
 
       if (attempt?.catch) {
         attempt.catch((err) => {
@@ -7077,6 +7083,7 @@ function initInstagramReelsPlayer() {
           if (activeAudioVideo !== video || video.dataset.reelAudioEnabled !== 'true') return;
           // If the video is actually playing and unmuted, do not force mute
           if (!video.paused && !video.muted) return;
+          if (!video.paused && video.currentTime > 0) return;
 
           console.warn('Audible reel playback was rejected; tap sound to retry:', err);
           video.dataset.reelAudioPlaybackFailed = 'true';
@@ -7090,52 +7097,40 @@ function initInstagramReelsPlayer() {
       }
     };
 
-    if (soundBtn) {
-      const toggleSound = (event) => {
-        if (event) {
-          event.stopPropagation();
-          event.preventDefault();
-        }
-        if (video.muted || video.dataset.reelAudioEnabled !== 'true' || video.dataset.reelAudioPlaybackFailed === 'true') {
-          playWithSound();
-        } else {
-          video.setAttribute('muted', '');
-          video.muted = true;
-          video.defaultMuted = true;
-          video.dataset.reelAudioEnabled = 'false';
-          if (activeAudioVideo === video) activeAudioVideo = null;
-          updateSoundUI(true);
-          setPlayback(true);
-        }
-      };
+    const toggleSound = (event) => {
+      if (event) {
+        event.stopPropagation();
+      }
+      if (video.muted || video.dataset.reelAudioEnabled !== 'true' || video.dataset.reelAudioPlaybackFailed === 'true') {
+        playWithSound();
+      } else {
+        video.setAttribute('muted', '');
+        video.muted = true;
+        video.defaultMuted = true;
+        video.dataset.reelAudioEnabled = 'false';
+        if (activeAudioVideo === video) activeAudioVideo = null;
+        updateSoundUI(true);
+        setPlayback(true);
+      }
+    };
 
+    if (soundBtn) {
       soundBtn.addEventListener('click', toggleSound);
     }
     updateSoundUI(video.muted);
 
     card.setAttribute('tabindex', '0');
-    const togglePlayback = () => {
-      if (video.paused) {
-        attemptVideoPlay(video);
-      } else {
-        video.dataset.reelWantPlayback = 'false';
-        video.dataset.reelAudioEnabled = 'false';
-        if (activeAudioVideo === video) activeAudioVideo = null;
-        video.muted = true;
-        video.defaultMuted = true;
-        video.pause();
-        card.classList.remove('is-playing');
-        updateSoundUI(true);
-      }
-    };
+    // On mobile touch screens, tapping anywhere on the reel card toggles audio.
+    // This provides an intuitive Instagram/TikTok-like tap-to-unmute experience
+    // and eliminates missed taps on mobile.
     card.addEventListener('click', (event) => {
-      if (suppressClick || event.target.closest('.ig-sound-toggle-btn') || event.target.closest('a')) return;
-      togglePlayback();
+      if (suppressClick || event.target.closest('a')) return;
+      toggleSound(event);
     });
     card.addEventListener('keydown', (event) => {
-      if ((event.key === ' ' || event.key === 'Enter') && !event.target.closest('.ig-sound-toggle-btn')) {
+      if ((event.key === ' ' || event.key === 'Enter') && !event.target.closest('a')) {
         event.preventDefault();
-        togglePlayback();
+        toggleSound(event);
       }
     });
   });

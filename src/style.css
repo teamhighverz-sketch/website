@@ -13285,6 +13285,11 @@ html.js .floating-badge-item {
   pointer-events: auto;
 }
 
+.ig-sound-toggle-btn svg,
+.ig-sound-toggle-btn path {
+  pointer-events: none !important;
+}
+
 .ig-sound-toggle-btn:hover {
   background: var(--accent-cyan);
   color: #000000;

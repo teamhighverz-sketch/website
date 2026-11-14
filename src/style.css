@@ -24518,6 +24518,19 @@ body.page-team .founder-accord-card .founder-quote strong {
    hero's glow in from that boundary and keep the floating nav's glass tint
    consistent while it passes over both backgrounds. */
 @media (max-width: 768px) {
+  #hero .hero-description--centered {
+    max-width: 94vw !important;
+    font-size: clamp(10px, 3.2vw, 12.5px) !important;
+  }
+
+  #hero .hero-description--centered span {
+    white-space: nowrap;
+  }
+
+  [data-theme="dark"] #hero .hero-headline-connector:not(.hero-platform-snippet) {
+    font-size: 1.05em !important;
+  }
+
   [data-theme="dark"] #hero.hero-section::before {
     top: -7rem;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 6rem);

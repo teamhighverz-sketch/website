@@ -7325,7 +7325,9 @@ function fitFooterScatterMark(watermark) {
   const rightEdge = links
     ? Math.min(links.getBoundingClientRect().left, socials.getBoundingClientRect().left)
     : socials.getBoundingClientRect().left;
-  const gutter = Math.max(36, Math.min(48, window.innerWidth * 0.02));
+  // Keep a wider safety zone around the wordmark so displaced dots have room
+  // to settle before they reach the footer's clipped section boundary.
+  const gutter = Math.max(72, Math.min(104, window.innerWidth * 0.045));
   const available = rightEdge - leftEdge - gutter * 2;
   const stacked = available < 480;
   footer.classList.toggle('footer-scatter-stacked', stacked);
@@ -7377,7 +7379,9 @@ export function initFooterScatterGrid() {
     strength: 2.4,
     stiffness: 0.035,
     damping: 0.86,
-    bleed: 15,
+    // Particle displacement can exceed the old 15px canvas overdraw near the
+    // rocket and the g descender, making the animation visibly hit the edge.
+    bleed: 100,
     base,
     accent
   });

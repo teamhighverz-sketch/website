@@ -7313,23 +7313,18 @@ function fitFooterScatterMark(watermark) {
   }
 
   const footerBox = footer.getBoundingClientRect();
-  // Case-study footers omit the Quick Links column. Measure the visible details
-  // content instead of the stretched grid cell, then fit the mark into the
-  // actual space before Socials just as we fit it between columns on Home.
-  const leftEdge = !links && isCaseStudy
-    ? Array.from(details.children).reduce(
-      (right, child) => Math.max(right, child.getBoundingClientRect().right),
-      details.getBoundingClientRect().left,
-    )
-    : details.getBoundingClientRect().right;
+  // Measure the visible details content so phantom box padding doesn't inflate the gap.
+  const leftEdge = Array.from(details.children).reduce(
+    (right, child) => Math.max(right, child.getBoundingClientRect().right),
+    details.getBoundingClientRect().left,
+  );
   const rightEdge = links
     ? Math.min(links.getBoundingClientRect().left, socials.getBoundingClientRect().left)
     : socials.getBoundingClientRect().left;
-  // Keep a wider safety zone around the wordmark so displaced dots have room
-  // to settle before they reach the footer's clipped section boundary.
-  const gutter = Math.max(72, Math.min(104, window.innerWidth * 0.045));
+  // Keep the scatter mark snug next to the left details while preventing collision
+  const gutter = Math.max(24, Math.min(36, window.innerWidth * 0.02));
   const available = rightEdge - leftEdge - gutter * 2;
-  const stacked = available < 480;
+  const stacked = available < 320;
   footer.classList.toggle('footer-scatter-stacked', stacked);
   clearSizing();
   if (stacked) return;

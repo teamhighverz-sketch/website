@@ -6302,9 +6302,15 @@ html.js .floating-badge-item {
   color: var(--text-primary);
 }
 
-/* Give the animated “Your Reach” phrase a touch more breathing room. */
+/* Keep the animated “Your Reach” phrase italic with clean single spacing between words. */
+#process .process-headline .highlight-cyan {
+  font-style: italic;
+  word-spacing: normal;
+}
+
 #process .process-headline .highlight-cyan .adscale-reveal-word:not(:last-child) {
-  margin-right: 0.13em !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* Drawing Progress Track */
@@ -9238,8 +9244,22 @@ html.js .floating-badge-item {
   color: #0284C7;
 }
 
-[data-theme="light"] .case-kicker-tag {
-  color: #0284C7;
+[data-theme="light"] :is(.case-kicker-tag, .case-section-tag, .breakdown-tag) {
+  color: #0284c7 !important;
+  background: rgba(14, 165, 233, 0.08) !important;
+  border: 1px solid rgba(14, 165, 233, 0.25) !important;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.08), inset 0 1px 0 #ffffff !important;
+}
+
+[data-theme="light"] :is(.case-kicker-tag, .case-section-tag, .breakdown-tag):hover {
+  background: rgba(14, 165, 233, 0.14) !important;
+  border-color: rgba(14, 165, 233, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.16), inset 0 1px 0 #ffffff !important;
+}
+
+[data-theme="light"] :is(.case-kicker-tag, .case-section-tag, .breakdown-tag)::before {
+  background-color: #0ea5e9 !important;
+  box-shadow: 0 0 8px #0ea5e9 !important;
 }
 
 [data-theme="light"] .case-hero-title {
@@ -9305,10 +9325,6 @@ html.js .floating-badge-item {
   stroke: #0284C7;
 }
 
-[data-theme="light"] .case-section-tag {
-  color: #0284C7;
-}
-
 [data-theme="light"] .case-section-title {
   color: #0A0D12;
 }
@@ -9347,10 +9363,6 @@ html.js .floating-badge-item {
 /* ── Case Study Agency Breakdown Section (Light Mode) ── */
 [data-theme="light"] .highverz-agency-breakdown {
   background: transparent;
-}
-
-[data-theme="light"] .breakdown-tag {
-  color: #0284C7;
 }
 
 [data-theme="light"] .breakdown-title {
@@ -12809,12 +12821,51 @@ html.js .floating-badge-item {
 .case-kicker-tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  justify-content: center;
+  width: fit-content;
+  max-width: fit-content;
+  align-self: flex-start;
+  gap: 0.45rem;
+  font-family: var(--font-tag, 'Space Grotesk', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 0.34rem 0.88rem;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(0, 229, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin-bottom: 0;
+  transition: all 0.3s var(--ease-expo);
+}
+
+.case-kicker-tag:hover {
+  background: rgba(0, 229, 255, 0.09);
+  border-color: rgba(0, 229, 255, 0.38);
+  box-shadow: 0 4px 18px rgba(0, 229, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.case-kicker-tag::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan), 0 0 16px rgba(0, 229, 255, 0.5);
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.case-kicker-tag>span:nth-child(2) {
+  opacity: 0.55;
+  margin: 0 0.08rem;
 }
 
 .case-hero-title {
@@ -13052,13 +13103,46 @@ html.js .floating-badge-item {
 }
 
 .case-section-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: fit-content;
+  font-family: var(--font-tag, 'Space Grotesk', sans-serif);
   font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent-cyan);
-  display: block;
-  margin-bottom: 0.6rem;
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 0.34rem 0.88rem;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(0, 229, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin: 0 auto 1.25rem auto;
+  transition: all 0.3s var(--ease-expo);
+}
+
+.case-section-tag:hover {
+  background: rgba(0, 229, 255, 0.09);
+  border-color: rgba(0, 229, 255, 0.38);
+  box-shadow: 0 4px 18px rgba(0, 229, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.case-section-tag::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan), 0 0 16px rgba(0, 229, 255, 0.5);
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .case-section-title {
@@ -13343,13 +13427,46 @@ html.js .floating-badge-item {
 }
 
 .breakdown-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: fit-content;
+  font-family: var(--font-tag, 'Space Grotesk', sans-serif);
   font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: var(--accent-cyan);
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  margin-bottom: 0.6rem;
-  display: block;
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  padding: 0.34rem 0.88rem;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(0, 229, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin: 0 auto 1.25rem auto;
+  transition: all 0.3s var(--ease-expo);
+}
+
+.breakdown-tag:hover {
+  background: rgba(0, 229, 255, 0.09);
+  border-color: rgba(0, 229, 255, 0.38);
+  box-shadow: 0 4px 18px rgba(0, 229, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.breakdown-tag::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan), 0 0 16px rgba(0, 229, 255, 0.5);
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .breakdown-title {
@@ -19901,7 +20018,7 @@ body::after {
   top: 50%;
   bottom: auto;
   z-index: 0;
-  width: min(1500px, 88vw);
+  width: min(1650px, 88vw);
   aspect-ratio: 2415 / 900;
   transform: translate(50%, -50%);
   pointer-events: none;
@@ -19947,6 +20064,9 @@ body::after {
   column-gap: clamp(1.5rem, 3.5vw, 3.2rem);
   row-gap: 2rem;
   min-height: auto;
+  width: 100%;
+  max-width: 2400px;
+  margin-inline: auto;
 }
 
 .footer-left-info,
@@ -20416,7 +20536,7 @@ body::after {
 /* Keep the footer watermark atmospheric without letting it wash over the
    footer copy and navigation. */
 .footer-watermark-logo {
-  width: min(1500px, 88vw);
+  width: min(1650px, 88vw);
   /* Give the rocket tip a little breathing room below the footer divider. */
   top: calc(50% + 10px);
   bottom: auto;
@@ -20429,7 +20549,7 @@ body::after {
 }
 
 [data-theme="light"] .footer-watermark-logo {
-  width: min(1500px, 88vw);
+  width: min(1650px, 88vw);
   top: calc(50% + 10px);
   bottom: auto;
   transform: translate(50%, -50%);
@@ -21575,7 +21695,10 @@ body::after {
   .case-kicker-tag {
     flex-wrap: wrap;
     justify-content: center;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .case-follower-transform-card {
@@ -24674,27 +24797,23 @@ html.is-low-spec[data-theme="light"] :is(.founder-accord-card,
 }
 
 /* Keep case-study headings and eyebrow labels on the same type system as Home. */
-body.case-study-page :is(
-  .case-hero-title,
+body.case-study-page :is(.case-hero-title,
   .case-section-title,
   .breakdown-title,
   .breakdown-card-title,
   .ig-reel-title,
-  .ig-case-cta-banner h3
-) {
+  .ig-case-cta-banner h3) {
   font-family: var(--font-display) !important;
   font-synthesis: none;
 }
 
-body.case-study-page :is(
-  .case-kicker-tag,
+body.case-study-page :is(.case-kicker-tag,
   .case-section-tag,
   .breakdown-tag,
   .ig-reel-tag,
   .case-trans-label,
   .case-hud-label,
-  .case-niche-chip
-) {
+  .case-niche-chip) {
   font-family: var(--font-tag, 'Space Grotesk', sans-serif) !important;
   font-synthesis: none;
 }

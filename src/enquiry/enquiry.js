@@ -624,6 +624,46 @@ function initCountrySelector(form) {
 
   let currentCountry = 'IN';
 
+  // Regional-indicator emoji flags are missing or rendered as letter pairs in
+  // several Windows browser/font combinations. Use image assets for the
+  // picker and keep the native emoji as the final fallback.
+  const flagMarkup = (code, emoji, selected = false) => {
+    const flagCode = String(code).toLowerCase();
+    const emojiCodepoints = Array.from(emoji, (character) =>
+      character.codePointAt(0).toString(16)
+    ).join('-');
+    const flag = `
+      <img class="country-flag-image" src="https://flagcdn.com/w40/${flagCode}.png" data-fallback-src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${emojiCodepoints}.svg" alt="" ${selected ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+      <span class="country-flag-emoji">${emoji}</span>`;
+    return selected
+      ? flag
+      : `<span class="flag-symbol" aria-hidden="true">${flag}</span>`;
+  };
+
+  const bindFlagFallbacks = (scope) => {
+    scope.querySelectorAll('.country-flag-image').forEach((image) => {
+      const handleImageError = () => {
+        const fallbackSrc = image.dataset.fallbackSrc;
+        if (fallbackSrc && image.src !== fallbackSrc) {
+          image.dataset.fallbackSrc = '';
+          image.src = fallbackSrc;
+          return;
+        }
+
+        image.classList.add('is-unavailable');
+      };
+
+      image.addEventListener('error', handleImageError);
+      // The image may fail before this listener is bound (for example when
+      // the selected-country control is re-rendered from cache).
+      if (image.complete && image.naturalWidth === 0) handleImageError();
+    });
+  };
+
+  const initialCountry = COUNTRIES.find((country) => country.code === currentCountry);
+  selectedFlag.innerHTML = flagMarkup(currentCountry, initialCountry?.flag || '🇮🇳', true);
+  bindFlagFallbacks(selectedFlag);
+
   const selectCountryItem = (item) => {
     if (!item) return;
     const code = item.dataset.countryCode;
@@ -632,7 +672,8 @@ function initCountrySelector(form) {
     const flag = item.dataset.flag;
 
     currentCountry = code;
-    selectedFlag.textContent = flag;
+    selectedFlag.innerHTML = flagMarkup(code, flag, true);
+    bindFlagFallbacks(selectedFlag);
     countryCodeInput.value = dial;
     countryNameInput.value = name;
 
@@ -658,11 +699,12 @@ function initCountrySelector(form) {
 
     flagList.innerHTML = filtered.map((c) => `
       <li class="enquiry-flag-item ${c.code === currentCountry ? 'is-active' : ''}" data-country-code="${c.code}" data-dial="${c.dial}" data-name="${c.name}" data-flag="${c.flag}" role="option" tabindex="0" aria-selected="${c.code === currentCountry}">
-        <span class="flag-symbol">${c.flag}</span>
+        ${flagMarkup(c.code, c.flag)}
         <span class="country-name">${c.name}</span>
         <span class="dial-code">${c.dial}</span>
       </li>
     `).join('');
+    bindFlagFallbacks(flagList);
   };
 
   renderCountries();
@@ -846,7 +888,9 @@ function initCountrySelector(form) {
 
   return function reset() {
     currentCountry = 'IN';
-    selectedFlag.textContent = '🇮🇳';
+    const india = COUNTRIES.find((country) => country.code === 'IN');
+    selectedFlag.innerHTML = flagMarkup('IN', india?.flag || '🇮🇳', true);
+    bindFlagFallbacks(selectedFlag);
     countryCodeInput.value = '+91';
     countryNameInput.value = 'India';
     closeDropdown();

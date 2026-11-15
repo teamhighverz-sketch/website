@@ -218,6 +218,14 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     return;
   }
 
+  // Home-bound links from other pages sometimes carry a section fragment
+  // (/#hero, /#contact, etc.). Keep the Home route clean on return; in-page
+  // anchors on Home itself still use their normal native/Lenis behavior.
+  if (isHomeRoute(targetUrl) && !isHomeRoute(currentPath) && targetUrl.hash) {
+    targetUrl.hash = '';
+    targetHref = `${targetUrl.pathname}${targetUrl.search}`;
+  }
+
   // Double-check route eligibility before taking over browser navigation.
   if (!canTransition(currentPath, targetUrl)) {
     if (!isPopState) {
@@ -464,6 +472,18 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
     const startIncomingScripts = () => {
       if (incomingScriptsStarted) return;
       incomingScriptsStarted = true;
+      // The loading intro only belongs to a hard page load. SPA navigation
+      // does not run boot() again, so a stale intro-pending flag can keep the
+      // incoming #page-content and navbar display:none indefinitely (most
+      // visible on mobile when returning Home). Release that startup-only
+      // suppression before revealing the incoming route; its own page-entry
+      // timeline handles the normal text and reel reveal from here.
+      document.documentElement.classList.remove('intro-pending');
+      document.documentElement.classList.add('skip-intro');
+      document.body.classList.remove('intro-active');
+      window.__HV_SKIP_INTRO__ = true;
+      const introOverlay = document.getElementById('highverz-intro');
+      if (introOverlay) introOverlay.remove();
       shell.style.visibility = 'visible';
       // Fast route clicks can leave the browser/Lenis scroll state one frame
       // behind the new shell. Reset every scroll owner before measuring the
@@ -522,6 +542,8 @@ export async function navigateWithTransition(targetHref, isPopState = false) {
         shell.remove();
         window.__hvHeroReelRefresh?.();
         window.__hvCaseReelsRefresh?.();
+        window.__hvEnsureHomeHeroVisible?.();
+        setTimeout(() => window.__hvEnsureHomeHeroVisible?.(), 400);
         if (navbar) {
           gsap.set(navbar, { clearProps: 'all' });
         }
@@ -717,6 +739,12 @@ export function initPageTransitions() {
     closeEnquiryModal();
     const currentPath = window.location.pathname;
     if (isHomeRoute(currentPath)) {
+      // Back/forward can restore an old Home section fragment. Clear only the
+      // fragment before reloading so Home always returns at its clean route.
+      if (window.location.hash) {
+        const cleanHomeUrl = `${window.location.pathname}${window.location.search}`;
+        window.history.replaceState(window.history.state, '', cleanHomeUrl);
+      }
       // Navigating back/forward to Home: reload natively
       window.location.reload();
       return;

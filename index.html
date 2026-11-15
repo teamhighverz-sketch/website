@@ -257,6 +257,17 @@
       document.documentElement.classList.add('intro-pending');
       window.__HV_SKIP_INTRO__ = false;
     }
+
+    // Failsafe: Never allow intro-pending or intro-active to lock #page-content hidden
+    setTimeout(function() {
+      if (document.documentElement.classList.contains('intro-pending') || (document.body && document.body.classList.contains('intro-active'))) {
+        document.documentElement.classList.remove('intro-pending');
+        document.documentElement.classList.add('skip-intro');
+        if (document.body) document.body.classList.remove('intro-active');
+        var introEl = document.getElementById('highverz-intro');
+        if (introEl) introEl.remove();
+      }
+    }, 2800);
   </script>
 </head>
   <body class="dark-theme">
@@ -1535,10 +1546,10 @@
 
           <div class="footer-link-group">
             <span class="footer-group-title">Quick Links</span>
-            <a href="#services" class="f-social">Services</a>
-            <a href="#work" class="f-social">Work</a>
-            <a href="#process" class="f-social">Process</a>
-            <a href="#contact" class="f-social">Contact</a>
+            <a href="/work" class="f-social">Work</a>
+            <a href="/team" class="f-social">Team</a>
+            <a href="/why-us" class="f-social">Why Us</a>
+            <a href="/campaigns" class="f-social">Campaigns</a>
           </div>
 
           <div class="footer-social-links">

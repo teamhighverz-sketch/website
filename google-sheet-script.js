@@ -5,9 +5,9 @@
  * 
  * Features included:
  *  1. Auto-sanitizes phone numbers and contacts (prevents #ERROR! formula parse issues).
- *  2. Visual Full-Row Color Highlighting:
- *     - Brand Enquiry: Vibrant Full-Row Cyan (#D1F4F9, dark text #042F2E)
- *     - Join Us Application: Vibrant Full-Row Purple (#EDE9FE, dark text #3B0764)
+ *  2. Visual Full-Row Color Highlighting (Background only, standard text):
+ *     - Brand Enquiry: Vibrant Full-Row Cyan (#D1F4F9, default black text)
+ *     - Join Us Application: Vibrant Full-Row Purple (#EDE9FE, default black text)
  *  3. One-Click Repair Tool:
  *     - Run "fixExistingSheetErrors" or use the "🚀 Highverz Tools" menu in Google Sheets
  *       to automatically heal all existing #ERROR! cells and color all rows.
@@ -133,12 +133,11 @@ function sanitizeForSheets_(val) {
 
 /**
  * Styles a specific row across ALL columns based on Enquiry Category
- *  - Brand Enquiry: Vibrant Full-Row Cyan (#D1F4F9 background, #042F2E dark text)
- *  - Join Us Application: Vibrant Full-Row Purple (#EDE9FE background, #3B0764 dark text)
+ *  - Brand Enquiry: Full-Row Cyan (#D1F4F9 background, standard default/black text)
+ *  - Join Us Application: Full-Row Purple (#EDE9FE background, standard default/black text)
  */
 function styleRowByCategory_(sheet, rowNum, headers, categoryVal) {
   var cat = String(categoryVal || "").toLowerCase();
-  var categoryCol = headers.indexOf("Enquiry Category") + 1;
   var totalCols = Math.max(headers.length, 12);
 
   var isBrand = cat.indexOf("brand") !== -1;
@@ -147,17 +146,11 @@ function styleRowByCategory_(sheet, rowNum, headers, categoryVal) {
   var rowRange = sheet.getRange(rowNum, 1, 1, totalCols);
 
   if (isBrand) {
-    // Full row solid Cyan
-    rowRange.setBackground("#D1F4F9").setFontColor("#042F2E");
-    if (categoryCol > 0) {
-      sheet.getRange(rowNum, categoryCol).setFontWeight("bold");
-    }
+    // Full row solid Cyan background, default text color
+    rowRange.setBackground("#D1F4F9").setFontColor("#000000");
   } else if (isJoin) {
-    // Full row solid Purple
-    rowRange.setBackground("#EDE9FE").setFontColor("#3B0764");
-    if (categoryCol > 0) {
-      sheet.getRange(rowNum, categoryCol).setFontWeight("bold");
-    }
+    // Full row solid Purple background, default text color
+    rowRange.setBackground("#EDE9FE").setFontColor("#000000");
   }
 }
 
@@ -292,19 +285,17 @@ function applyConditionalFormatting_(sheet, headers) {
     return str.indexOf("brand") === -1 && str.indexOf("join") === -1 && str.indexOf("Brand") === -1 && str.indexOf("Join") === -1;
   });
 
-  // Full-row rule for Brand Enquiry (matches any column when Category contains "brand")
+  // Full-row rule for Brand Enquiry (full row Cyan background, standard text)
   var ruleBrand = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied('=REGEXMATCH(LOWER($' + colLetter + '2), "brand")')
     .setBackground("#D1F4F9")
-    .setFontColor("#042F2E")
     .setRanges([range])
     .build();
 
-  // Full-row rule for Join Us Application (matches any column when Category contains "join")
+  // Full-row rule for Join Us Application (full row Purple background, standard text)
   var ruleJoin = SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied('=REGEXMATCH(LOWER($' + colLetter + '2), "join")')
     .setBackground("#EDE9FE")
-    .setFontColor("#3B0764")
     .setRanges([range])
     .build();
 

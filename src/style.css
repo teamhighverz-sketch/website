@@ -20081,13 +20081,6 @@ body::after {
 .footer-left-info {
   gap: 1.1rem;
   max-width: 330px;
-  width: fit-content;
-}
-
-@media (min-width: 901px) {
-  .footer-left-info {
-    margin-left: clamp(2.5rem, 8vw, 10rem);
-  }
 }
 
 .footer-logo-img {

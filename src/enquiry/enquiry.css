@@ -359,6 +359,36 @@ body.enquiry-modal-open .admin-leads-close {
   color: var(--accent-cyan, #00e5ff);
 }
 
+.enquiry-sub-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--accent-cyan, #00e5ff);
+  opacity: 0.85;
+  margin-left: 0.25rem;
+}
+
+.enquiry-contact-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #7e8b9b);
+  margin-top: -0.65rem;
+  margin-bottom: 0.2rem;
+  line-height: 1.4;
+  transition: all 0.2s ease;
+}
+
+.enquiry-contact-hint.is-error {
+  color: #f87171 !important;
+  font-weight: 600;
+}
+
+.enquiry-input.is-invalid,
+.enquiry-phone-wrap.is-invalid {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35) !important;
+}
+
 .enquiry-input,
 .enquiry-select,
 .enquiry-textarea {

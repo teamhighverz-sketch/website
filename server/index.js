@@ -315,13 +315,24 @@ app.post('/api/enquiry', async (req, res) => {
   const incomingPayload = req.body || {};
   const email = String(incomingPayload.email || '').trim();
   const phone = String(incomingPayload.phone || '').trim();
-  const contact = String(incomingPayload.contact || phone || email || '').trim();
+  const contact = String(incomingPayload.contact || (email && phone ? `${email} / ${phone}` : (email || phone)) || '').trim();
+
+  if (!email && !phone && !contact) {
+    return res.status(400).json({ error: 'Please provide either an email address or phone / WhatsApp number.' });
+  }
+
+  const sanitizeForSheets = (val) => {
+    const s = String(val || '').trim();
+    if (!s) return '';
+    if (s.startsWith("'")) return s;
+    return /^[+=@-]/.test(s) ? `'${s}` : s;
+  };
 
   const payload = {
     ...incomingPayload,
     email,
-    phone,
-    contact,
+    phone: sanitizeForSheets(phone),
+    contact: sanitizeForSheets(contact),
     position: String(incomingPayload.position || '').trim(),
     otherPosition: String(incomingPayload.otherPosition || '').trim()
   };

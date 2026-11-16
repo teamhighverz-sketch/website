@@ -232,14 +232,14 @@ function injectEnquiryModal() {
               <input type="text" id="enquiry-name" name="name" class="enquiry-input" placeholder="e.g. Alex Gonzalez" required />
             </div>
 
-            <div class="enquiry-grid-2">
+            <div class="enquiry-grid-2 enquiry-contact-grid">
               <div class="enquiry-field">
-                <label class="enquiry-label" for="enquiry-email">Email Address <span class="req">*</span></label>
-                <input type="email" id="enquiry-email" name="email" class="enquiry-input" placeholder="you@company.com" required autocomplete="email" />
+                <label class="enquiry-label" for="enquiry-email">Email Address <span class="enquiry-sub-label">(or Phone)</span></label>
+                <input type="email" id="enquiry-email" name="email" class="enquiry-input" placeholder="you@company.com" autocomplete="email" />
               </div>
 
               <div class="enquiry-field enquiry-contact-field enquiry-phone-field">
-                <label class="enquiry-label" for="enquiry-phone">Phone / WhatsApp <span class="req">*</span></label>
+                <label class="enquiry-label" for="enquiry-phone">Phone / WhatsApp <span class="enquiry-sub-label">(or Email)</span></label>
                 <div class="enquiry-phone-wrap" id="enquiry-phone-wrap">
                   <button type="button" class="enquiry-flag-btn" id="enquiry-flag-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Select Country Code">
                     <span class="enquiry-flag-symbol" id="enquiry-selected-flag">🇮🇳</span>
@@ -249,7 +249,7 @@ function injectEnquiryModal() {
                       </svg>
                     </span>
                   </button>
-                  <input type="tel" id="enquiry-phone" name="phone" class="enquiry-input enquiry-phone-input" placeholder="081234 56789" required autocomplete="tel" />
+                  <input type="tel" id="enquiry-phone" name="phone" class="enquiry-input enquiry-phone-input" placeholder="081234 56789" autocomplete="tel" />
                   <input type="hidden" id="enquiry-country-code" name="countryCode" value="+91" />
                   <input type="hidden" id="enquiry-country-name" name="countryName" value="India" />
 
@@ -266,6 +266,7 @@ function injectEnquiryModal() {
                 </div>
               </div>
             </div>
+            <div class="enquiry-contact-hint" id="enquiry-contact-hint">* Provide either Email or Phone / WhatsApp (or both)</div>
 
             <div class="enquiry-field" id="enquiry-position-field" hidden>
               <label class="enquiry-label" for="enquiry-position">Position you are applying for <span class="req">*</span></label>
@@ -545,11 +546,27 @@ function bindModalEvents() {
   // Initialize Country Flag Selector for Phone/Contact Field
   const resetCountrySelector = initCountrySelector(form);
 
+  // Reset validation feedback when user types in email or phone
+  const emailInput = form.querySelector('#enquiry-email');
+  const phoneInput = form.querySelector('#enquiry-phone');
+  const phoneWrap = form.querySelector('#enquiry-phone-wrap');
+  const contactHint = form.querySelector('#enquiry-contact-hint');
+
+  const clearContactError = () => {
+    emailInput?.classList.remove('is-invalid');
+    phoneWrap?.classList.remove('is-invalid');
+    if (contactHint) {
+      contactHint.classList.remove('is-error');
+      contactHint.textContent = '* Provide either Email or Phone / WhatsApp (or both)';
+    }
+  };
+
+  emailInput?.addEventListener('input', clearContactError);
+  phoneInput?.addEventListener('input', clearContactError);
+
   // Handle Form Submission
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    submitBtn.disabled = true;
-    setSubmitLabel('Sending...');
 
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData.entries());
@@ -557,16 +574,53 @@ function bindModalEvents() {
     let phoneVal = String(rawData.phone || '').trim();
     const countryCode = String(rawData.countryCode || '+91').trim();
 
+    // Reset validation states
+    clearContactError();
+
+    // Validation: At least one of Email or Phone must be provided
+    if (!emailVal && !phoneVal) {
+      emailInput?.classList.add('is-invalid');
+      phoneWrap?.classList.add('is-invalid');
+      if (contactHint) {
+        contactHint.classList.add('is-error');
+        contactHint.textContent = '⚠️ Please provide either an Email address or Phone / WhatsApp.';
+      }
+      emailInput?.focus();
+      return;
+    }
+
+    // If email is provided, validate email structure
+    if (emailVal) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailVal)) {
+        emailInput?.classList.add('is-invalid');
+        if (contactHint) {
+          contactHint.classList.add('is-error');
+          contactHint.textContent = '⚠️ Please enter a valid email address.';
+        }
+        emailInput?.focus();
+        return;
+      }
+    }
+
     // Prepend dial code if user entered a phone number without +
     if (phoneVal && !phoneVal.startsWith('+')) {
       phoneVal = `${countryCode} ${phoneVal}`;
     }
 
+    submitBtn.disabled = true;
+    setSubmitLabel('Sending...');
+
+    // Format contact gracefully (Email first to avoid leading '+' formula triggers)
+    const contactVal = emailVal && phoneVal
+      ? `${emailVal} / ${phoneVal}`
+      : (emailVal || phoneVal);
+
     const data = {
       ...rawData,
       email: emailVal,
       phone: phoneVal,
-      contact: phoneVal ? `${phoneVal} (${emailVal})` : emailVal,
+      contact: contactVal,
       type: enquiryType === 'editor' ? 'Join Us Application' : 'Brand Enquiry'
     };
 
@@ -592,6 +646,7 @@ function bindModalEvents() {
   // Reset form to submit another
   resetBtn.addEventListener('click', () => {
     form.reset();
+    clearContactError();
     if (resetCountrySelector) resetCountrySelector();
     setEnquiryType(enquiryType);
     successStage.classList.remove('is-visible');

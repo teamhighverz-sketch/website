@@ -188,6 +188,13 @@ function fixExistingSheetErrors() {
   var phoneCol = headers.indexOf("Phone / WhatsApp") + 1;
   var contactCol = headers.indexOf("Email or WhatsApp") + 1;
 
+  // Style Header Row (Row 1) with distinct dark navy background and crisp white bold text
+  sheet.getRange(1, 1, 1, lastCol)
+    .setBackground("#0F172A")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold");
+  sheet.setFrozenRows(1);
+
   var range = sheet.getRange(2, 1, lastRow - 1, lastCol);
   var formulas = range.getFormulas();
   var values = range.getValues();
@@ -337,8 +344,8 @@ function ensureHeaders_(sheet) {
     sheet.appendRow(defaultHeaders);
     sheet.getRange(1, 1, 1, defaultHeaders.length)
       .setFontWeight("bold")
-      .setBackground("#00e5ff")
-      .setFontColor("#000000");
+      .setBackground("#0F172A")
+      .setFontColor("#FFFFFF");
     sheet.setFrozenRows(1);
     return defaultHeaders;
   }
